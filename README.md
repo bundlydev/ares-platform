@@ -12,7 +12,7 @@ This template is designed to easily build applications deployed on ICP using Mot
 
 ### In the cloud
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/adrian-d-hidalgo/motoko-nextjs/?quickstart=1)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/bundlydev/ares-platform/?quickstart=1)
 
 Create a .env file:
 
@@ -91,7 +91,7 @@ Ensure the following are installed on your system:
 Clone the project
 
 ```bash
-  git clone https://github.com/adrian-d-hidalgo/motoko-nextjs.git
+  git clone https://github.com/bundlydev/ares-platform.git
 ```
 
 Go to the project directory
