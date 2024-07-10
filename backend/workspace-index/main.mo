@@ -1,59 +1,60 @@
 import Principal "mo:base/Principal";
-import HashMap "mo:base/HashMap";
-import Result "mo:base/Result";
-import Bool "mo:base/Bool";
+import Map "mo:map/Map";
+import TextValidator "mo:validators/Text";
+
+import Profile "./services/profile";
+import Types "./types";
 
 actor WorkspaceIndex {
-    type Profile = {
-        username : Text;
-        bio : Text;
-    };
+	// Database
+	stable let _profiles = Map.new<Principal, Profile.Profile>();
 
-    type GetProfileError = {
-        #userNotAuthenticated;
-        #profileNotFound;
-    };
+	// Services
+	private let profileService = Profile.ProfileService(_profiles);
 
-    type GetProfileResponse = Result.Result<Profile, GetProfileError>;
+	public query ({ caller }) func getProfile() : async Types.GetProfileResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
 
-    type CreateProfileError = {
-        #profileAlreadyExists;
-        #userNotAuthenticated;
-    };
+		let profile = profileService.getById(caller);
 
-    type CreateProfileResponse = Result.Result<Bool, CreateProfileError>;
+		switch profile {
+			case (?profile) {
+				#ok(profile);
+			};
+			case null {
+				#err(#profileNotFound);
+			};
+		};
+	};
 
-    let profiles = HashMap.HashMap<Principal, Profile>(0, Principal.equal, Principal.hash);
+	public shared ({ caller }) func createProfile(data : Profile.CreateProfileData) : async Types.CreateProfileResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
 
-    public query ({caller}) func getProfile () : async GetProfileResponse {
-        if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		// TODO: Should validations be done here or in the profile service?
 
-        let profile = profiles.get(caller);
+		if (profileService.getById(caller) != null) return #err(#principalAlreadyRegistered);
 
-        switch profile {
-            case (?profile) {
-                #ok(profile);
-            };
-            case null {
-                #err(#profileNotFound);
-            };
-        }
-    };
+		if (TextValidator.isEmpty(data.username)) {
+			return #err(#fieldRequired("username"));
+		} else if (TextValidator.isEmpty(data.email)) {
+			return #err(#fieldRequired("email"));
+		} else if (TextValidator.isEmpty(data.firstName)) {
+			return #err(#fieldRequired("firstName"));
+		} else if (TextValidator.isEmpty(data.lastName)) {
+			return #err(#fieldRequired("lastName"));
+		};
 
-    public shared ({caller}) func createProfile (username : Text, bio : Text) : async CreateProfileResponse {
-        if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (profileService.getByUsername(data.username) != null) return #err(#usernameAlreadyExists);
 
-        let profile = profiles.get(caller);
+		let newProfile : Profile.Profile = {
+			username = data.username;
+			firstName = data.firstName;
+			lastName = data.lastName;
+			email = data.email;
+		};
 
-        if (profile != null) return #err(#profileAlreadyExists);
+		profileService.create(caller, newProfile);
 
-        let newProfile: Profile = {
-            username = username;
-            bio = bio;
-        };
-        
-        profiles.put(caller, newProfile);
-
-        #ok(true);
-    };
-}
+		#ok(true);
+	};
+};
