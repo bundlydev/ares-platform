@@ -87,6 +87,7 @@ Ensure the following are installed on your system:
 
 - [Node.js](https://nodejs.org/en/) `>= 21`
 - [DFX](https://internetcomputer.org/docs/current/developer-docs/build/install-upgrade-remove) `>= 0.20.1`
+- [Mops](https://j4mwm-bqaaa-aaaam-qajbq-cai.ic0.app/docs/install)
 
 Clone the project
 
@@ -104,6 +105,7 @@ Install dependencies
 
 ```bash
 npm install
+mops install
 ```
 
 Create a .env file:
