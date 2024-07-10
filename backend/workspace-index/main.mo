@@ -3,7 +3,7 @@ import HashMap "mo:base/HashMap";
 import Result "mo:base/Result";
 import Bool "mo:base/Bool";
 
-actor {
+actor WorkspaceIndex {
     type Profile = {
         username : Text;
         bio : Text;

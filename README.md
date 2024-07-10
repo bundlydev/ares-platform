@@ -27,7 +27,7 @@ Get environment values:
 dfx canister create --all
 
 # Get backend canister id
-dfx canister id test
+dfx canister id workspace-index
 
 # Get internet-identity canister id
 dfx canister id internet-identity
@@ -41,8 +41,8 @@ Replace values in the `frontend/.env` file:
 ```bash
 # Replace YOUR_CODESPACE_NAME with your Codespace name
 NEXT_PUBLIC_IC_HOST_URL=https://YOUR_CODESPACE_NAME-4943.app.github.dev/
-# Replace YOUR_TEST_CANISTER_ID with your test canister id
-NEXT_PUBLIC_TEST_CANISTER_ID=YOUR_TEST_CANISTER_ID
+# Replace YOUR_WORKSPACE_INDEX_CANISTER_ID with your workspace-index canister id
+NEXT_PUBLIC_WORKSPACE_INDEX_CANISTER_ID=YOUR_WORKSPACE_INDEX_CANISTER_ID
 # Replace YOUR_INTERNET_IDENTITY_CANISTER_ID with your internet-identity canister id
 NEXT_PUBLIC_INTERNET_IDENTITY_URL=https://YOUR_CODESPACE_NAME-4943.app.github.dev/?canisterId=YOUR_INTERNET_COMPUTER_CANISTER_ID
 ```
@@ -50,7 +50,7 @@ NEXT_PUBLIC_INTERNET_IDENTITY_URL=https://YOUR_CODESPACE_NAME-4943.app.github.de
 Generate did files:
 
 ```bash
-dfx generate test
+dfx generate workspace-index
 ```
 
 Deploy your canisters:
@@ -72,7 +72,7 @@ URLs:
       - http://bd3sg-teaaa-aaaaa-qaaba-cai.localhost:4943/
   Backend canister via Candid interface:
     internet-identity: http://127.0.0.1:4943/?canisterId=br5f7-7uaaa-aaaaa-qaaca-cai&id=bd3sg-teaaa-aaaaa-qaaba-cai
-    test: http://127.0.0.1:4943/?canisterId=br5f7-7uaaa-aaaaa-qaaca-cai&id=be2us-64aaa-aaaaa-qaabq-cai
+    workspace-index: http://127.0.0.1:4943/?canisterId=br5f7-7uaaa-aaaaa-qaaca-cai&id=be2us-64aaa-aaaaa-qaabq-cai
 ```
 
 To interact with the frontend the url can be obtained as follows:
@@ -97,7 +97,7 @@ Clone the project
 Go to the project directory
 
 ```bash
-  cd motoko-nextjs
+  cd ares-platform
 ```
 
 Install dependencies
@@ -125,7 +125,7 @@ Get your canister ids:
 dfx canister create --all
 
 # Get backend canister id
-dfx canister id test
+dfx canister id workspace-index
 
 # Get internet-identity canister id
 dfx canister id internet-identity
@@ -136,8 +136,8 @@ Replace values in the .env file:
 ```bash
 # Replace port if needed
 NEXT_PUBLIC_IC_HOST_URL=http://localhost:4943
-# Replace YOUR_TEST_CANISTER_ID with your test canister id
-NEXT_PUBLIC_TEST_CANISTER_ID=YOUR_TEST_CANISTER_ID
+# Replace YOUR_WORKSPACE_INDEX_CANISTER_ID with your workspace-index canister id
+NEXT_PUBLIC_WORKSPACE_INDEX_CANISTER_ID=YOUR_WORKSPACE_INDEX_CANISTER_ID
 # Replace YOUR_INTERNET_IDENTITY_CANISTER_ID with your internet-identity canister id
 NEXT_PUBLIC_INTERNET_IDENTITY_URL=http://YOUR_INTERNET_IDENTITY_CANISTER_ID.localhost:4943
 ```
@@ -145,7 +145,7 @@ NEXT_PUBLIC_INTERNET_IDENTITY_URL=http://YOUR_INTERNET_IDENTITY_CANISTER_ID.loca
 Generate did files:
 
 ```bash
-dfx generate test
+dfx generate workspace-index
 ```
 
 Deploy your canisters:
@@ -167,7 +167,7 @@ URLs:
       - http://bd3sg-teaaa-aaaaa-qaaba-cai.localhost:4943/
   Backend canister via Candid interface:
     internet-identity: http://127.0.0.1:4943/?canisterId=br5f7-7uaaa-aaaaa-qaaca-cai&id=bd3sg-teaaa-aaaaa-qaaba-cai
-    test: http://127.0.0.1:4943/?canisterId=br5f7-7uaaa-aaaaa-qaaca-cai&id=be2us-64aaa-aaaaa-qaabq-cai
+    workspace-index: http://127.0.0.1:4943/?canisterId=br5f7-7uaaa-aaaaa-qaaca-cai&id=be2us-64aaa-aaaaa-qaabq-cai
 ```
 
 Open your web browser and enter the Frontend URL to view the web application in action.

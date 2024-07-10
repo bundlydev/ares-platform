@@ -16,9 +16,10 @@ export default function IcConnectPage() {
   const identities = useIdentities();
   const [profile, setProfile] = useState<Profile | undefined>();
   const [loading, setLoading] = useState(false); // State for loader
-  const test = useCandidActor<CandidActors>("test", currentIdentity, {
-    canisterId: process.env.NEXT_PUBLIC_TEST_CANISTER_ID,
-  }) as CandidActors["test"];
+  const workspaceIndex = useCandidActor<CandidActors>(
+    "workspaceIndex",
+    currentIdentity
+  ) as CandidActors["workspaceIndex"];
 
   useEffect(() => {
     getProfile();
@@ -37,7 +38,7 @@ export default function IcConnectPage() {
 
   async function getProfile() {
     try {
-      const response = await test.getProfile();
+      const response = await workspaceIndex.getProfile();
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -54,7 +55,7 @@ export default function IcConnectPage() {
   async function registerProfile(username: string, bio: string) {
     try {
       setLoading(true); // Show loader
-      const response = await test.createProfile(username, bio);
+      const response = await workspaceIndex.createProfile(username, bio);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
