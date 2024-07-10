@@ -1,5 +1,5 @@
 {
-  "name": "motoko_nextjs",
+  "name": "ares_plaftorm",
   "build": { "dockerfile": "Dockerfile" },
   "forwardPorts": [4943],
   "onCreateCommand": "nohup bash -c 'npm install && mops install && dfx start &'",

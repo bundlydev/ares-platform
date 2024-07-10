@@ -17,3 +17,6 @@ src/declarations
 
 # Mops
 .mops
+
+# Github
+nohup.out
