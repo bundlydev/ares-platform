@@ -2,17 +2,17 @@
   "version": 1,
   "dfx": "0.20.1",
   "canisters": {
-    "workspace": {
+    "backoffice-gateway": {
       "type": "motoko",
-      "main": "backend/workspace/main.mo",
+      "main": "backend/backoffice-gateway/main.mo",
       "declarations": {
         "node_compatibility": true,
-        "output": "frontend/src/declarations/workspace"
+        "output": "frontend/src/declarations/backoffice-gateway"
       }
     },
     "frontend": {
       "type": "assets",
-      "dependencies": ["workspace"],
+      "dependencies": ["backoffice-gateway"],
       "frontend": {
         "entrypoint": "frontend/build/index.html"
       },

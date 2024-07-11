@@ -1,8 +1,9 @@
 import Result "mo:base/Result";
 
 import Profile "./services/profile";
+import Workspace "./services/workspace";
 
-module Types {
+module {
 	public type GetProgileResponseOk = Profile.Profile;
 	public type GetProfileResponseErr = {
 		#userNotAuthenticated;
@@ -21,4 +22,24 @@ module Types {
 	};
 
 	public type CreateProfileResponse = Result.Result<CreateProfileResponseOk, CreateProfileResponseErr>;
+
+	public type GetMyWorkspacesResponseOk = [Workspace.Workspace];
+
+	public type GetMyWorkspacesResponseErr = {
+		#userNotAuthenticated;
+	};
+
+	public type GetMyWorkspacesResponse = Result.Result<GetMyWorkspacesResponseOk, GetMyWorkspacesResponseErr>;
+
+	public type CreateWorkspaceData = {
+		name : Text;
+	};
+
+	public type CreateWorkspaceResponseOk = ();
+
+	public type CreateWorkspaceResponseErr = {
+		#userNotAuthenticated;
+	};
+
+	public type CreateWorkspaceResponse = Result.Result<CreateWorkspaceResponseOk, CreateWorkspaceResponseErr>;
 };

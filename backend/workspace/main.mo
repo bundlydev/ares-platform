@@ -1,61 +1,69 @@
-import Principal "mo:base/Principal";
-
+import Result "mo:base/Result";
+import Nat "mo:base/Nat";
 import Map "mo:map/Map";
-import TextValidator "mo:validators/Text";
+import Principal "mo:base/Principal";
+import Array "mo:base/Array";
+import Iter "mo:base/Iter";
 
-import Profile "./services/profile";
-import Types "./types";
+import Member "./member";
+import Role "./role";
 
-actor {
+shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Principal) = this {
 	// Database
-	stable let _profiles = Map.new<Principal, Profile.Profile>();
+	private stable let _creator : Principal = creator;
+	private stable var _name : Text = name;
+	private stable let _roles = Map.new<Nat, Role.Role>();
+	private stable let _members = Map.new<Principal, Member.Member>();
 
 	// Services
-	private let profileService = Profile.ProfileService(_profiles);
+	private let roleService = Role.RoleService(_roles);
+	private let memberService = Member.MemberService(_members);
 
-	public shared query ({ caller }) func getProfile() : async Types.GetProfileResponse {
-		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+	// Initializer
+	let ownerRole = roleService.add({ name = "Owner" });
+	memberService.add(owner, ownerRole.id);
 
-		let profile = profileService.getById(caller);
+	private func hasAccess(principal : Principal, roles : [Nat]) : Bool {
+		if (Principal.isAnonymous(principal)) return false;
 
-		switch profile {
-			case (?profile) {
-				#ok(profile);
-			};
-			case null {
-				#err(#profileNotFound);
-			};
-		};
+		if (Array.size(roles) == 0) return true;
+
+		// TODO: verify if principal is in _members and has one of the roles
+		return principal == _creator;
 	};
 
-	public shared ({ caller }) func createProfile(data : Profile.CreateProfileData) : async Types.CreateProfileResponse {
-		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-
-		// TODO: Should validations be done here or in the profile service?
-
-		if (profileService.getById(caller) != null) return #err(#principalAlreadyRegistered);
-
-		if (TextValidator.isEmpty(data.username)) {
-			return #err(#fieldRequired("username"));
-		} else if (TextValidator.isEmpty(data.email)) {
-			return #err(#fieldRequired("email"));
-		} else if (TextValidator.isEmpty(data.firstName)) {
-			return #err(#fieldRequired("firstName"));
-		} else if (TextValidator.isEmpty(data.lastName)) {
-			return #err(#fieldRequired("lastName"));
-		};
-
-		if (profileService.getByUsername(data.username) != null) return #err(#usernameAlreadyExists);
-
-		let newProfile : Profile.Profile = {
-			username = data.username;
-			firstName = data.firstName;
-			lastName = data.lastName;
-			email = data.email;
-		};
-
-		profileService.create(caller, newProfile);
-
-		#ok();
+	type GetInfoResponseOk = {
+		id : Principal;
+		name : Text;
+		members : [{
+			id : Principal;
+			roleId : Nat;
+		}];
 	};
+
+	type GetInfoResponseErr = {
+		#unauthorized;
+	};
+
+	type GetInfoResponse = Result.Result<GetInfoResponseOk, GetInfoResponseErr>;
+
+	public shared query ({ caller }) func getInfo() : async GetInfoResponse {
+		if (not hasAccess(caller, [])) {
+			return #err(#unauthorized);
+		};
+
+		let memberMap = memberService.getAll();
+		let memberIter = Map.vals(memberMap);
+		let members = Iter.toArray(memberIter);
+
+		let result = {
+			id = Principal.fromActor(this);
+			name = _name;
+			members;
+		};
+
+		return #ok(result);
+	};
+
+	// TODO: Add member management functions
 };

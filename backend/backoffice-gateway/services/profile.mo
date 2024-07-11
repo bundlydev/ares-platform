@@ -2,7 +2,7 @@ import Principal "mo:base/Principal";
 import Map "mo:map/Map";
 import { phash } "mo:map/Map";
 
-module Profile {
+module {
 	public type Profile = {
 		username : Text;
 		email : Text;
