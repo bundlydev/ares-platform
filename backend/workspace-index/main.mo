@@ -12,7 +12,7 @@ actor WorkspaceIndex {
 	// Services
 	private let profileService = Profile.ProfileService(_profiles);
 
-	public query ({ caller }) func getProfile() : async Types.GetProfileResponse {
+	public shared query ({ caller }) func getProfile() : async Types.GetProfileResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
 
 		let profile = profileService.getById(caller);
@@ -55,6 +55,6 @@ actor WorkspaceIndex {
 
 		profileService.create(caller, newProfile);
 
-		#ok(true);
+		#ok();
 	};
 };

@@ -10,6 +10,8 @@ module Profile {
 		lastName : Text;
 	};
 
+	public type Profiles = Map.Map<Principal, Profile>;
+
 	public type CreateProfileData = {
 		username : Text;
 		firstName : Text;
@@ -17,10 +19,10 @@ module Profile {
 		email : Text;
 	};
 
-	public class ProfileService(_profiles : Map.Map<Principal, Profile>) {
+	public class ProfileService(_profiles : Profiles) {
 		public func create(id : Principal, data : CreateProfileData) {
 			// TODO: Validate data
-			let _result = Map.set<Principal, Profile>(_profiles, phash, id, data);
+			Map.set<Principal, Profile>(_profiles, phash, id, data);
 		};
 
 		public func getById(id : Principal) : ?Profile {
