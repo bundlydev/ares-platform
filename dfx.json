@@ -2,17 +2,17 @@
   "version": 1,
   "dfx": "0.20.1",
   "canisters": {
-    "workspace-index": {
+    "workspace": {
       "type": "motoko",
-      "main": "backend/workspace-index/main.mo",
+      "main": "backend/workspace/main.mo",
       "declarations": {
         "node_compatibility": true,
-        "output": "frontend/src/declarations/workspace-index"
+        "output": "frontend/src/declarations/workspace"
       }
     },
     "frontend": {
       "type": "assets",
-      "dependencies": ["workspace-index"],
+      "dependencies": ["workspace"],
       "frontend": {
         "entrypoint": "frontend/build/index.html"
       },

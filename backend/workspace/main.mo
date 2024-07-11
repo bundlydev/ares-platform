@@ -1,11 +1,12 @@
 import Principal "mo:base/Principal";
+
 import Map "mo:map/Map";
 import TextValidator "mo:validators/Text";
 
 import Profile "./services/profile";
 import Types "./types";
 
-actor WorkspaceIndex {
+actor {
 	// Database
 	stable let _profiles = Map.new<Principal, Profile.Profile>();
 
