@@ -8,8 +8,6 @@ import Workspace "../../workspace/main";
 
 module {
 	public type Workspace = {
-		// principal : Principal;
-		// name : Text;
 		ref : Workspace.WorkspaceClass;
 		members : [Principal];
 	};
@@ -29,8 +27,6 @@ module {
 			let workspaceId = Principal.fromActor(workspace);
 
 			let newWorkspace : Workspace = {
-				// principal = workspaceId;
-				// name = data.name;
 				ref = workspace;
 				members = [data.owner];
 			};

@@ -23,7 +23,9 @@ module {
 
 	public type CreateProfileResponse = Result.Result<CreateProfileResponseOk, CreateProfileResponseErr>;
 
-	public type GetMyWorkspacesResponseOk = [Workspace.Workspace];
+	public type GetMyWorkspacesResponseOkItem = Workspace.Workspace;
+
+	public type GetMyWorkspacesResponseOk = [GetMyWorkspacesResponseOkItem];
 
 	public type GetMyWorkspacesResponseErr = {
 		#userNotAuthenticated;
