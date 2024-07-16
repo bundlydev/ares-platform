@@ -11,7 +11,7 @@ module {
 
 	public type Members = Map.Map<Principal, Member>;
 
-	public type AddMemberResultOk = ();
+	public type AddMemberResultOk = Member;
 
 	public type AddMemberResultErr = {
 		#memberAlreadyRegistered;
@@ -29,7 +29,7 @@ module {
 
 			Map.set<Principal, Member>(_members, phash, userId, newMember);
 
-			return #ok();
+			return #ok(newMember);
 		};
 
 		public func getAll() : Members {

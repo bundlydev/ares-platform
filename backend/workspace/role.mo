@@ -16,6 +16,7 @@ module {
 	public class RoleService(_roles : Roles) {
 		// Set default role
 		Map.set(_roles, nhash, 1, { id = 1; name = "Owner" });
+		Map.set(_roles, nhash, 1, { id = 2; name = "Admin" });
 
 		public func add(data : AddRoleData) : Role {
 			let nextId = Map.size(_roles) + 1;
