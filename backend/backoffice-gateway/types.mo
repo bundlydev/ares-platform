@@ -18,7 +18,7 @@ module {
 		#userNotAuthenticated;
 		#principalAlreadyRegistered;
 		#usernameAlreadyExists;
-		#fieldRequired : Text;
+		#requiredField : Text;
 	};
 
 	public type CreateProfileResponse = Result.Result<CreateProfileResponseOk, CreateProfileResponseErr>;
@@ -29,6 +29,7 @@ module {
 
 	public type GetMyWorkspacesResponseErr = {
 		#userNotAuthenticated;
+		#profileNotFound;
 	};
 
 	public type GetMyWorkspacesResponse = Result.Result<GetMyWorkspacesResponseOk, GetMyWorkspacesResponseErr>;
@@ -41,6 +42,8 @@ module {
 
 	public type CreateWorkspaceResponseErr = {
 		#userNotAuthenticated;
+		#profileNotFound;
+		#requiredField : Text;
 	};
 
 	public type CreateWorkspaceResponse = Result.Result<CreateWorkspaceResponseOk, CreateWorkspaceResponseErr>;

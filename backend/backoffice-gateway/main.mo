@@ -40,13 +40,13 @@ actor {
 		if (profileService.getById(caller) != null) return #err(#principalAlreadyRegistered);
 
 		if (TextValidator.isEmpty(data.username)) {
-			return #err(#fieldRequired("username"));
+			return #err(#requiredField("username"));
 		} else if (TextValidator.isEmpty(data.email)) {
-			return #err(#fieldRequired("email"));
+			return #err(#requiredField("email"));
 		} else if (TextValidator.isEmpty(data.firstName)) {
-			return #err(#fieldRequired("firstName"));
+			return #err(#requiredField("firstName"));
 		} else if (TextValidator.isEmpty(data.lastName)) {
-			return #err(#fieldRequired("lastName"));
+			return #err(#requiredField("lastName"));
 		};
 
 		if (profileService.getByUsername(data.username) != null) return #err(#usernameAlreadyExists);
@@ -65,6 +65,7 @@ actor {
 
 	public shared query ({ caller }) func getMyWorkspaces() : async Types.GetMyWorkspacesResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (profileService.getById(caller) == null) return #err(#profileNotFound);
 
 		let workspaceMap = workspaceService.findByMember(caller);
 		let workspaceIter = Map.vals(workspaceMap);
@@ -75,6 +76,11 @@ actor {
 
 	public shared ({ caller }) func createWorkspace(data : Types.CreateWorkspaceData) : async Types.CreateWorkspaceResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (profileService.getById(caller) == null) return #err(#profileNotFound);
+
+		if (TextValidator.isEmpty(data.name)) {
+			return #err(#requiredField("name"));
+		};
 
 		let newWorkspace : Workspace.CreateWorkspaceData = {
 			name = data.name;
