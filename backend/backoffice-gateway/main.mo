@@ -1,28 +1,27 @@
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
+import Cycles "mo:base/ExperimentalCycles";
+import Array "mo:base/Array";
 
 import Map "mo:map/Map";
+import { phash } "mo:map/Map";
 import TextValidator "mo:validators/Text";
 
-import Profile "./services/profile";
-import Workspace "./services/workspace";
+import WorkspaceClass "../workspace/main";
 import Types "./types";
+import Models "./models";
 
 actor {
 	// Database
-	stable let _profiles = Map.new<Principal, Profile.Profile>();
-	stable let _workspaces = Map.new<Principal, Workspace.Workspace>();
-
-	// Services
-	private let profileService = Profile.ProfileService(_profiles);
-	private let workspaceService = Workspace.WorkspaceService(_workspaces);
+	stable let _profiles = Map.new<Principal, Models.Profile>();
+	stable let _workspaces = Map.new<Principal, Models.Workspace>();
 
 	public shared query ({ caller }) func getProfile() : async Types.GetProfileResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
 
-		let profile = profileService.getById(caller);
+		let maybeProfile = Map.get(_profiles, phash, caller);
 
-		switch profile {
+		switch maybeProfile {
 			case (?profile) {
 				#ok(profile);
 			};
@@ -32,12 +31,11 @@ actor {
 		};
 	};
 
-	public shared ({ caller }) func createProfile(data : Profile.CreateProfileData) : async Types.CreateProfileResponse {
+	public shared ({ caller }) func createProfile(data : Types.CreateProfileData) : async Types.CreateProfileResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (Map.get(_profiles, phash, caller) != null) return #err(#principalAlreadyRegistered);
 
 		// TODO: Should validations be done here or in the profile service?
-
-		if (profileService.getById(caller) != null) return #err(#principalAlreadyRegistered);
 
 		if (TextValidator.isEmpty(data.username)) {
 			return #err(#requiredField("username"));
@@ -49,25 +47,39 @@ actor {
 			return #err(#requiredField("lastName"));
 		};
 
-		if (profileService.getByUsername(data.username) != null) return #err(#usernameAlreadyExists);
+		for (profile in Map.vals(_profiles)) {
+			if (profile.username == data.username) {
+				return #err(#usernameAlreadyExists);
+			};
+		};
 
-		let newProfile : Profile.Profile = {
+		let newProfile : Models.Profile = {
 			username = data.username;
 			firstName = data.firstName;
 			lastName = data.lastName;
 			email = data.email;
 		};
 
-		profileService.create(caller, newProfile);
+		Map.set<Principal, Models.Profile>(_profiles, phash, caller, newProfile);
 
 		#ok();
 	};
 
 	public shared query ({ caller }) func getMyWorkspaces() : async Types.GetMyWorkspacesResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (profileService.getById(caller) == null) return #err(#profileNotFound);
+		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
 
-		let workspaceMap = workspaceService.findByMember(caller);
+		let workspaceMap = Map.filter<Principal, Models.Workspace>(
+			_workspaces,
+			phash,
+			func(key, value) {
+				let index = Array.indexOf(caller, value.members, Principal.equal);
+
+				if (index == null) { return false };
+
+				return true;
+			},
+		);
 		let workspaceIter = Map.vals(workspaceMap);
 		let workspaces = Iter.toArray(workspaceIter);
 
@@ -76,19 +88,45 @@ actor {
 
 	public shared ({ caller }) func createWorkspace(data : Types.CreateWorkspaceData) : async Types.CreateWorkspaceResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (profileService.getById(caller) == null) return #err(#profileNotFound);
+		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
 
 		if (TextValidator.isEmpty(data.name)) {
 			return #err(#requiredField("name"));
 		};
 
-		let newWorkspace : Workspace.CreateWorkspaceData = {
-			name = data.name;
-			owner = caller;
+		Cycles.add(113_846_199_230);
+
+		let workspace = await WorkspaceClass.WorkspaceClass(data.name, caller);
+		let workspaceId = Principal.fromActor(workspace);
+
+		let newWorkspace : Models.Workspace = {
+			ref = workspace;
+			members = [caller];
 		};
 
-		let _workspace = workspaceService.create(newWorkspace);
+		Map.set<Principal, Models.Workspace>(_workspaces, phash, workspaceId, newWorkspace);
 
 		#ok(());
+	};
+
+	public shared composite query ({ caller }) func getWorkspaceInfo(workspaceId : Principal) : async Types.GetWorkspaceInfoResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+
+		let workspace = Map.get(_workspaces, phash, workspaceId);
+
+		switch workspace {
+			case (null) { #err(#workspaceNotFound) };
+			case (?wp) {
+				let result = await wp.ref.getInfo();
+
+				switch result {
+					case (#ok(info)) {
+						#ok(info);
+					};
+					case (_) { #err(#infoCannotBeRetrieved) };
+				};
+			};
+		};
 	};
 };

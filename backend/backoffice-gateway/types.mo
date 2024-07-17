@@ -1,16 +1,23 @@
 import Result "mo:base/Result";
 
-import Profile "./services/profile";
-import Workspace "./services/workspace";
+import Models "./models";
 
 module {
-	public type GetProgileResponseOk = Profile.Profile;
+	public type GetProgileResponseOk = Models.Profile;
+
 	public type GetProfileResponseErr = {
 		#userNotAuthenticated;
 		#profileNotFound;
 	};
 
 	public type GetProfileResponse = Result.Result<GetProgileResponseOk, GetProfileResponseErr>;
+
+	public type CreateProfileData = {
+		username : Text;
+		firstName : Text;
+		lastName : Text;
+		email : Text;
+	};
 
 	public type CreateProfileResponseOk = ();
 
@@ -23,7 +30,7 @@ module {
 
 	public type CreateProfileResponse = Result.Result<CreateProfileResponseOk, CreateProfileResponseErr>;
 
-	public type GetMyWorkspacesResponseOkItem = Workspace.Workspace;
+	public type GetMyWorkspacesResponseOkItem = Models.Workspace;
 
 	public type GetMyWorkspacesResponseOk = [GetMyWorkspacesResponseOkItem];
 
@@ -47,4 +54,22 @@ module {
 	};
 
 	public type CreateWorkspaceResponse = Result.Result<CreateWorkspaceResponseOk, CreateWorkspaceResponseErr>;
+
+	public type GetWorkspaceInfoResponseOk = {
+		id : Principal;
+		name : Text;
+		members : [{
+			id : Principal;
+			roleId : Nat;
+		}];
+	};
+
+	public type GetWorkspaceInfoResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+		#workspaceNotFound;
+		#infoCannotBeRetrieved;
+	};
+
+	public type GetWorkspaceInfoResponse = Result.Result<GetWorkspaceInfoResponseOk, GetWorkspaceInfoResponseErr>;
 };
