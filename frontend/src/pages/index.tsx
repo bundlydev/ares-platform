@@ -18,10 +18,10 @@ export default function IcConnectPage() {
   const identities = useIdentities();
   const [profile, setProfile] = useState<Profile | undefined>();
   const [loading, setLoading] = useState(false); // State for loader
-  const workspaceIndex = useCandidActor<CandidActors>(
-    "workspaceIndex",
+  const backofficeGateway = useCandidActor<CandidActors>(
+    "backofficeGateway",
     currentIdentity
-  ) as CandidActors["workspaceIndex"];
+  ) as CandidActors["backofficeGateway"];
 
   useEffect(() => {
     getProfile();
@@ -40,7 +40,8 @@ export default function IcConnectPage() {
 
   async function getProfile() {
     try {
-      const response = await workspaceIndex.getProfile();
+      const response = await backofficeGateway.getProfile();
+			console.log('getprofiles',response)
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -50,38 +51,11 @@ export default function IcConnectPage() {
       const profile = "ok" in response ? response.ok : undefined;
       setProfile(profile);
     } catch (error) {
-      console.error({ error });
+      console.error('error response',{ error });
     }
   }
 
-  async function registerProfile(username: string, email: string, firstName: string, lastName: string) {
-    try {
-      setLoading(true); // Show loader
-
-      const profile = {
-        username,
-        email,
-        firstName,
-        lastName,
-      };
-
-      const response = await workspaceIndex.createProfile(profile);
-
-      if ("err" in response) {
-        if ("userNotAuthenticated" in response.err) alert("User not authenticated");
-        if ("profileAlreadyExists" in response.err) alert("Profile already exists");
-
-        throw new Error("Error creating profile");
-      }
-
-      setProfile(profile);
-    } catch (error) {
-      console.error({ error });
-    } finally {
-      setLoading(false); // Hide loader
-    }
-  }
-
+ 
   return (
     <>
       <Header />
@@ -97,7 +71,7 @@ export default function IcConnectPage() {
                 <strong>Current Identity:</strong> {currentIdentity.getPrincipal().toString()}
               </p>
               <h2 className="text-xl font-bold mb-2">Profile</h2>
-              {profile ? (
+              {profile && (
                 <>
                   <p>
                     <strong>Username: </strong> {profile.username}
@@ -106,9 +80,7 @@ export default function IcConnectPage() {
                     <strong>Email: </strong> {profile.email}
                   </p>
                 </>
-              ) : (
-                <CreateProfileForm onSubmit={registerProfile} loading={loading} />
-              )}
+              ) }
             </div>
 
             <div className="bg-white rounded-lg shadow-md p-6">

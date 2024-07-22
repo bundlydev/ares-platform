@@ -1,10 +1,13 @@
+"use client";
+
 import type { AppProps } from "next/app";
 import "tailwindcss/tailwind.css";
 
 import { Client, InternetIdentity } from "@bundly/ares-core";
 import { IcpConnectContextProvider } from "@bundly/ares-react";
+import { AuthContextProvider } from "@app/context/auth-context";
 
-import { candidCanisters } from "@app/canisters";
+import { candidCanisters } from "@app/canisters/index";
 
 export default function MyApp({ Component, pageProps }: AppProps) {
   const client = Client.create({
@@ -21,7 +24,9 @@ export default function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <IcpConnectContextProvider client={client}>
+			 <AuthContextProvider>
       <Component {...pageProps} />
+			</AuthContextProvider>
     </IcpConnectContextProvider>
   );
 }
