@@ -144,9 +144,25 @@ actor {
 				switch memberId {
 					case (null) #err(#unauthorized);
 					case (_) {
-						ignore await wp.ref.addMember(userId, 2);
+						let result = await wp.ref.addMember(userId, 2);
 
-						#ok();
+						switch result {
+							case (#ok()) {
+								let members : [Principal] = Array.append<Principal>(wp.members, [userId]);
+								let workspaceId : Principal = Principal.fromActor(wp.ref);
+
+								let workspaceUpdate : Models.Workspace = {
+									ref = wp.ref;
+									members;
+								};
+
+								Map.set<Principal, Models.Workspace>(_workspaces, phash, workspaceId, workspaceUpdate);
+
+								#ok();
+							};
+							case (#err(#memberAlreadyRegistered)) #err(#memberAlreadyRegistered);
+							case (#err(#unauthorized)) #err(#unauthorized);
+						};
 					};
 				};
 			};
