@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuthGuard } from "@app/hooks/useGuard";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
 import { CandidActors } from "@app/canisters";
@@ -13,6 +14,7 @@ type ProfileInputs = {
 };
 
 export default function Profile() {
+	useAuthGuard({ isPrivate: true });
   const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
   const { register, handleSubmit, formState: { errors } } = useForm<ProfileInputs>();
   const [image, setImage] = useState<File | null>(null);
@@ -33,6 +35,9 @@ export default function Profile() {
 
         throw new Error("Error creating profile");
       }
+			else{
+				
+			}
     } catch (error) {
       console.error({ error });
     }

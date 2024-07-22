@@ -10,25 +10,18 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const profile = useProfile();
-
   const redirect = (path: string) => {
     if (router.pathname !== path) {
       router.push(path);
     }
   };
-
   if (isPrivate && !isAuthenticated) {
-    redirect("/login");
+    redirect("/");
     return;
   }
-
-  if (router.pathname === "/login" && isAuthenticated) {
+  if ( isAuthenticated ) {
     profile ? redirect("/workspace") : redirect("/profile");
     return;
   }
 
-  if (isAuthenticated && !profile && router.pathname !== "/profile") {
-    redirect("/profile");
-    return;
-  }
 }

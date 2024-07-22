@@ -9,6 +9,6 @@ export type BackofficeGatewayActor = ActorSubclass<_SERVICE>;
 export const backofficeGateway: CandidCanister = {
   idlFactory,
   actorConfig: {
-    canisterId: process.env.NEXT_PUBLIC_WORKSPACE_INDEX_CANISTER_ID!,
+    canisterId: process.env.NEXT_PUBLIC_BACKOFFICE_GATEWAY_CANISTER_ID!,
   },
 };

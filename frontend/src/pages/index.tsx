@@ -5,6 +5,7 @@ import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ar
 
 import { CandidActors } from "@app/canisters";
 import Header from "@app/components/header";
+import { useAuthGuard } from "@app/hooks/useGuard";
 
 type Profile = {
   username: string;
@@ -18,6 +19,7 @@ export default function IcConnectPage() {
   const identities = useIdentities();
   const [profile, setProfile] = useState<Profile | undefined>();
   const [loading, setLoading] = useState(false); // State for loader
+	useAuthGuard({ isPrivate: false });
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
     currentIdentity
@@ -41,7 +43,6 @@ export default function IcConnectPage() {
   async function getProfile() {
     try {
       const response = await backofficeGateway.getProfile();
-			console.log('getprofiles',response)
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useAuthGuard } from "@app/hooks/useGuard";
 
 import Modal from "../components/Modal";
 import ModalDelete from '../components/ModalDelete';
@@ -10,7 +11,7 @@ export default function Home() {
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
   const [deleteItem, setDeleteItem] = useState<string>('');
   const [items, setItems] = useState<string[]>(["Juan Pérez", "María López"]);
-
+	useAuthGuard({ isPrivate: true });
   const addItem = (item: string) => {
     setItems([...items, item]);
   };

@@ -9,9 +9,15 @@ export type AuthUserProfile = {
   firstName: string;
   lastName: string;
 };
+export type AuthUserWorkspace = {
+  ref: string;
+  members: Array[];
+};
+
 
 export type AuthContextType = {
   profile?: AuthUserProfile;
+	workspace?: AuthUserProfile;
 };
 
 export type AuthContextProviderType = {
@@ -19,6 +25,12 @@ export type AuthContextProviderType = {
 };
 
 const ZUserProfileSchema = z.object({
+  email: z.string(),
+  username: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+});
+const ZUserWorksSchema = z.object({
   email: z.string(),
   username: z.string(),
   firstName: z.string(),
@@ -33,22 +45,27 @@ const ZResponseSchema = z
   .refine((data) => (data.ok !== undefined) !== (data.err !== undefined), {
     message: 'Either "ok" or "err" should be present, but not both.',
   });
+	const ZResponseWorksSchema = z
+  .object({
+    ok: ZUserWorksSchema.optional(),
+    err: z.object({}).optional(),
+  })
+  .refine((data) => (data.ok !== undefined) !== (data.err !== undefined), {
+    message: 'Either "ok" or "err" should be present, but not both.',
+  });
 
 export const AuthContext = createContext<AuthContextType>({});
 
 export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
-  const [isReady, setIsReady] = useState(false);
   const { isAuthenticated, currentIdentity } = useAuth();
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
     currentIdentity
   ) as CandidActors["backofficeGateway"];
-console.log(backofficeGateway)
   const [profile, setProfile] = useState<AuthUserProfile | undefined>();
+	const [workspace, setWorkspace] = useState<AuthUserProfile | undefined>();
   useEffect(() => {
     async function loadProfile() {
-      console.log("loadProfile",profile);
-      console.log({ isAuthenticated, principal: currentIdentity?.getPrincipal().toString() });
       if (isAuthenticated) {
         try {
           const response = await backofficeGateway.getProfile();
@@ -68,25 +85,47 @@ console.log(backofficeGateway)
             firstName: responseParse.data.ok?.firstName || "",
             lastName: responseParse.data.ok?.lastName || "",
           };
-
           setProfile(profile);
         } catch (error) {
           console.error("Error loading profile:", error);
           setProfile(undefined);
         }
+				try {
+					const responseWorks = await backofficeGateway.getMyWorkspaces()
+					console.log(responseWorks,'usecontext')
+debugger
+          const responseWorksParse = ZResponseWorksSchema.safeParse(responseWorks);
+          if (!responseWorksParse.success) {
+            throw new Error(`Invalid response schema: ${responseWorksParse.error}`);
+          }
+          if (responseWorksParse.data.err) {
+            setWorkspace(undefined);
+            return;
+          }
+
+          const workspace: AuthUserProfile = {
+            username: responseWorksParse.data.ok?.username || "",
+            email: responseWorksParse.data.ok?.email || "",
+            firstName: responseWorksParse.data.ok?.firstName || "",
+            lastName: responseWorksParse.data.ok?.lastName || "",
+          };
+          setWorkspace(workspace);
+        } catch (error) {
+          setWorkspace(undefined);
+        }
       } else {
         setProfile(undefined);
+				setWorkspace(undefined);
       }
 
-      setIsReady(true);
     }
 
     loadProfile();
   }, [isAuthenticated, currentIdentity, backofficeGateway]);
 
-  return isReady ? (
+  return (
     <AuthContext.Provider value={{ profile }}>
       {children}
     </AuthContext.Provider>
-  ) : null;
+  );
 };
