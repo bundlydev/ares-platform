@@ -74,6 +74,16 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 
 	type AddMemberResult = Result.Result<AddMemberResultOk, AddMemberResultErr>;
 
+	type RemoveMemberResultOk = ();
+
+	type RemoveMemberResultErr = {
+		#unauthorized;
+		#memberNotFound;
+		#errorRemovingMember;
+	};
+
+	type RemoveMemberResult = Result.Result<RemoveMemberResultOk, RemoveMemberResultErr>;
+
 	public shared ({ caller }) func addMember(userId : Principal, roleId : Nat) : async AddMemberResult {
 		if (not hasAccess(caller)) {
 			return #err(#unauthorized);
@@ -86,6 +96,21 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 				#err(#memberAlreadyRegistered);
 			};
 			case (#ok(_)) { #ok() };
+		};
+	};
+
+	public shared ({ caller }) func removeMember(userId : Principal) : async RemoveMemberResult {
+		if (not hasAccess(caller)) {
+			return #err(#unauthorized);
+		};
+
+		let result = memberService.remove(userId);
+
+		switch (result) {
+			case (#ok()) {
+				#ok();
+			};
+			case (#err(#memberNotFound)) { #err(#memberNotFound) };
 		};
 	};
 };

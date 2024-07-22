@@ -17,7 +17,19 @@ module {
 		#memberAlreadyRegistered;
 	};
 
+	public type RemoveMemberResultOk = ();
+
+	public type RemoveMemberResultErr = {
+		#memberNotFound;
+	};
+
+	public type RemoveMemberResult = Result.Result<RemoveMemberResultOk, RemoveMemberResultErr>;
+
 	public class MemberService(_members : Members) {
+		public func getAll() : Members {
+			return _members;
+		};
+
 		public func add(userId : Principal, roleId : Nat) : Result.Result<AddMemberResultOk, AddMemberResultErr> {
 			let existingMember = Map.get<Principal, Member>(_members, phash, userId);
 
@@ -32,8 +44,16 @@ module {
 			return #ok(newMember);
 		};
 
-		public func getAll() : Members {
-			return _members;
+		public func remove(memberId : Principal) : RemoveMemberResult {
+			let existingMember = Map.get<Principal, Member>(_members, phash, memberId);
+
+			if (existingMember == null) {
+				return #err(#memberNotFound);
+			};
+
+			ignore Map.remove<Principal, Member>(_members, phash, memberId);
+
+			return #ok();
 		};
 	};
 };

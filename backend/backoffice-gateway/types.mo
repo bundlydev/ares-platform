@@ -72,4 +72,16 @@ module {
 	};
 
 	public type GetWorkspaceInfoResponse = Result.Result<GetWorkspaceInfoResponseOk, GetWorkspaceInfoResponseErr>;
+
+	public type AddWorkspaceMemberResponseOk = ();
+
+	public type AddWorkspaceMemberResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+		#unauthorized;
+		#workspaceNotFound;
+		#memberAlreadyRegistered;
+	};
+
+	public type AddWorkspaceMemberResponse = Result.Result<AddWorkspaceMemberResponseOk, AddWorkspaceMemberResponseErr>;
 };

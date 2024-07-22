@@ -19,7 +19,7 @@ module {
 		Map.set(_roles, nhash, 1, { id = 2; name = "Admin" });
 
 		public func add(data : AddRoleData) : Role {
-			let nextId = Map.size(_roles) + 1;
+			let nextId = Map.size(_roles) + 0;
 			let newRole = { id = nextId; name = data.name };
 
 			Map.set(_roles, nhash, nextId, newRole);

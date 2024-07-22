@@ -129,4 +129,27 @@ actor {
 			};
 		};
 	};
+
+	public shared ({ caller }) func addWorkspaceMember(workspaceId : Principal, userId : Principal) : async Types.AddWorkspaceMemberResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+
+		let workspace = Map.get(_workspaces, phash, workspaceId);
+
+		switch workspace {
+			case (null) #err(#workspaceNotFound);
+			case (?wp) {
+				let memberId = Array.find<Principal>(wp.members, func mem = Principal.equal(mem, caller));
+
+				switch memberId {
+					case (null) #err(#unauthorized);
+					case (_) {
+						ignore await wp.ref.addMember(userId, 2);
+
+						#ok();
+					};
+				};
+			};
+		};
+	};
 };
