@@ -5,6 +5,7 @@ import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ar
 import { CandidActors } from "@app/canisters";
 import Modal from "../components/Modal";
 import SelectWorkspace from "../components/SelectWorkspace";
+import { useRouter } from "next/router";
 
 type ProfileInputs = {
   username: string;
@@ -18,25 +19,22 @@ export default function Profile() {
   const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
   const { register, handleSubmit, formState: { errors } } = useForm<ProfileInputs>();
   const [image, setImage] = useState<File | null>(null);
+	const router = useRouter();
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
     currentIdentity
   ) as CandidActors["backofficeGateway"];
 
   const onSubmit: SubmitHandler<ProfileInputs> = async (data) => {
-		debugger
     try {
       const response = await backofficeGateway.createProfile(data);
-			debugger
-			console.log(response,'responseexitoso')
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
         if ("profileAlreadyExists" in response.err) alert("Profile already exists");
-
         throw new Error("Error creating profile");
       }
-			else{
-				
+			if ("ok" in response) {
+				router.push("/workspace");
 			}
     } catch (error) {
       console.error({ error });

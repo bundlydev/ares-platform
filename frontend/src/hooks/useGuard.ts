@@ -1,6 +1,7 @@
-import { useRouter } from "next/router";
-import { useAuth } from "@bundly/ares-react";
-import { useProfile } from "./useProfile";
+import { useRouter } from 'next/router';
+import { useAuth } from '@bundly/ares-react';
+import { useProfile } from './useProfile';
+import { useWorkspace } from './useWorkspace';
 
 export type AuthGuardOptions = {
   isPrivate: boolean;
@@ -10,18 +11,33 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
   const profile = useProfile();
+  const workspaces = useWorkspace();
+
   const redirect = (path: string) => {
     if (router.pathname !== path) {
       router.push(path);
     }
   };
-  if (isPrivate && !isAuthenticated) {
-    redirect("/");
-    return;
-  }
-  if ( isAuthenticated ) {
-    profile ? redirect("/workspace") : redirect("/profile");
-    return;
-  }
 
+  if (isPrivate) {
+    if (!isAuthenticated) {
+      redirect('/');
+      return;
+    }
+		
+    if (profile) {
+			if (workspaces) {
+				redirect('/home');
+			}
+			else{
+				redirect('/workspace');
+			}
+    } else {
+      redirect('/profile');
+    }
+  } else {
+    if (isAuthenticated) {
+     
+    }
+  }
 }

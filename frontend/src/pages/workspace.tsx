@@ -5,6 +5,7 @@ import Modal from "../components/Modal";
 import SelectWorkspace from "../components/SelectWorkspace";
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 import { CandidActors } from "@app/canisters";
+import { useRouter } from "next/router";
 
 type FormValues = {
   name: string;
@@ -18,6 +19,7 @@ export default function Workspace() {
     currentIdentity
   ) as CandidActors["backofficeGateway"];
   const [image, setImage] = useState<File | null>(null);
+	const router = useRouter();
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>();
 
@@ -39,14 +41,15 @@ export default function Workspace() {
   };
 
   const onSubmit: SubmitHandler<FormValues> = async(data) => {
-			debugger
 			try {
 				const response = await backofficeGateway.createWorkspace(data);
-				debugger
 				if ("err" in response) {
 					if ("userNotAuthenticated" in response.err) alert("User not authenticated");
 	
 					throw new Error("Error creating profile");
+				}
+				if ("ok" in response) {
+					router.push("/home");
 				}
 			} catch (error) {
 				console.error({ error });
