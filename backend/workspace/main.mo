@@ -19,9 +19,7 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 	private let memberService = Member.MemberService(_members);
 
 	// Init Start
-	let ownerRole = roleService.add({ name = "Owner" });
-	// TODO: Improve error handling
-	let _a = memberService.add(owner, ownerRole.id);
+	ignore memberService.add(owner, Role.DEFAULT_OWNER_ROLE_ID);
 	// Init End
 
 	private func hasAccess(caller : Principal) : Bool {
@@ -79,7 +77,7 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 	type RemoveMemberResultErr = {
 		#unauthorized;
 		#memberNotFound;
-		#errorRemovingMember;
+		#ownersCannotBeRemoved;
 	};
 
 	type RemoveMemberResult = Result.Result<RemoveMemberResultOk, RemoveMemberResultErr>;
@@ -104,13 +102,6 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 			return #err(#unauthorized);
 		};
 
-		let result = memberService.remove(userId);
-
-		switch (result) {
-			case (#ok()) {
-				#ok();
-			};
-			case (#err(#memberNotFound)) { #err(#memberNotFound) };
-		};
+		return memberService.remove(userId);
 	};
 };

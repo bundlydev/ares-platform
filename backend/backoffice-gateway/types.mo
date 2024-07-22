@@ -84,4 +84,17 @@ module {
 	};
 
 	public type AddWorkspaceMemberResponse = Result.Result<AddWorkspaceMemberResponseOk, AddWorkspaceMemberResponseErr>;
+
+	public type RemoveWorkspaceMemberResponseOk = ();
+
+	public type RemoveWorkspaceMemberResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+		#unauthorized;
+		#workspaceNotFound;
+		#memberNotFound;
+		#ownersCannotBeRemoved;
+	};
+
+	public type RemoveWorkspaceMemberResponse = Result.Result<RemoveWorkspaceMemberResponseOk, RemoveWorkspaceMemberResponseErr>;
 };

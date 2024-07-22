@@ -152,4 +152,44 @@ actor {
 			};
 		};
 	};
+
+	public shared ({ caller }) func removeWorkspaceMember(workspaceId : Principal, userId : Principal) : async Types.RemoveWorkspaceMemberResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+
+		let workspace = Map.get(_workspaces, phash, workspaceId);
+
+		switch workspace {
+			case (null) #err(#workspaceNotFound);
+			case (?wp) {
+				let memberId = Array.find<Principal>(wp.members, func mem = Principal.equal(mem, caller));
+
+				switch memberId {
+					case (null) #err(#unauthorized);
+					case (_) {
+						let result = await wp.ref.removeMember(userId);
+
+						switch result {
+							case (#ok()) {
+								let members : [Principal] = Array.filter<Principal>(wp.members, func mem = not Principal.equal(mem, userId));
+								let workspaceId : Principal = Principal.fromActor(wp.ref);
+
+								let workspaceUpdate : Models.Workspace = {
+									ref = wp.ref;
+									members;
+								};
+
+								Map.set<Principal, Models.Workspace>(_workspaces, phash, workspaceId, workspaceUpdate);
+
+								#ok();
+							};
+							case (#err(#memberNotFound)) #err(#memberNotFound);
+							case (#err(#ownersCannotBeRemoved)) #err(#ownersCannotBeRemoved);
+							case (#err(#unauthorized)) #err(#unauthorized);
+						};
+					};
+				};
+			};
+		};
+	};
 };

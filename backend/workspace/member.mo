@@ -3,6 +3,8 @@ import Result "mo:base/Result";
 import Map "mo:map/Map";
 import { phash } "mo:map/Map";
 
+import Role "./role";
+
 module {
 	public type Member = {
 		id : Principal;
@@ -20,6 +22,7 @@ module {
 	public type RemoveMemberResultOk = ();
 
 	public type RemoveMemberResultErr = {
+		#ownersCannotBeRemoved;
 		#memberNotFound;
 	};
 
@@ -47,13 +50,18 @@ module {
 		public func remove(memberId : Principal) : RemoveMemberResult {
 			let existingMember = Map.get<Principal, Member>(_members, phash, memberId);
 
-			if (existingMember == null) {
-				return #err(#memberNotFound);
+			switch existingMember {
+				case (null) #err(#memberNotFound);
+				case (?member) {
+					if (member.roleId == Role.DEFAULT_OWNER_ROLE_ID) {
+						#err(#ownersCannotBeRemoved);
+					} else {
+						ignore Map.remove<Principal, Member>(_members, phash, memberId);
+
+						#ok();
+					};
+				};
 			};
-
-			ignore Map.remove<Principal, Member>(_members, phash, memberId);
-
-			return #ok();
 		};
 	};
 };
