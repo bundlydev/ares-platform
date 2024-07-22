@@ -83,7 +83,15 @@ actor {
 		let workspaceIter = Map.vals(workspaceMap);
 		let workspaces = Iter.toArray(workspaceIter);
 
-		return #ok(workspaces);
+		let result = Array.map<Models.Workspace, { id : Principal; members : [Principal] }>(
+			workspaces,
+			func item = {
+				id = Principal.fromActor(item.ref);
+				members = item.members;
+			},
+		);
+
+		return #ok(result);
 	};
 
 	public shared ({ caller }) func createWorkspace(data : Types.CreateWorkspaceData) : async Types.CreateWorkspaceResponse {

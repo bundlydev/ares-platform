@@ -30,7 +30,10 @@ module {
 
 	public type CreateProfileResponse = Result.Result<CreateProfileResponseOk, CreateProfileResponseErr>;
 
-	public type GetMyWorkspacesResponseOkItem = Models.Workspace;
+	public type GetMyWorkspacesResponseOkItem = {
+		id : Principal;
+		members : [Principal];
+	};
 
 	public type GetMyWorkspacesResponseOk = [GetMyWorkspacesResponseOkItem];
 
