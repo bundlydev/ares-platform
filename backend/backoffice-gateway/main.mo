@@ -83,7 +83,15 @@ actor {
 		let workspaceIter = Map.vals(workspaceMap);
 		let workspaces = Iter.toArray(workspaceIter);
 
-		return #ok(workspaces);
+		let result = Array.map<Models.Workspace, { id : Principal; members : [Principal] }>(
+			workspaces,
+			func item = {
+				id = Principal.fromActor(item.ref);
+				members = item.members;
+			},
+		);
+
+		return #ok(result);
 	};
 
 	public shared ({ caller }) func createWorkspace(data : Types.CreateWorkspaceData) : async Types.CreateWorkspaceResponse {
@@ -118,13 +126,19 @@ actor {
 		switch workspace {
 			case (null) { #err(#workspaceNotFound) };
 			case (?wp) {
-				let result = await wp.ref.getInfo();
+				let memberId = Array.find<Principal>(wp.members, func mem = Principal.equal(mem, caller));
 
-				switch result {
-					case (#ok(info)) {
-						#ok(info);
+				switch memberId {
+					case (null) #err(#unauthorized);
+					case (_) {
+						let result = await wp.ref.getInfo();
+						switch result {
+							case (#ok(info)) {
+								#ok(info);
+							};
+							case (_) return result;
+						};
 					};
-					case (_) { #err(#infoCannotBeRetrieved) };
 				};
 			};
 		};
@@ -160,8 +174,7 @@ actor {
 
 								#ok();
 							};
-							case (#err(#memberAlreadyRegistered)) #err(#memberAlreadyRegistered);
-							case (#err(#unauthorized)) #err(#unauthorized);
+							case (_) return result;
 						};
 					};
 				};
@@ -199,9 +212,7 @@ actor {
 
 								#ok();
 							};
-							case (#err(#memberNotFound)) #err(#memberNotFound);
-							case (#err(#ownersCannotBeRemoved)) #err(#ownersCannotBeRemoved);
-							case (#err(#unauthorized)) #err(#unauthorized);
+							case (_) return result;
 						};
 					};
 				};

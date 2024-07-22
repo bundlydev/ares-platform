@@ -44,6 +44,8 @@ module {
 
 			Map.set<Principal, Member>(_members, phash, userId, newMember);
 
+			// TODO: Notify via event
+
 			return #ok(newMember);
 		};
 

@@ -30,7 +30,10 @@ module {
 
 	public type CreateProfileResponse = Result.Result<CreateProfileResponseOk, CreateProfileResponseErr>;
 
-	public type GetMyWorkspacesResponseOkItem = Models.Workspace;
+	public type GetMyWorkspacesResponseOkItem = {
+		id : Principal;
+		members : [Principal];
+	};
 
 	public type GetMyWorkspacesResponseOk = [GetMyWorkspacesResponseOkItem];
 
@@ -68,7 +71,7 @@ module {
 		#userNotAuthenticated;
 		#profileNotFound;
 		#workspaceNotFound;
-		#infoCannotBeRetrieved;
+		#unauthorized;
 	};
 
 	public type GetWorkspaceInfoResponse = Result.Result<GetWorkspaceInfoResponseOk, GetWorkspaceInfoResponseErr>;
