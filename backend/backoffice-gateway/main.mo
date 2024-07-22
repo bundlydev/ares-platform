@@ -118,13 +118,19 @@ actor {
 		switch workspace {
 			case (null) { #err(#workspaceNotFound) };
 			case (?wp) {
-				let result = await wp.ref.getInfo();
+				let memberId = Array.find<Principal>(wp.members, func mem = Principal.equal(mem, caller));
 
-				switch result {
-					case (#ok(info)) {
-						#ok(info);
+				switch memberId {
+					case (null) #err(#unauthorized);
+					case (_) {
+						let result = await wp.ref.getInfo();
+						switch result {
+							case (#ok(info)) {
+								#ok(info);
+							};
+							case (_) return result;
+						};
 					};
-					case (_) { #err(#infoCannotBeRetrieved) };
 				};
 			};
 		};
@@ -160,8 +166,7 @@ actor {
 
 								#ok();
 							};
-							case (#err(#memberAlreadyRegistered)) #err(#memberAlreadyRegistered);
-							case (#err(#unauthorized)) #err(#unauthorized);
+							case (_) return result;
 						};
 					};
 				};
@@ -199,9 +204,7 @@ actor {
 
 								#ok();
 							};
-							case (#err(#memberNotFound)) #err(#memberNotFound);
-							case (#err(#ownersCannotBeRemoved)) #err(#ownersCannotBeRemoved);
-							case (#err(#unauthorized)) #err(#unauthorized);
+							case (_) return result;
 						};
 					};
 				};

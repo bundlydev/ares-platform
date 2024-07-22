@@ -68,7 +68,7 @@ module {
 		#userNotAuthenticated;
 		#profileNotFound;
 		#workspaceNotFound;
-		#infoCannotBeRetrieved;
+		#unauthorized;
 	};
 
 	public type GetWorkspaceInfoResponse = Result.Result<GetWorkspaceInfoResponseOk, GetWorkspaceInfoResponseErr>;
