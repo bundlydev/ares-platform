@@ -99,6 +99,8 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 			return #err(#unauthorized);
 		};
 
+		// TODO: Prevent adding members with owner role
+
 		let result = memberService.add(userId, roleId);
 
 		switch (result) {

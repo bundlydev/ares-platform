@@ -1,5 +1,7 @@
 import Result "mo:base/Result";
 
+import Role "../workspace/role";
+
 import Models "./models";
 
 module {
@@ -129,4 +131,15 @@ module {
 	};
 
 	public type RemoveWorkspaceMemberResponse = Result.Result<RemoveWorkspaceMemberResponseOk, RemoveWorkspaceMemberResponseErr>;
+
+	public type GetWorkspaceRolesResponseOk = [Role.Role];
+
+	public type GetWorkspaceRolesResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+		#workspaceNotFound;
+		#unauthorized;
+	};
+
+	public type GetWorkspaceRolesResponse = Result.Result<GetWorkspaceRolesResponseOk, GetWorkspaceRolesResponseErr>;
 };

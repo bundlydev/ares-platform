@@ -231,7 +231,7 @@ actor {
 		};
 	};
 
-	public shared ({ caller }) func addWorkspaceMember(workspaceId : Principal, userId : Principal) : async Types.AddWorkspaceMemberResponse {
+	public shared ({ caller }) func addWorkspaceMember(workspaceId : Principal, userId : Principal, roleId: Nat) : async Types.AddWorkspaceMemberResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
 		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
 
@@ -245,7 +245,7 @@ actor {
 				switch memberId {
 					case (null) #err(#unauthorized);
 					case (_) {
-						let result = await wp.ref.addMember(userId, 2);
+						let result = await wp.ref.addMember(userId, roleId);
 
 						switch result {
 							case (#ok()) {
@@ -302,6 +302,25 @@ actor {
 							case (_) result;
 						};
 					};
+				};
+			};
+		};
+	};
+
+	public shared composite query ({caller}) func getWorkspaceRoles(workspaceId: Principal): async Types.GetWorkspaceRolesResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+
+		let workspace = Map.get(_workspaces, phash, workspaceId);
+
+		switch workspace {
+			case null #err(#workspaceNotFound);
+			case (?wp) {
+				let getRolesResult = await wp.ref.getRoles();
+
+				switch getRolesResult {
+					case (#ok(result)) #ok(result);
+					case (_) getRolesResult;
 				};
 			};
 		};
