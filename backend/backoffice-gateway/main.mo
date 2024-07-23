@@ -23,12 +23,8 @@ actor {
 		let maybeProfile = Map.get(_profiles, phash, caller);
 
 		switch maybeProfile {
-			case (?profile) {
-				#ok(profile);
-			};
-			case null {
-				#err(#profileNotFound);
-			};
+			case (?profile) #ok(profile);
+			case null #err(#profileNotFound);
 		};
 	};
 
@@ -36,15 +32,17 @@ actor {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
 		if (Map.get(_profiles, phash, caller) != null) return #err(#principalAlreadyRegistered);
 
-		// TODO: Should validations be done here or in the profile service?
-
 		if (TextValidator.isEmpty(data.username)) {
+		// TODO: Validate username with regex ^[a-zA-Z0-9_]{5,15}$
 			return #err(#requiredField("username"));
 		} else if (TextValidator.isEmpty(data.email)) {
+			// TODO: Validate email with regex ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$
 			return #err(#requiredField("email"));
 		} else if (TextValidator.isEmpty(data.firstName)) {
+			// TODO: Validate first name with regex /^[A-Za-zÀ-ÿ]+([-'\s][A-Za-zÀ-ÿ]+)*$/
 			return #err(#requiredField("firstName"));
 		} else if (TextValidator.isEmpty(data.lastName)) {
+			// TODO: Validate last name with regex /^[A-Za-zÀ-ÿ]+([-'\s][A-Za-zÀ-ÿ]+)*$/
 			return #err(#requiredField("lastName"));
 		};
 
@@ -157,7 +155,7 @@ actor {
 		let workspace = Map.get(_workspaces, phash, workspaceId);
 
 		switch workspace {
-			case (null) { #err(#workspaceNotFound) };
+			case null { #err(#workspaceNotFound) };
 			case (?wp) {
 				let memberId = Array.find<Principal>(wp.members, func mem = Principal.equal(mem, caller));
 
@@ -166,10 +164,8 @@ actor {
 					case (_) {
 						let result = await wp.ref.getInfo();
 						switch result {
-							case (#ok(info)) {
-								#ok(info);
-							};
-							case (_) return result;
+							case (#ok(info)) #ok(info);
+							case (_) result;
 						};
 					};
 				};
@@ -184,7 +180,7 @@ actor {
 		let workspace = Map.get(_workspaces, phash, workspaceId);
 
 		switch workspace {
-			case (null) #err(#workspaceNotFound);
+			case null #err(#workspaceNotFound);
 			case (?wp) {
 				let memberId = Array.find<Principal>(wp.members, func mem = Principal.equal(mem, caller));
 
@@ -207,7 +203,7 @@ actor {
 
 								#ok();
 							};
-							case (_) return result;
+							case (_) result;
 						};
 					};
 				};
@@ -222,7 +218,7 @@ actor {
 		let workspace = Map.get(_workspaces, phash, workspaceId);
 
 		switch workspace {
-			case (null) #err(#workspaceNotFound);
+			case null #err(#workspaceNotFound);
 			case (?wp) {
 				let memberId = Array.find<Principal>(wp.members, func mem = Principal.equal(mem, caller));
 
@@ -245,7 +241,7 @@ actor {
 
 								#ok();
 							};
-							case (_) return result;
+							case (_) result;
 						};
 					};
 				};

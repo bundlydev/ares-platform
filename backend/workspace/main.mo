@@ -90,10 +90,8 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 		let result = memberService.add(userId, roleId);
 
 		switch (result) {
-			case (#err(#memberAlreadyRegistered)) {
-				#err(#memberAlreadyRegistered);
-			};
-			case (#ok(_)) { #ok() };
+			case (#err(#memberAlreadyRegistered)) #err(#memberAlreadyRegistered);
+			case (#ok(_)) #ok();
 		};
 	};
 
