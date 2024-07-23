@@ -74,10 +74,6 @@ module {
 	public type GetWorkspaceInfoResponseOk = {
 		id : Principal;
 		name : Text;
-		members : [{
-			id : Principal;
-			roleId : Nat;
-		}];
 	};
 
 	public type GetWorkspaceInfoResponseErr = {
@@ -88,6 +84,26 @@ module {
 	};
 
 	public type GetWorkspaceInfoResponse = Result.Result<GetWorkspaceInfoResponseOk, GetWorkspaceInfoResponseErr>;
+
+	public type GetWorkspaceMembersResponseOk = [{
+		id : Principal;
+		name : Text;
+		role : {
+			id : Nat;
+			name : Text;
+		};
+	}];
+
+	public type GetWorkspaceMembersResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+		#workspaceNotFound;
+		#errorGettingMembers;
+		#errorGettingRoles;
+		#errorGettingMembersInfo;
+	};
+
+	public type GetWorkspaceMembersResponse = Result.Result<GetWorkspaceMembersResponseOk, GetWorkspaceMembersResponseErr>;
 
 	public type AddWorkspaceMemberResponseOk = ();
 

@@ -2,7 +2,6 @@ import Result "mo:base/Result";
 import Nat "mo:base/Nat";
 import Map "mo:map/Map";
 import Principal "mo:base/Principal";
-import Iter "mo:base/Iter";
 
 import Member "./member";
 import Role "./role";
@@ -33,10 +32,6 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 	type GetInfoResponseOk = {
 		id : Principal;
 		name : Text;
-		members : [{
-			id : Principal;
-			roleId : Nat;
-		}];
 	};
 
 	type GetInfoResponseErr = {
@@ -50,17 +45,44 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 			return #err(#unauthorized);
 		};
 
-		let memberMap = memberService.getAll();
-		let memberIter = Map.vals(memberMap);
-		let members = Iter.toArray(memberIter);
-
 		let result = {
 			id = Principal.fromActor(this);
 			name = _name;
-			members;
 		};
 
 		return #ok(result);
+	};
+
+	type GetRolesResponseOk = [Role.Role];
+
+	type GetRolesResponseErr = {
+		#unauthorized;
+	};
+
+	type GetRolesResponse = Result.Result<GetRolesResponseOk, GetRolesResponseErr>;
+
+	public shared query ({ caller }) func getRoles() : async GetRolesResponse {
+		if (not hasAccess(caller)) {
+			return #err(#unauthorized);
+		};
+
+		return #ok(roleService.getAllArray());
+	};
+
+	type GetMembersResponseOk = [Member.Member];
+
+	type GetMembersResponseErr = {
+		#unauthorized;
+	};
+
+	type GetMembersResponse = Result.Result<GetMembersResponseOk, GetMembersResponseErr>;
+
+	public shared query ({ caller }) func getMembers() : async GetMembersResponse {
+		if (not hasAccess(caller)) {
+			return #err(#unauthorized);
+		};
+
+		return #ok(memberService.getAllArray());
 	};
 
 	type AddMemberResultOk = ();
@@ -71,16 +93,6 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 	};
 
 	type AddMemberResult = Result.Result<AddMemberResultOk, AddMemberResultErr>;
-
-	type RemoveMemberResultOk = ();
-
-	type RemoveMemberResultErr = {
-		#unauthorized;
-		#memberNotFound;
-		#ownersCannotBeRemoved;
-	};
-
-	type RemoveMemberResult = Result.Result<RemoveMemberResultOk, RemoveMemberResultErr>;
 
 	public shared ({ caller }) func addMember(userId : Principal, roleId : Nat) : async AddMemberResult {
 		if (not hasAccess(caller)) {
@@ -94,6 +106,16 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 			case (#ok(_)) #ok();
 		};
 	};
+
+	type RemoveMemberResultOk = ();
+
+	type RemoveMemberResultErr = {
+		#unauthorized;
+		#memberNotFound;
+		#ownersCannotBeRemoved;
+	};
+
+	type RemoveMemberResult = Result.Result<RemoveMemberResultOk, RemoveMemberResultErr>;
 
 	public shared ({ caller }) func removeMember(userId : Principal) : async RemoveMemberResult {
 		if (not hasAccess(caller)) {

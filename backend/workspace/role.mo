@@ -1,5 +1,6 @@
 import Map "mo:map/Map";
 import { nhash } "mo:map/Map";
+import Iter "mo:base/Iter";
 
 module {
 	public type Role = {
@@ -18,8 +19,8 @@ module {
 
 	public class RoleService(_roles : Roles) {
 		// Set default role
-		Map.set(_roles, nhash, 1, { id = DEFAULT_OWNER_ROLE_ID; name = "Owner" });
-		Map.set(_roles, nhash, 1, { id = DEFAULT_ADMIN_ROLE_ID; name = "Admin" });
+		Map.set(_roles, nhash, DEFAULT_OWNER_ROLE_ID, { id = DEFAULT_OWNER_ROLE_ID; name = "Owner" });
+		Map.set(_roles, nhash, DEFAULT_ADMIN_ROLE_ID, { id = DEFAULT_ADMIN_ROLE_ID; name = "Admin" });
 
 		public func add(data : AddRoleData) : Role {
 			let nextId = Map.size(_roles) + 0;
@@ -32,6 +33,10 @@ module {
 
 		public func getAll() : Roles {
 			return _roles;
+		};
+
+		public func getAllArray() : [Role] {
+			return Iter.toArray(Map.vals(_roles));
 		};
 	};
 };

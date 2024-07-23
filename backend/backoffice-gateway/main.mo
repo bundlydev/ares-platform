@@ -8,6 +8,9 @@ import Map "mo:map/Map";
 import { phash } "mo:map/Map";
 import TextValidator "mo:validators/Text";
 
+import Member "../workspace/member";
+import Role "../workspace/role";
+
 import WorkspaceClass "../workspace/main";
 import Types "./types";
 import Models "./models";
@@ -168,6 +171,61 @@ actor {
 							case (_) result;
 						};
 					};
+				};
+			};
+		};
+	};
+
+	private func setGetWorkspaceMembersResult(members : [Member.Member], roles : [Role.Role]): Types.GetWorkspaceMembersResponseOk  {
+		let result = Array.map<Member.Member, { id : Principal; name : Text; role : { id : Nat; name : Text } }>(
+			members,
+			func member {
+				let role = Array.find<Role.Role>(roles, func r = r.id == member.roleId);
+				let profile = Map.find<Principal, Models.Profile>(_profiles, func (id, _) = Principal.equal(id, member.id));
+
+				switch ((role, profile)) {
+					case ((?r, ?p)) {
+						{
+							id = member.id;
+							name = p.1.firstName # " " # p.1.lastName;
+							role = {
+								id = r.id;
+								name = r.name;
+							};
+						};
+					};
+					// TODO: Handle case when role or profile is not found
+					// case(_) {
+						
+					// };	
+				};
+			},
+		);
+
+		return result;
+	};
+
+	public shared composite query ({caller}) func getWorkspaceMembers(workspaceId: Principal): async Types.GetWorkspaceMembersResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+
+		let workspace = Map.get(_workspaces, phash, workspaceId);
+
+		switch workspace {
+			case null { #err(#workspaceNotFound) };
+			case (?wp) {
+				let getMembersResult = await wp.ref.getMembers();
+				let getRolesResult = await wp.ref.getRoles();
+
+				switch ((getMembersResult, getRolesResult)) {
+					case ((#ok(members), #ok(roles))) {
+						let result = setGetWorkspaceMembersResult(members, roles);
+
+						#ok(result);
+					};
+					case ((#ok(_), #err(_))) #err(#errorGettingMembers);
+					case ((#err(_), #ok(_))) #err(#errorGettingRoles);
+					case ((#err(_), #err(_))) #err(#errorGettingMembersInfo);
 				};
 			};
 		};
