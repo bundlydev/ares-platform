@@ -148,7 +148,7 @@ actor {
 
 		Map.set<Principal, Models.Workspace>(_workspaces, phash, workspaceId, newWorkspace);
 
-		#ok(());
+		#ok({ workspaceId });
 	};
 
 	public shared composite query ({ caller }) func getWorkspaceInfo(workspaceId : Principal) : async Types.GetWorkspaceInfoResponse {
