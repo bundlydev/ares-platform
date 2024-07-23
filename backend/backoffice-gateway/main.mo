@@ -2,6 +2,7 @@ import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Cycles "mo:base/ExperimentalCycles";
 import Array "mo:base/Array";
+import Text "mo:base/Text";
 
 import Map "mo:map/Map";
 import { phash } "mo:map/Map";
@@ -63,6 +64,38 @@ actor {
 		Map.set<Principal, Models.Profile>(_profiles, phash, caller, newProfile);
 
 		#ok();
+	};
+
+	public shared query ({ caller }) func findProfilesByUsernameChunk(chunk : Text) : async Types.FindProfilesByUsernameChunkResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+		if (Text.size(chunk) < 3) return #err(#chunkTooShort);
+
+		let matchedProfiles = Map.filter<Principal, Models.Profile>(
+			_profiles,
+			phash,
+			func(key, value) {
+				return Text.contains(value.username, #text chunk) and not Principal.equal(key, caller);
+			},
+		);
+
+		let matchedProfilesArray = Iter.toArray(Map.entries(matchedProfiles));
+
+		let preResult = Array.map<(Principal, Models.Profile), { id : Principal; username : Text }>(
+			matchedProfilesArray,
+			func(item) {
+				return {
+					id = item.0;
+					username = item.1.username;
+				};
+			},
+		);
+
+		let maxResultLength = if (Array.size(preResult) < 10) Array.size(preResult) else 10;
+
+		let result = Array.subArray(preResult, 0, maxResultLength);
+
+		return #ok(result);
 	};
 
 	public shared query ({ caller }) func getMyWorkspaces() : async Types.GetMyWorkspacesResponse {

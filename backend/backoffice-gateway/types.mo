@@ -30,6 +30,19 @@ module {
 
 	public type CreateProfileResponse = Result.Result<CreateProfileResponseOk, CreateProfileResponseErr>;
 
+	public type FindProfilesByUsernameChunkResponseOk = [{
+		id : Principal;
+		username : Text;
+	}];
+
+	public type FindProfilesByUsernameChunkResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+		#chunkTooShort;
+	};
+
+	public type FindProfilesByUsernameChunkResponse = Result.Result<FindProfilesByUsernameChunkResponseOk, FindProfilesByUsernameChunkResponseErr>;
+
 	public type GetMyWorkspacesResponseOkItem = {
 		id : Principal;
 		members : [Principal];
