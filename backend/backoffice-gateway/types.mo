@@ -1,5 +1,7 @@
 import Result "mo:base/Result";
 
+import Role "../workspace/role";
+
 import Models "./models";
 
 module {
@@ -29,6 +31,19 @@ module {
 	};
 
 	public type CreateProfileResponse = Result.Result<CreateProfileResponseOk, CreateProfileResponseErr>;
+
+	public type FindProfilesByUsernameChunkResponseOk = [{
+		id : Principal;
+		username : Text;
+	}];
+
+	public type FindProfilesByUsernameChunkResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+		#chunkTooShort;
+	};
+
+	public type FindProfilesByUsernameChunkResponse = Result.Result<FindProfilesByUsernameChunkResponseOk, FindProfilesByUsernameChunkResponseErr>;
 
 	public type GetMyWorkspacesResponseOkItem = {
 		id : Principal;
@@ -61,10 +76,6 @@ module {
 	public type GetWorkspaceInfoResponseOk = {
 		id : Principal;
 		name : Text;
-		members : [{
-			id : Principal;
-			roleId : Nat;
-		}];
 	};
 
 	public type GetWorkspaceInfoResponseErr = {
@@ -75,6 +86,26 @@ module {
 	};
 
 	public type GetWorkspaceInfoResponse = Result.Result<GetWorkspaceInfoResponseOk, GetWorkspaceInfoResponseErr>;
+
+	public type GetWorkspaceMembersResponseOk = [{
+		id : Principal;
+		name : Text;
+		role : {
+			id : Nat;
+			name : Text;
+		};
+	}];
+
+	public type GetWorkspaceMembersResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+		#workspaceNotFound;
+		#errorGettingMembers;
+		#errorGettingRoles;
+		#errorGettingMembersInfo;
+	};
+
+	public type GetWorkspaceMembersResponse = Result.Result<GetWorkspaceMembersResponseOk, GetWorkspaceMembersResponseErr>;
 
 	public type AddWorkspaceMemberResponseOk = ();
 
@@ -100,4 +131,15 @@ module {
 	};
 
 	public type RemoveWorkspaceMemberResponse = Result.Result<RemoveWorkspaceMemberResponseOk, RemoveWorkspaceMemberResponseErr>;
+
+	public type GetWorkspaceRolesResponseOk = [Role.Role];
+
+	public type GetWorkspaceRolesResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+		#workspaceNotFound;
+		#unauthorized;
+	};
+
+	public type GetWorkspaceRolesResponse = Result.Result<GetWorkspaceRolesResponseOk, GetWorkspaceRolesResponseErr>;
 };

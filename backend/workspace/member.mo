@@ -1,5 +1,6 @@
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
+import Iter "mo:base/Iter";
 import Map "mo:map/Map";
 import { phash } "mo:map/Map";
 
@@ -31,6 +32,10 @@ module {
 	public class MemberService(_members : Members) {
 		public func getAll() : Members {
 			return _members;
+		};
+
+		public func getAllArray() : [Member] {
+			return Iter.toArray(Map.vals(_members));
 		};
 
 		public func add(userId : Principal, roleId : Nat) : Result.Result<AddMemberResultOk, AddMemberResultErr> {
