@@ -1,6 +1,8 @@
 import React, { ReactNode, createContext, useEffect, useState } from "react";
 import z from "zod";
-import { useCandidActor, useAuth } from "@bundly/ares-react";
+
+import { useAuth, useCandidActor } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters/index";
 
 // Define your types
@@ -12,7 +14,7 @@ export type AuthUserProfile = {
 };
 
 export type AuthUserWorkspace = {
-  ref: string;
+  id: string;
   members: string[];
 };
 
@@ -25,8 +27,8 @@ const ZUserProfileSchema = z.object({
 });
 
 const ZUserWorksSchema = z.object({
-  ref: z.string(),  // Expect `ref` as a string
-  members: z.array(z.string()),  // Expect `members` as an array of strings
+  id: z.string(), // Expect `ref` as a string
+  members: z.array(z.string()), // Expect `members` as an array of strings
 });
 
 // Define response schemas
@@ -48,6 +50,15 @@ const ZResponseWorksSchema = z
     message: 'Either "ok" or "err" should be present, but not both.',
   });
 
+export type AuthContextType = {
+  profile?: AuthUserProfile;
+  workspaces?: AuthUserWorkspace[];
+};
+
+export type AuthContextProviderType = {
+  children: ReactNode;
+};
+
 // Create context
 export const AuthContext = createContext<AuthContextType>({});
 
@@ -57,7 +68,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
     "backofficeGateway",
     currentIdentity
   ) as CandidActors["backofficeGateway"];
-  
+
   const [profile, setProfile] = useState<AuthUserProfile | undefined>();
   const [workspaces, setWorkspaces] = useState<AuthUserWorkspace[] | undefined>();
 
@@ -67,45 +78,34 @@ export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
         try {
           const [profileResponse, workspacesResponse] = await Promise.all([
             backofficeGateway.getProfile(),
-            backofficeGateway.getMyWorkspaces()
+            backofficeGateway.getMyWorkspaces(),
           ]);
-
-          // Convert ref and members to strings before parsing with Zod
-          const convertedWorkspacesResponse = workspacesResponse.ok.map((workspace: any) => ({
-            ...workspace,
-            ref:workspace.ref.toString(),  // Convert `ref` to a JSON string
-            members: workspace.members.map((member: any) => JSON.stringify(member))  // Convert each `member` to a JSON string
-          }));
 
           // Parse responses with Zod
           const profileParse = ZResponseSchema.safeParse(profileResponse);
-          const workspacesParse = ZResponseWorksSchema.safeParse({
-            ...workspacesResponse,
-            ok: convertedWorkspacesResponse
-          });
+          if ("ok" in workspacesResponse) {
+            const convertedWorkspacesResponse = workspacesResponse.ok
+              ? workspacesResponse.ok.map((workspace: any) => ({
+                  ...workspace,
+                  id: workspace.id.toString(),
+                  members: workspace.members.map((member: any) => JSON.stringify(member)), // Convert each `member` to a JSON string
+                }))
+              : [];
 
+            const workspacesParse = ZResponseWorksSchema.safeParse({
+              ...workspacesResponse,
+              ok: convertedWorkspacesResponse,
+            });
+            if (!workspacesParse.success) {
+              throw new Error(`Invalid workspaces response schema: ${workspacesParse.error}`);
+            }
+            setWorkspaces(workspacesParse.data.ok || undefined);
+          }
           if (!profileParse.success) {
             throw new Error(`Invalid profile response schema: ${profileParse.error}`);
           }
-          if (!workspacesParse.success) {
-            throw new Error(`Invalid workspaces response schema: ${workspacesParse.error}`);
-          }
 
-          if (profileParse.data.err) {
-            setProfile(undefined);
-          } else {
-            setProfile({
-              username: profileParse.data.ok?.username || "",
-              email: profileParse.data.ok?.email || "",
-              firstName: profileParse.data.ok?.firstName || "",
-              lastName: profileParse.data.ok?.lastName || "",
-            });
-          }
-          if (workspacesParse.data.err) {
-            setWorkspaces(undefined);
-          } else {
-            setWorkspaces(workspacesParse.data.ok );
-          }
+          setProfile(profileParse.data.ok || undefined);
         } catch (error) {
           console.error("Error loading profile or workspaces:", error);
           setProfile(undefined);
@@ -119,9 +119,6 @@ export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
 
     loadProfileAndWorkspaces();
   }, [isAuthenticated, currentIdentity, backofficeGateway]);
-  return (
-    <AuthContext.Provider value={{ profile, workspaces }}>
-      {children}
-    </AuthContext.Provider>
-  );
+
+  return <AuthContext.Provider value={{ profile, workspaces }}>{children}</AuthContext.Provider>;
 };

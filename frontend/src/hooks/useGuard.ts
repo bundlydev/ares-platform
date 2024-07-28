@@ -12,7 +12,7 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
   const { isAuthenticated } = useAuth();
   const profile = useProfile();
   const workspaces = useWorkspace();
-
+console.log(workspaces,'workspacesssssss')
   const redirect = (path: string) => {
     if (router.pathname !== path) {
       router.push(path);
@@ -26,7 +26,7 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
     }
 		
     if (profile) {
-			if (workspaces) {
+			if (workspaces!==null && workspaces!==undefined &&workspaces.length >0) {
 				redirect('/home');
 			}
 			else{
