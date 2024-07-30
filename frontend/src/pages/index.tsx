@@ -19,7 +19,7 @@ export default function IcConnectPage() {
   const identities = useIdentities();
   const [profile, setProfile] = useState<Profile | undefined>();
   const [loading, setLoading] = useState(false); // State for loader
-	useAuthGuard({ isPrivate: false });
+  useAuthGuard({ isPrivate: false });
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
     currentIdentity
@@ -52,11 +52,10 @@ export default function IcConnectPage() {
       const profile = "ok" in response ? response.ok : undefined;
       setProfile(profile);
     } catch (error) {
-      console.error('error response',{ error });
+      console.error("error response", { error });
     }
   }
 
- 
   return (
     <>
       <Header />
@@ -81,7 +80,7 @@ export default function IcConnectPage() {
                     <strong>Email: </strong> {profile.email}
                   </p>
                 </>
-              ) }
+              )}
             </div>
 
             <div className="bg-white rounded-lg shadow-md p-6">

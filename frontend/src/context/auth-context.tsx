@@ -1,7 +1,8 @@
-import React, { ReactNode, createContext, useEffect, useState, useContext } from "react";
+import React, { ReactNode, createContext, useContext, useEffect, useState } from "react";
 import z from "zod";
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters/index";
 
 // Define your types
@@ -117,7 +118,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
     }
 
     loadProfileAndWorkspaces();
-  }, [isAuthenticated, currentIdentity, backofficeGateway]);
+  }, [isAuthenticated, currentIdentity]);
 
   return <AuthContext.Provider value={{ profile, workspaces }}>{children}</AuthContext.Provider>;
 };

@@ -1,11 +1,14 @@
+import { useRouter } from "next/router";
 import React, { useState } from "react";
-import { useAuthGuard } from "@app/hooks/useGuard";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { SubmitHandler, useForm } from "react-hook-form";
+
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters";
+import { useAuthGuard } from "@app/hooks/useGuard";
+
 import Modal from "../components/Modal";
 import SelectWorkspace from "../components/SelectWorkspace";
-import { useRouter } from "next/router";
 
 type ProfileInputs = {
   username: string;
@@ -15,11 +18,15 @@ type ProfileInputs = {
 };
 
 export default function Profile() {
-	useAuthGuard({ isPrivate: true });
+  useAuthGuard({ isPrivate: true });
   const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
-  const { register, handleSubmit, formState: { errors } } = useForm<ProfileInputs>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProfileInputs>();
   const [image, setImage] = useState<File | null>(null);
-	const router = useRouter();
+  const router = useRouter();
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
     currentIdentity
@@ -33,9 +40,9 @@ export default function Profile() {
         if ("profileAlreadyExists" in response.err) alert("Profile already exists");
         throw new Error("Error creating profile");
       }
-			if ("ok" in response) {
-				router.push("/workspace");
-			}
+      if ("ok" in response) {
+        router.push("/workspace");
+      }
     } catch (error) {
       console.error({ error });
     }
@@ -50,50 +57,39 @@ export default function Profile() {
             <input
               type="text"
               placeholder="Type username"
-              className={`h-10 w-11/12 rounded-lg border ${errors.username ? 'border-red-500' : 'border-gray-300'} px-2`}
+              className={`h-10 w-11/12 rounded-lg border ${errors.username ? "border-red-500" : "border-gray-300"} px-2`}
               {...register("username", { required: true })}
             />
-            <span className="text-red-500 h-2">
-              {errors.username ? 'Username is required' : ''}
-            </span>
+            <span className="text-red-500 h-2">{errors.username ? "Username is required" : ""}</span>
           </div>
           <div className="flex flex-col">
             <input
               type="text"
               placeholder="Type firstname"
-              className={`h-10 w-11/12 rounded-lg border ${errors.firstName ? 'border-red-500' : 'border-gray-300'} px-2`}
+              className={`h-10 w-11/12 rounded-lg border ${errors.firstName ? "border-red-500" : "border-gray-300"} px-2`}
               {...register("firstName", { required: true })}
             />
-            <span className="text-red-500 h-2">
-              {errors.firstName ? 'First name is required' : ''}
-            </span>
+            <span className="text-red-500 h-2">{errors.firstName ? "First name is required" : ""}</span>
           </div>
           <div className="flex flex-col">
             <input
               type="text"
               placeholder="Type lastname"
-              className={`h-10 w-11/12 rounded-lg border ${errors.lastName ? 'border-red-500' : 'border-gray-300'} px-2`}
+              className={`h-10 w-11/12 rounded-lg border ${errors.lastName ? "border-red-500" : "border-gray-300"} px-2`}
               {...register("lastName", { required: true })}
             />
-            <span className="text-red-500 h-2">
-              {errors.lastName ? 'Last name is required' : ''}
-            </span>
+            <span className="text-red-500 h-2">{errors.lastName ? "Last name is required" : ""}</span>
           </div>
           <div className="flex flex-col">
             <input
               type="text"
               placeholder="Type email"
-              className={`h-10 w-11/12 rounded-lg border ${errors.email ? 'border-red-500' : 'border-gray-300'} px-2`}
+              className={`h-10 w-11/12 rounded-lg border ${errors.email ? "border-red-500" : "border-gray-300"} px-2`}
               {...register("email", { required: true })}
             />
-            <span className="text-red-500 h-2">
-              {errors.email ? 'Email is required' : ''}
-            </span>
+            <span className="text-red-500 h-2">{errors.email ? "Email is required" : ""}</span>
           </div>
-          <button
-            type="submit"
-            className="bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4"
-          >
+          <button type="submit" className="bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4">
             Create Profile
           </button>
         </form>

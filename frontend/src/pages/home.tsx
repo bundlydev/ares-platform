@@ -69,13 +69,12 @@ export default function Home() {
         }
 
         const profile = "ok" in response ? response.ok : undefined;
-				if ("ok" in response) {
-					const profile = response.ok;
-					if (profile) {
-						return { id: profile.id.toString(), name: profile.name };
-					}
-				}
-       
+        if ("ok" in response) {
+          const profile = response.ok;
+          if (profile) {
+            return { id: profile.id.toString(), name: profile.name };
+          }
+        }
       });
 
       const results = await Promise.all(promises);
@@ -122,9 +121,9 @@ export default function Home() {
   };
   const getListFindName = async (nameText: string) => {
     try {
-			const response = await backofficeGateway.findProfilesByUsernameChunk(nameText);
+      const response = await backofficeGateway.findProfilesByUsernameChunk(nameText);
       if ("err" in response) {
-				if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
+        if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
         return; // No continuar si hay error
       }

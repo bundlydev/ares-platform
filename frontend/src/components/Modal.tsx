@@ -12,22 +12,28 @@ interface ModalProps {
   dataNameSearch: NameData[];
 }
 
-const Modal: FC<ModalProps> = ({ showModal, setShowModal, addMemberWorkspace, getListFindName, dataNameSearch }) => {
+const Modal: FC<ModalProps> = ({
+  showModal,
+  setShowModal,
+  addMemberWorkspace,
+  getListFindName,
+  dataNameSearch,
+}) => {
   const [inputValue, setInputValue] = useState<string>("");
-	const [inputValueId, setInputValueId] = useState<string>("");
-	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const [inputValueId, setInputValueId] = useState<string>("");
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
 
     if (value.length >= 3) {
       getListFindName(value);
-    } 
+    }
   };
 
   const handleAdd = () => {
     addMemberWorkspace(inputValueId);
     setInputValue("");
-		setInputValueId("");
+    setInputValueId("");
     setShowModal(false);
   };
 
@@ -52,8 +58,7 @@ const Modal: FC<ModalProps> = ({ showModal, setShowModal, addMemberWorkspace, ge
                 key={index}
                 className="p-2 cursor-pointer hover:bg-gray-200"
                 onClick={() => {
-                  setInputValue(suggestion.username),
-									setInputValueId(suggestion.id)
+                  setInputValue(suggestion.username), setInputValueId(suggestion.id);
                 }}>
                 {suggestion.username}
               </li>

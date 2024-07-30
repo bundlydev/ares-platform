@@ -1,7 +1,9 @@
-import { useRouter } from 'next/router';
-import { useAuth } from '@bundly/ares-react';
-import { useProfile } from './useProfile';
-import { useWorkspace } from './useWorkspace';
+import { useRouter } from "next/router";
+
+import { useAuth } from "@bundly/ares-react";
+
+import { useProfile } from "./useProfile";
+import { useWorkspace } from "./useWorkspace";
 
 export type AuthGuardOptions = {
   isPrivate: boolean;
@@ -20,32 +22,32 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
 
   if (isPrivate) {
     if (!isAuthenticated) {
-      redirect('/');
+      redirect("/");
       return;
     }
 
     if (profile) {
-      if (router.pathname === '/addworkspace') {
+      if (router.pathname === "/addworkspace") {
         return;
       }
 
       if (workspaces !== null && workspaces !== undefined && workspaces.length > 0) {
-        redirect('/home');
+        redirect("/home");
       } else {
-        redirect('/workspace');
+        redirect("/workspace");
       }
     } else {
-      redirect('/profile');
+      redirect("/profile");
     }
   } else {
     if (isAuthenticated) {
-      if (router.pathname !== '/addworkspace' && router.pathname !== '/'  ) {
+      if (router.pathname !== "/addworkspace" && router.pathname !== "/") {
         // No redirigir si la URL es /addworkspace
-        redirect('/home');
+        redirect("/home");
       }
-			if (router.pathname === '/') {
+      if (router.pathname === "/") {
         // No redirigir si la URL es /addworkspace
-        redirect('/');
+        redirect("/");
       }
     }
   }
