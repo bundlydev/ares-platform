@@ -12,7 +12,6 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
   const { isAuthenticated } = useAuth();
   const profile = useProfile();
   const workspaces = useWorkspace();
-console.log(workspaces,'workspacesssssss')
   const redirect = (path: string) => {
     if (router.pathname !== path) {
       router.push(path);
@@ -24,20 +23,30 @@ console.log(workspaces,'workspacesssssss')
       redirect('/');
       return;
     }
-		
+
     if (profile) {
-			if (workspaces!==null && workspaces!==undefined &&workspaces.length >0) {
-				redirect('/home');
-			}
-			else{
-				redirect('/workspace');
-			}
+      if (router.pathname === '/addworkspace') {
+        return;
+      }
+
+      if (workspaces !== null && workspaces !== undefined && workspaces.length > 0) {
+        redirect('/home');
+      } else {
+        redirect('/workspace');
+      }
     } else {
       redirect('/profile');
     }
   } else {
     if (isAuthenticated) {
-     
+      if (router.pathname !== '/addworkspace' && router.pathname !== '/'  ) {
+        // No redirigir si la URL es /addworkspace
+        redirect('/home');
+      }
+			if (router.pathname === '/') {
+        // No redirigir si la URL es /addworkspace
+        redirect('/');
+      }
     }
   }
 }

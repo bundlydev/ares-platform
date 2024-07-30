@@ -1,8 +1,7 @@
-import React, { ReactNode, createContext, useEffect, useState } from "react";
+import React, { ReactNode, createContext, useEffect, useState, useContext } from "react";
 import z from "zod";
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
-
 import { CandidActors } from "@app/canisters/index";
 
 // Define your types
@@ -14,7 +13,7 @@ export type AuthUserProfile = {
 };
 
 export type AuthUserWorkspace = {
-  id: string;
+  id: string; // Convert principal to string for front-end handling
   members: string[];
 };
 
@@ -27,7 +26,7 @@ const ZUserProfileSchema = z.object({
 });
 
 const ZUserWorksSchema = z.object({
-  id: z.string(), // Expect `ref` as a string
+  id: z.string(), // Expect `id` as a string for front-end handling
   members: z.array(z.string()), // Expect `members` as an array of strings
 });
 
@@ -87,8 +86,8 @@ export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
             const convertedWorkspacesResponse = workspacesResponse.ok
               ? workspacesResponse.ok.map((workspace: any) => ({
                   ...workspace,
-                  id: workspace.id.toString(),
-                  members: workspace.members.map((member: any) => JSON.stringify(member)), // Convert each `member` to a JSON string
+                  id: workspace.id.toString(), // Convert `principal` to string
+                  members: workspace.members.map((member: any) => member.toString()), // Convert each `member` to string
                 }))
               : [];
 
@@ -122,3 +121,8 @@ export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
 
   return <AuthContext.Provider value={{ profile, workspaces }}>{children}</AuthContext.Provider>;
 };
+
+export function useWorkspace() {
+  const { workspaces } = useContext(AuthContext);
+  return workspaces;
+}

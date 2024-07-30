@@ -1,39 +1,39 @@
 import React, { ChangeEvent, FC, useState } from "react";
 
+interface NameData {
+  id: string;
+  username: string;
+}
 interface ModalProps {
   showModal: boolean;
   setShowModal: (show: boolean) => void;
-  addItem: (item: string) => void;
+  addMemberWorkspace: (userId: string) => void;
+  getListFindName: (nameText: string) => void;
+  dataNameSearch: NameData[];
 }
 
-const Modal: FC<ModalProps> = ({ showModal, setShowModal, addItem }) => {
+const Modal: FC<ModalProps> = ({ showModal, setShowModal, addMemberWorkspace, getListFindName, dataNameSearch }) => {
   const [inputValue, setInputValue] = useState<string>("");
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const items = ["Juan Carlos", "María Lupe"]; // Lista de elementos para autocompletar
-
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+	const [inputValueId, setInputValueId] = useState<string>("");
+	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);
 
-    if (value.length > 0) {
-      const filteredSuggestions = items.filter((item) => item.toLowerCase().includes(value.toLowerCase()));
-      setSuggestions(filteredSuggestions);
-    } else {
-      setSuggestions([]);
-    }
+    if (value.length >= 3) {
+      getListFindName(value);
+    } 
   };
 
   const handleAdd = () => {
-    addItem(inputValue);
+    addMemberWorkspace(inputValueId);
     setInputValue("");
-    setSuggestions([]);
+		setInputValueId("");
     setShowModal(false);
   };
 
   if (!showModal) {
     return null;
   }
-
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
       <div className="bg-white p-6 rounded shadow-lg w-1/3">
@@ -45,17 +45,17 @@ const Modal: FC<ModalProps> = ({ showModal, setShowModal, addItem }) => {
           value={inputValue}
           onChange={handleChange}
         />
-        {suggestions.length > 0 && (
+        {dataNameSearch.length > 0 && (
           <ul className="border border-gray-300 rounded mb-2">
-            {suggestions.map((suggestion, index) => (
+            {dataNameSearch.map((suggestion, index) => (
               <li
                 key={index}
                 className="p-2 cursor-pointer hover:bg-gray-200"
                 onClick={() => {
-                  setInputValue(suggestion);
-                  setSuggestions([]);
+                  setInputValue(suggestion.username),
+									setInputValueId(suggestion.id)
                 }}>
-                {suggestion}
+                {suggestion.username}
               </li>
             ))}
           </ul>
