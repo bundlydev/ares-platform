@@ -63,7 +63,9 @@ module {
 		name : Text;
 	};
 
-	public type CreateWorkspaceResponseOk = ();
+	public type CreateWorkspaceResponseOk = {
+		workspaceId : Principal;
+	};
 
 	public type CreateWorkspaceResponseErr = {
 		#userNotAuthenticated;
