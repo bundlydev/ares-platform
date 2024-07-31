@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface Workspace {
   id: string;
@@ -13,8 +13,18 @@ interface SelectWorkspaceProps {
 
 const SelectWorkspace: React.FC<SelectWorkspaceProps> = ({ myworkspaces, getList }) => {
   const router = useRouter();
-  const [selectedOption, setSelectedOption] = useState<string | null>("ESPACIO 1");
+  const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [isInitialized, setIsInitialized] = useState(false); // New state for initialization check
+
+  useEffect(() => {
+    if (!isInitialized && myworkspaces.length > 0) {
+      const firstWorkspace = myworkspaces[0];
+      setSelectedOption(firstWorkspace.name);
+      getList(firstWorkspace.id);
+      setIsInitialized(true); // Mark as initialized
+    }
+  }, [myworkspaces, getList, isInitialized]); // Include isInitialized in dependencies
 
   const handleOptionClick = (option: Workspace) => {
     setSelectedOption(option.name);

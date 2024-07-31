@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
@@ -7,22 +7,26 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 import { CandidActors } from "@app/canisters";
 import { useAuthGuard } from "@app/hooks/useGuard";
 
-import Modal from "../components/Modal";
-import SelectWorkspace from "../components/SelectWorkspace";
+import { AuthContext } from "../context/auth-context";
+
+// Import your AuthContext
 
 type FormValues = {
   name: string;
 };
 
 export default function Workspace() {
-  const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
-  useAuthGuard({ isPrivate: true });
+  const { isAuthenticated, currentIdentity } = useAuth();
+	useAuthGuard({ isPrivate: true });
+  const router = useRouter();
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
     currentIdentity
   ) as CandidActors["backofficeGateway"];
+  const { setWorkspaces } = useContext(AuthContext);
   const [image, setImage] = useState<File | null>(null);
-  const router = useRouter();
+  const [submissionSuccess, setSubmissionSuccess] = useState(false); // State for submission success
+  const [loading, setLoading] = useState(false); // State for loading
 
   const {
     register,
@@ -48,20 +52,33 @@ export default function Workspace() {
   };
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
+    setLoading(true); // Start loading
     try {
       const response = await backofficeGateway.createWorkspace(data);
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
-
-        throw new Error("Error creating profile");
+        throw new Error("Error creating workspace");
       }
       if ("ok" in response) {
-        router.push("/home");
+        setWorkspaces({
+          id: response.ok.workspaceId.toString(),
+          members: data.name,
+        });
+        setSubmissionSuccess(true); // Update state to indicate successful submission
       }
     } catch (error) {
       console.error({ error });
+    } finally {
+      setLoading(false); // End loading
     }
   };
+
+  useEffect(() => {
+		debugger
+    if (submissionSuccess) {
+      window.location.reload(); // Reload the page on successful submission
+    }
+  }, [submissionSuccess]);
 
   return (
     <div className="flex justify-center">
@@ -77,8 +94,32 @@ export default function Workspace() {
             />
             <span className="text-red-500 h-2">{errors.name ? "Name is required" : ""}</span>
           </div>
-          <button type="submit" className="bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4">
-            Create Workspace
+          <button
+            type="submit"
+            className={`bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4 flex items-center justify-center ${loading ? "cursor-wait" : ""}`}
+            disabled={loading} // Disable button when loading
+          >
+            {loading ? (
+              <svg
+                className="animate-spin h-5 w-5 mr-3"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V4a10 10 0 00-10 10h2zm0 0a8 8 0 008 8v-2a10 10 0 01-10-10h2zm0 0a8 8 0 018 8h-2a10 10 0 00-10-10v2z"></path>
+              </svg>
+            ) : (
+              "Create Workspace"
+            )}
           </button>
         </form>
       </div>

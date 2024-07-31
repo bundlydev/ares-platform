@@ -1,18 +1,13 @@
 import { Principal } from "@dfinity/principal";
 import React, { useEffect, useRef, useState } from "react";
-
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
-
 import { CandidActors } from "@app/canisters/index";
 import { useAuthGuard } from "@app/hooks/useGuard";
-
 import Modal from "../components/Modal";
 import ModalDelete from "../components/ModalDelete";
 import SelectWorkspace from "../components/SelectWorkspace";
 import { useProfile } from "../hooks/useProfile";
 import { useWorkspace } from "../hooks/useWorkspace";
-
-// Importar Principal para manejar la conversión
 
 export default function Home() {
   type Workspace = {
@@ -46,10 +41,14 @@ export default function Home() {
   const profiles = useProfile();
   const [items, setItems] = useState<string[]>(["Juan Pérez", "María López"]);
   const hasFetchedWorkspaces = useRef(false);
-  useAuthGuard({ isPrivate: true });
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const identity = useIdentities();
+  const loading = useAuthGuard({ isPrivate: true });
+
   const getFirstLetter = (text: string): string => {
     return text.charAt(0).toUpperCase();
   };
+
   async function getWorkspaceList() {
     if (!workspaces || workspaces.length === 0) {
       return;
@@ -91,6 +90,7 @@ export default function Home() {
       hasFetchedWorkspaces.current = true; // Marcar como ejecutada
     }
   }, [currentIdentity, workspaces]);
+
   const getList = async (idWorkspace: string) => {
     setIdDataworkspaces(idWorkspace);
     try {
@@ -119,6 +119,7 @@ export default function Home() {
       console.error("error response", { error });
     }
   };
+
   const getListFindName = async (nameText: string) => {
     try {
       const response = await backofficeGateway.findProfilesByUsernameChunk(nameText);
@@ -141,6 +142,7 @@ export default function Home() {
       console.error("error response", { error });
     }
   };
+
   const deleteIdmember = async (idMember: string) => {
     try {
       const workspaceId = Principal.fromText(idDataworkspaces);
@@ -157,6 +159,7 @@ export default function Home() {
       console.error("error response", { error });
     }
   };
+
   const addMemberWorkspace = async (userId: string) => {
     try {
       const workspaceId = Principal.fromText(idDataworkspaces);
@@ -177,6 +180,38 @@ export default function Home() {
       console.error("error response", { error });
     }
   };
+
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+  };
+
+  // Cierra el menú si se hace clic fuera de él
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef]);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col">
       <div className="flex h-16 bg-cyan-950 items-center justify-between px-2">
@@ -189,8 +224,26 @@ export default function Home() {
           {hasFetchedWorkspaces.current && <SelectWorkspace myworkspaces={myworkspaces} getList={getList} />}
         </div>
         {profiles && (
-          <div className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center">
-            <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
+          <div className="relative inline-block text-left" ref={menuRef}>
+            <div
+              className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center cursor-pointer"
+              onClick={handleToggle}
+            >
+              <span className="text-white">
+                {getFirstLetter(profiles?.firstName)}
+              </span>
+            </div>
+            {isOpen && identity.length > 0 && (
+              <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                  <LogoutButton 
+                    identity={identity[0].identity} 
+                    style={{color: 'red', fontSize: '18px',fontWeight: 500}}
+                    role="menuitem"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

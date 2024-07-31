@@ -1,14 +1,15 @@
 import { useRouter } from "next/router";
-import React, { useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
-import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
+import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters";
 import { useAuthGuard } from "@app/hooks/useGuard";
 
-import Modal from "../components/Modal";
-import SelectWorkspace from "../components/SelectWorkspace";
+import { AuthContext } from "../context/auth-context";
+
+// Import your AuthContext
 
 type ProfileInputs = {
   username: string;
@@ -19,34 +20,51 @@ type ProfileInputs = {
 
 export default function Profile() {
   useAuthGuard({ isPrivate: true });
-  const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
+
+  const { isAuthenticated, currentIdentity } = useAuth();
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<ProfileInputs>();
-  const [image, setImage] = useState<File | null>(null);
   const router = useRouter();
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
     currentIdentity
   ) as CandidActors["backofficeGateway"];
 
+  const { setProfile, profile } = useContext(AuthContext); // Access profile and setProfile function
+  const [submissionSuccess, setSubmissionSuccess] = useState(false); // State for submission success
+
+  const [loading, setLoading] = useState(false); // State to manage loading
+
   const onSubmit: SubmitHandler<ProfileInputs> = async (data) => {
+    setLoading(true); // Set loading to true when submission starts
     try {
       const response = await backofficeGateway.createProfile(data);
-      if ("err" in response) {
-        if ("userNotAuthenticated" in response.err) alert("User not authenticated");
-        if ("profileAlreadyExists" in response.err) alert("Profile already exists");
-        throw new Error("Error creating profile");
-      }
+
       if ("ok" in response) {
-        router.push("/workspace");
+        // Update profile in the context
+        setProfile({
+          username: data.username,
+          email: data.email,
+          firstName: data.firstName,
+          lastName: data.lastName,
+        });
+        setSubmissionSuccess(true);
       }
     } catch (error) {
-      console.error({ error });
+      console.error("Error creating profile:", error);
+    } finally {
+      setLoading(false); // Set loading to false when submission ends
     }
   };
+  useEffect(() => {
+    debugger;
+    if (submissionSuccess) {
+      window.location.reload(); // Reload the page on successful submission
+    }
+  }, [submissionSuccess]);
 
   return (
     <div className="flex justify-center">
@@ -56,7 +74,7 @@ export default function Profile() {
           <div className="flex flex-col">
             <input
               type="text"
-              placeholder="Type username"
+              placeholder="Username"
               className={`h-10 w-11/12 rounded-lg border ${errors.username ? "border-red-500" : "border-gray-300"} px-2`}
               {...register("username", { required: true })}
             />
@@ -65,7 +83,7 @@ export default function Profile() {
           <div className="flex flex-col">
             <input
               type="text"
-              placeholder="Type firstname"
+              placeholder="Firstname"
               className={`h-10 w-11/12 rounded-lg border ${errors.firstName ? "border-red-500" : "border-gray-300"} px-2`}
               {...register("firstName", { required: true })}
             />
@@ -74,7 +92,7 @@ export default function Profile() {
           <div className="flex flex-col">
             <input
               type="text"
-              placeholder="Type lastname"
+              placeholder="Lastname"
               className={`h-10 w-11/12 rounded-lg border ${errors.lastName ? "border-red-500" : "border-gray-300"} px-2`}
               {...register("lastName", { required: true })}
             />
@@ -83,14 +101,38 @@ export default function Profile() {
           <div className="flex flex-col">
             <input
               type="text"
-              placeholder="Type email"
+              placeholder="Email"
               className={`h-10 w-11/12 rounded-lg border ${errors.email ? "border-red-500" : "border-gray-300"} px-2`}
               {...register("email", { required: true })}
             />
             <span className="text-red-500 h-2">{errors.email ? "Email is required" : ""}</span>
           </div>
-          <button type="submit" className="bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4">
-            Create Profile
+          <button
+            type="submit"
+            className={`bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4 flex items-center justify-center ${loading ? "cursor-wait" : ""}`}
+            disabled={loading} // Disable button when loading
+          >
+            {loading ? (
+              <svg
+                className="animate-spin h-5 w-5 mr-3"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V4a10 10 0 00-10 10h2zm0 0a8 8 0 008 8v-2a10 10 0 01-10-10h2zm0 0a8 8 0 018 8h-2a10 10 0 00-10-10v2z"></path>
+              </svg>
+            ) : (
+              "Create Profile"
+            )}
           </button>
         </form>
       </div>

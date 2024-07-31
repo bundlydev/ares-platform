@@ -1,11 +1,10 @@
-import React, { ReactNode, createContext, useContext, useEffect, useState } from "react";
+import React, { ReactNode, createContext, useEffect, useState } from "react";
 import z from "zod";
-
 import { useAuth, useCandidActor } from "@bundly/ares-react";
-
 import { CandidActors } from "@app/canisters/index";
 
-// Define your types
+// Define your types and schemas...
+
 export type AuthUserProfile = {
   username: string;
   email: string;
@@ -19,50 +18,43 @@ export type AuthUserWorkspace = {
 };
 
 // Define Zod schemas
-const ZUserProfileSchema = z.object({
-  email: z.string(),
+const ZProfileSchema = z.object({
   username: z.string(),
+  email: z.string().email(),
   firstName: z.string(),
   lastName: z.string(),
 });
 
-const ZUserWorksSchema = z.object({
-  id: z.string(), // Expect `id` as a string for front-end handling
-  members: z.array(z.string()), // Expect `members` as an array of strings
+const ZResponseSchema = z.object({
+  ok: ZProfileSchema.optional(),
+  err: z.union([z.string(), z.record(z.unknown())]).optional(),
 });
 
-// Define response schemas
-const ZResponseSchema = z
-  .object({
-    ok: ZUserProfileSchema.optional(),
-    err: z.object({}).optional(),
-  })
-  .refine((data) => (data.ok !== undefined) !== (data.err !== undefined), {
-    message: 'Either "ok" or "err" should be present, but not both.',
-  });
+const ZWorkspaceSchema = z.object({
+  id: z.string(),
+  members: z.array(z.string()),
+});
 
-const ZResponseWorksSchema = z
-  .object({
-    ok: z.array(ZUserWorksSchema).optional(),
-    err: z.object({}).optional(),
-  })
-  .refine((data) => (data.ok !== undefined) !== (data.err !== undefined), {
-    message: 'Either "ok" or "err" should be present, but not both.',
-  });
+const ZResponseWorksSchema = z.object({
+  ok: z.array(ZWorkspaceSchema).optional(),
+  err: z.union([z.string(), z.record(z.unknown())]).optional(),
+});
 
 export type AuthContextType = {
   profile?: AuthUserProfile;
   workspaces?: AuthUserWorkspace[];
+  setProfile: (profile: AuthUserProfile) => void;
+	setWorkspaces: (workspaces: AuthUserWorkspace) => void;
 };
 
-export type AuthContextProviderType = {
-  children: ReactNode;
-};
+export const AuthContext = createContext<AuthContextType>({
+  profile: undefined,
+  workspaces: undefined,
+  setProfile: () => {}, // Default function does nothing
+	setWorkspaces: () => {}, // Default function does nothing
+});
 
-// Create context
-export const AuthContext = createContext<AuthContextType>({});
-
-export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
+export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, currentIdentity } = useAuth();
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
@@ -81,9 +73,23 @@ export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
             backofficeGateway.getMyWorkspaces(),
           ]);
 
+          // Ensure responses are objects
+          if (profileResponse == null || typeof profileResponse !== 'object') {
+            throw new Error("Invalid profile response");
+          }
+
+          if (workspacesResponse == null || typeof workspacesResponse !== 'object') {
+            throw new Error("Invalid workspaces response");
+          }
+
           // Parse responses with Zod
           const profileParse = ZResponseSchema.safeParse(profileResponse);
-          if ("ok" in workspacesResponse) {
+          if (!profileParse.success) {
+            throw new Error(`Invalid profile response schema: ${profileParse.error}`);
+          }
+
+          // Check if workspacesResponse has 'ok' property
+          if ('ok' in workspacesResponse) {
             const convertedWorkspacesResponse = workspacesResponse.ok
               ? workspacesResponse.ok.map((workspace: any) => ({
                   ...workspace,
@@ -96,16 +102,16 @@ export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
               ...workspacesResponse,
               ok: convertedWorkspacesResponse,
             });
+
             if (!workspacesParse.success) {
               throw new Error(`Invalid workspaces response schema: ${workspacesParse.error}`);
             }
-            setWorkspaces(workspacesParse.data.ok || undefined);
-          }
-          if (!profileParse.success) {
-            throw new Error(`Invalid profile response schema: ${profileParse.error}`);
-          }
 
-          setProfile(profileParse.data.ok || undefined);
+            setProfile(profileParse.data.ok || undefined);
+            setWorkspaces(workspacesParse.data.ok || undefined);
+          } else {
+            throw new Error("Workspaces response does not contain 'ok' property");
+          }
         } catch (error) {
           console.error("Error loading profile or workspaces:", error);
           setProfile(undefined);
@@ -120,10 +126,16 @@ export const AuthContextProvider = ({ children }: AuthContextProviderType) => {
     loadProfileAndWorkspaces();
   }, [isAuthenticated, currentIdentity]);
 
-  return <AuthContext.Provider value={{ profile, workspaces }}>{children}</AuthContext.Provider>;
-};
+  const updateProfile = (newProfile: AuthUserProfile) => {
+    setProfile(newProfile);
+  };
+	const updateWorkspaces= (newWorkspaces: AuthUserWorkspace) => {
+    setWorkspaces(newWorkspaces);
+  };
 
-export function useWorkspace() {
-  const { workspaces } = useContext(AuthContext);
-  return workspaces;
-}
+  return (
+    <AuthContext.Provider value={{ profile, workspaces, setProfile: updateProfile,setWorkspaces: updateWorkspaces }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};

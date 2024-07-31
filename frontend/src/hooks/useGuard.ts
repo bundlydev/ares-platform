@@ -1,9 +1,8 @@
 import { useRouter } from "next/router";
-
 import { useAuth } from "@bundly/ares-react";
-
 import { useProfile } from "./useProfile";
 import { useWorkspace } from "./useWorkspace";
+import { useEffect, useState } from "react";
 
 export type AuthGuardOptions = {
   isPrivate: boolean;
@@ -14,41 +13,43 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
   const { isAuthenticated } = useAuth();
   const profile = useProfile();
   const workspaces = useWorkspace();
-  const redirect = (path: string) => {
-    if (router.pathname !== path) {
-      router.push(path);
-    }
-  };
+  const [loading, setLoading] = useState(true);
 
-  if (isPrivate) {
-    if (!isAuthenticated) {
-      redirect("/");
-      return;
-    }
+  useEffect(() => {
+    const redirect = (path: string) => {
+      if (router.pathname !== path) {
+        router.push(path);
+      }
+    };
 
-    if (profile) {
-      if (router.pathname === "/addworkspace") {
+    if (isPrivate) {
+      if (!isAuthenticated) {
+        redirect("/");
+        setLoading(false);
         return;
       }
 
-      if (workspaces !== null && workspaces !== undefined && workspaces.length > 0) {
-        redirect("/home");
+      if (profile) {
+        if (router.pathname === "/addworkspace") {
+          setLoading(false);
+          return;
+        }
+
+        if (workspaces && workspaces.length > 0) {
+          redirect("/home");
+        } else {
+          redirect("/workspace");
+        }
       } else {
-        redirect("/workspace");
+        redirect("/profile");
       }
     } else {
-      redirect("/profile");
-    }
-  } else {
-    if (isAuthenticated) {
-      if (router.pathname !== "/addworkspace" && router.pathname !== "/") {
-        // No redirigir si la URL es /addworkspace
+      if (isAuthenticated && router.pathname !== "/addworkspace") {
         redirect("/home");
       }
-      if (router.pathname === "/") {
-        // No redirigir si la URL es /addworkspace
-        redirect("/");
-      }
     }
-  }
+    setLoading(false);
+  }, [isAuthenticated, profile, workspaces, router, isPrivate]);
+
+  return loading;
 }
