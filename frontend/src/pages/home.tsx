@@ -1,11 +1,8 @@
 import { Principal } from "@dfinity/principal";
 import React, { useEffect, useRef, useState } from "react";
-
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
-
 import { CandidActors } from "@app/canisters/index";
 import { useAuthGuard } from "@app/hooks/useGuard";
-
 import Modal from "../components/Modal";
 import ModalDelete from "../components/ModalDelete";
 import SelectWorkspace from "../components/SelectWorkspace";
@@ -27,12 +24,11 @@ export default function Home() {
     username: string;
   };
 
-  const { isAuthenticated, currentIdentity } = useAuth();
+  const { currentIdentity } = useAuth();
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
     currentIdentity
   ) as CandidActors["backofficeGateway"];
-  const Name = "Christian Cadena";
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
   const [deleteItem, setDeleteItem] = useState<string>("");
@@ -42,11 +38,15 @@ export default function Home() {
   const [dataworkspaces, setDataworkspaces] = useState<WorkspaceData[]>([]);
   const workspaces = useWorkspace();
   const profiles = useProfile();
-  const [items, setItems] = useState<string[]>(["Juan Pérez", "María López"]);
-  const hasFetchedWorkspaces = useRef(false);
+  const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false); // Definir estado para controlar el menú de logout
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const identity = useIdentities();
   const loading = useAuthGuard({ isPrivate: true });
+
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const hasFetchedWorkspaces = useRef(false); // Definir useRef para controlar la carga inicial
 
   const getFirstLetter = (text: string): string => {
     return text.charAt(0).toUpperCase();
@@ -67,7 +67,7 @@ export default function Home() {
           } else {
             console.log("Error fetching profile");
           }
-          return null; // Retornar null en caso de error
+          return null;
         }
 
         const profile = "ok" in response ? response.ok : undefined;
@@ -97,16 +97,15 @@ export default function Home() {
   const getList = async (idWorkspace: string) => {
     setIdDataworkspaces(idWorkspace);
     try {
-      const workspaceId = Principal.fromText(idWorkspace); // Convertir `id` a `Principal`
+      const workspaceId = Principal.fromText(idWorkspace);
       const response = await backofficeGateway.getWorkspaceMembers(workspaceId);
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
-        return; // No continuar si hay error
+        return;
       }
       const list = "ok" in response ? response.ok : undefined;
       if (list) {
-        // Mapea `list` a un nuevo formato
         const newWorkspaceList = list.map(
           (member: { id: { toString: () => any }; name: any; role: { name: any } }) => ({
             id: member.id.toString(),
@@ -129,11 +128,10 @@ export default function Home() {
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
-        return; // No continuar si hay error
+        return;
       }
       const listName = "ok" in response ? response.ok : undefined;
       if (listName) {
-        // Mapea `list` a un nuevo formato
         const searchNameList = listName.map((member: { id: { toString: () => any }; username: any }) => ({
           id: member.id.toString(),
           username: member.username,
@@ -154,7 +152,7 @@ export default function Home() {
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
-        return; // No continuar si hay error
+        return;
       }
       const member = "ok" in response ? response.ok : undefined;
       if (member) getList(idDataworkspaces);
@@ -171,7 +169,7 @@ export default function Home() {
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
-        return; // No continuar si hay error
+        return;
       }
       if ("ok" in response) {
         const member = response.ok;
@@ -184,18 +182,18 @@ export default function Home() {
     }
   };
 
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
   const handleToggle = () => {
     setIsOpen(!isOpen);
   };
 
-  // Cierra el menú si se hace clic fuera de él
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (
+        menuRef.current && !menuRef.current.contains(event.target as Node) &&
+        workspaceRef.current && !workspaceRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
+        setWorkspaceIsOpen(false);
       }
     };
 
@@ -203,7 +201,13 @@ export default function Home() {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [menuRef]);
+  }, [menuRef, workspaceRef]);
+
+  const handleCreateWorkspace = (newWorkspace: Workspace) => {
+    setMyworkspace((prevWorkspaces) => [...prevWorkspaces, newWorkspace]);
+    setIdDataworkspaces(newWorkspace.id);
+    setWorkspaceIsOpen(false);
+  };
 
   if (loading) {
     return (
@@ -218,13 +222,20 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       <div className="flex h-16 bg-cyan-950 items-center justify-between px-2">
-        <div className="flex w-1/4 justify-around">
+        <div ref={workspaceRef} className="flex w-1/4 justify-around">
           {profiles && (
             <div className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center">
               <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
             </div>
           )}
-          {hasFetchedWorkspaces.current && <SelectWorkspace myworkspaces={myworkspaces} getList={getList} />}
+          {hasFetchedWorkspaces.current && (
+            <SelectWorkspace
+              myworkspaces={myworkspaces}
+              getList={getList}
+              isOpen={workspaceIsOpen}
+              setIsOpen={setWorkspaceIsOpen}
+            />
+          )}
         </div>
         {profiles && (
           <div className="relative inline-block text-left" ref={menuRef}>
@@ -235,11 +246,31 @@ export default function Home() {
             </div>
             {isOpen && identity.length > 0 && (
               <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                <div
+                  role="menu"
+                  aria-orientation="vertical"
+                  aria-labelledby="options-menu">
                   <LogoutButton
                     identity={identity[0].identity}
-                    style={{ color: "red", fontSize: "18px", fontWeight: 500 }}
-                  />
+                    style={{ display: "flex", width: '100%', justifyContent: "flex-start", color: "red", fontSize: "18px", alignItems: 'center', fontWeight: 500, padding: '10px 15px', gap: '15px' }}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="feather feather-log-out"
+                      style={{ width: "24px", height: "24px" }}
+                    >
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                      <polyline points="16 17 21 12 16 7"></polyline>
+                      <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Logout</span>
+                  </LogoutButton>
                 </div>
               </div>
             )}
