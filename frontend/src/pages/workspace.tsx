@@ -23,7 +23,6 @@ export default function Workspace() {
     "backofficeGateway",
     currentIdentity
   ) as CandidActors["backofficeGateway"];
-  const { setWorkspaces } = useContext(AuthContext);
   const [image, setImage] = useState<File | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState(false); // State for submission success
   const [loading, setLoading] = useState(false); // State for loading
@@ -60,11 +59,7 @@ export default function Workspace() {
         throw new Error("Error creating workspace");
       }
       if ("ok" in response) {
-        setWorkspaces({
-          id: response.ok.workspaceId.toString(),
-          members: data.name,
-        });
-        setSubmissionSuccess(true); // Update state to indicate successful submission
+        setSubmissionSuccess(true); 
       }
     } catch (error) {
       console.error({ error });

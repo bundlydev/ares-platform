@@ -1,6 +1,8 @@
 import React, { ReactNode, createContext, useEffect, useState } from "react";
 import z from "zod";
+
 import { useAuth, useCandidActor } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters/index";
 
 // Define your types and schemas...
@@ -13,7 +15,7 @@ export type AuthUserProfile = {
 };
 
 export type AuthUserWorkspace = {
-  id: string; // Convert principal to string for front-end handling
+  id: string;
   members: string[];
 };
 
@@ -44,14 +46,12 @@ export type AuthContextType = {
   profile?: AuthUserProfile;
   workspaces?: AuthUserWorkspace[];
   setProfile: (profile: AuthUserProfile) => void;
-	setWorkspaces: (workspaces: AuthUserWorkspace) => void;
 };
 
 export const AuthContext = createContext<AuthContextType>({
   profile: undefined,
   workspaces: undefined,
   setProfile: () => {}, // Default function does nothing
-	setWorkspaces: () => {}, // Default function does nothing
 });
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
@@ -74,11 +74,11 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           ]);
 
           // Ensure responses are objects
-          if (profileResponse == null || typeof profileResponse !== 'object') {
+          if (profileResponse == null || typeof profileResponse !== "object") {
             throw new Error("Invalid profile response");
           }
 
-          if (workspacesResponse == null || typeof workspacesResponse !== 'object') {
+          if (workspacesResponse == null || typeof workspacesResponse !== "object") {
             throw new Error("Invalid workspaces response");
           }
 
@@ -89,7 +89,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           }
 
           // Check if workspacesResponse has 'ok' property
-          if ('ok' in workspacesResponse) {
+          if ("ok" in workspacesResponse) {
             const convertedWorkspacesResponse = workspacesResponse.ok
               ? workspacesResponse.ok.map((workspace: any) => ({
                   ...workspace,
@@ -129,12 +129,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const updateProfile = (newProfile: AuthUserProfile) => {
     setProfile(newProfile);
   };
-	const updateWorkspaces= (newWorkspaces: AuthUserWorkspace) => {
-    setWorkspaces(newWorkspaces);
-  };
 
   return (
-    <AuthContext.Provider value={{ profile, workspaces, setProfile: updateProfile,setWorkspaces: updateWorkspaces }}>
+    <AuthContext.Provider value={{ profile, workspaces, setProfile: updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

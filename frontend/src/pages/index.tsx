@@ -56,9 +56,7 @@ export default function IcConnectPage() {
     }
   }
 
-  return (
-      <Header />
-  );
+  return <Header />;
 }
 
 type ProfileFormProps = {

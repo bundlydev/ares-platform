@@ -1,8 +1,10 @@
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+
 import { useAuth } from "@bundly/ares-react";
+
 import { useProfile } from "./useProfile";
 import { useWorkspace } from "./useWorkspace";
-import { useEffect, useState } from "react";
 
 export type AuthGuardOptions = {
   isPrivate: boolean;

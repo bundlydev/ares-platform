@@ -1,8 +1,11 @@
 import { Principal } from "@dfinity/principal";
 import React, { useEffect, useRef, useState } from "react";
+
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters/index";
 import { useAuthGuard } from "@app/hooks/useGuard";
+
 import Modal from "../components/Modal";
 import ModalDelete from "../components/ModalDelete";
 import SelectWorkspace from "../components/SelectWorkspace";
@@ -227,19 +230,15 @@ export default function Home() {
           <div className="relative inline-block text-left" ref={menuRef}>
             <div
               className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center cursor-pointer"
-              onClick={handleToggle}
-            >
-              <span className="text-white">
-                {getFirstLetter(profiles?.firstName)}
-              </span>
+              onClick={handleToggle}>
+              <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
             </div>
             {isOpen && identity.length > 0 && (
               <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                 <div className="py-1" role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                  <LogoutButton 
-                    identity={identity[0].identity} 
-                    style={{color: 'red', fontSize: '18px',fontWeight: 500}}
-                    role="menuitem"
+                  <LogoutButton
+                    identity={identity[0].identity}
+                    style={{ color: "red", fontSize: "18px", fontWeight: 500 }}
                   />
                 </div>
               </div>
