@@ -1,8 +1,11 @@
 import { Principal } from "@dfinity/principal";
 import React, { useEffect, useRef, useState } from "react";
+
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters/index";
 import { useAuthGuard } from "@app/hooks/useGuard";
+
 import Modal from "../components/Modal";
 import ModalDelete from "../components/ModalDelete";
 import SelectWorkspace from "../components/SelectWorkspace";
@@ -189,8 +192,10 @@ export default function Home() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        menuRef.current && !menuRef.current.contains(event.target as Node) &&
-        workspaceRef.current && !workspaceRef.current.contains(event.target as Node)
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node) &&
+        workspaceRef.current &&
+        !workspaceRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
         setWorkspaceIsOpen(false);
@@ -246,14 +251,20 @@ export default function Home() {
             </div>
             {isOpen && identity.length > 0 && (
               <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                <div
-                  role="menu"
-                  aria-orientation="vertical"
-                  aria-labelledby="options-menu">
+                <div role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
                   <LogoutButton
                     identity={identity[0].identity}
-                    style={{ display: "flex", width: '100%', justifyContent: "flex-start", color: "red", fontSize: "18px", alignItems: 'center', fontWeight: 500, padding: '10px 15px', gap: '15px' }}
-                  >
+                    style={{
+                      display: "flex",
+                      width: "100%",
+                      justifyContent: "flex-start",
+                      color: "red",
+                      fontSize: "18px",
+                      alignItems: "center",
+                      fontWeight: 500,
+                      padding: "10px 15px",
+                      gap: "15px",
+                    }}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       viewBox="0 0 24 24"
@@ -263,8 +274,7 @@ export default function Home() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       className="feather feather-log-out"
-                      style={{ width: "24px", height: "24px" }}
-                    >
+                      style={{ width: "24px", height: "24px" }}>
                       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                       <polyline points="16 17 21 12 16 7"></polyline>
                       <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -277,14 +287,19 @@ export default function Home() {
           </div>
         )}
       </div>
-      <div className="flex">
-        <div className="container mx-auto mt-10 flex flex-col justify-end items-end">
+      <div className="flex items-start">
+        <div
+          style={{ height: "calc(100vh - 64px)" }}
+          className="flex flex-col justify-start items-center bg-cyan-950 w-56 gap-10 pt-10">
+          <div className="cursor-pointer w-48 h-12 rounded-lg flex justify-center items-center bg-slate-100 text-cyan-950 text-2xl font-semibold">IAM</div>
+        </div>
+        <div style={{ height: "calc(100vh - 64px)" }} className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
           <button
             className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
             onClick={() => setShowModal(true)}>
             New
           </button>
-          <div className="bg-white shadow-md rounded-lg overflow-hidden w-10/12">
+          <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
             <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
               <div>Name</div>
               <div>Role</div>

@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface Workspace {
   id: string;
@@ -15,21 +15,22 @@ const SelectWorkspace: React.FC<SelectWorkspaceProps> = ({ myworkspaces, getList
   const router = useRouter();
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const [isInitialized, setIsInitialized] = useState(false); // New state for initialization check
+  const [isInitialized, setIsInitialized] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isInitialized && myworkspaces.length > 0) {
       const firstWorkspace = myworkspaces[0];
       setSelectedOption(firstWorkspace.name);
       getList(firstWorkspace.id);
-      setIsInitialized(true); // Mark as initialized
+      setIsInitialized(true);
     }
-  }, [myworkspaces, getList, isInitialized]); // Include isInitialized in dependencies
+  }, [myworkspaces, getList, isInitialized]);
 
   const handleOptionClick = (option: Workspace) => {
     setSelectedOption(option.name);
     setIsDropdownOpen(false);
-    getList(option.id); // Llama a la función getList con el id del workspace seleccionado
+    getList(option.id);
   };
 
   const handleAddClick = () => {
@@ -37,8 +38,21 @@ const SelectWorkspace: React.FC<SelectWorkspaceProps> = ({ myworkspaces, getList
     router.push("/addworkspace");
   };
 
+  const handleClickOutside = (event: MouseEvent) => {
+    if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      setIsDropdownOpen(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div className="relative inline-block text-left">
+    <div className="relative inline-block text-left" ref={dropdownRef}>
       <div>
         <button
           type="button"

@@ -22,6 +22,7 @@ export default function Workspace() {
     currentIdentity
   ) as CandidActors["backofficeGateway"];
   const [image, setImage] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false); // Estado para loading
   const router = useRouter();
 
   const {
@@ -48,6 +49,7 @@ export default function Workspace() {
   };
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
+    setLoading(true); // Start loading
     try {
       const response = await backofficeGateway.createWorkspace(data);
       if ("err" in response) {
@@ -56,10 +58,12 @@ export default function Workspace() {
         throw new Error("Error creating profile");
       }
       if ("ok" in response) {
-        router.push("/home");
+        window.location.href = "/home"; // Redirige y recarga completamente la página de inicio
       }
     } catch (error) {
       console.error({ error });
+    } finally {
+      setLoading(false); // End loading
     }
   };
 
@@ -77,8 +81,32 @@ export default function Workspace() {
             />
             <span className="text-red-500 h-2">{errors.name ? "Name is required" : ""}</span>
           </div>
-          <button type="submit" className="bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4">
-            Create Workspace
+          <button
+            type="submit"
+            className={`bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4 flex items-center justify-center ${loading ? "cursor-wait" : ""}`}
+            disabled={loading} // Disable button when loading
+          >
+            {loading ? (
+              <svg
+                className="animate-spin h-5 w-5 mr-3"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V4a10 10 0 00-10 10h2zm0 0a8 8 0 008 8v-2a10 10 0 01-10-10h2zm0 0a8 8 0 018 8h-2a10 10 0 00-10-10v2z"></path>
+              </svg>
+            ) : (
+              "Create Workspace"
+            )}
           </button>
         </form>
       </div>
