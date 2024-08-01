@@ -237,8 +237,6 @@ export default function Home() {
             <SelectWorkspace
               myworkspaces={myworkspaces}
               getList={getList}
-              isOpen={workspaceIsOpen}
-              setIsOpen={setWorkspaceIsOpen}
             />
           )}
         </div>
