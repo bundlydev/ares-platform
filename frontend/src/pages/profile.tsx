@@ -3,13 +3,10 @@ import React, { useContext, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
-
 import { CandidActors } from "@app/canisters";
 import { useAuthGuard } from "@app/hooks/useGuard";
 
 import { AuthContext } from "../context/auth-context";
-
-// Import your AuthContext
 
 type ProfileInputs = {
   username: string;
@@ -33,18 +30,16 @@ export default function Profile() {
     currentIdentity
   ) as CandidActors["backofficeGateway"];
 
-  const { setProfile, profile } = useContext(AuthContext); // Access profile and setProfile function
-  const [submissionSuccess, setSubmissionSuccess] = useState(false); // State for submission success
-
-  const [loading, setLoading] = useState(false); // State to manage loading
+  const { setProfile, profile } = useContext(AuthContext);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const onSubmit: SubmitHandler<ProfileInputs> = async (data) => {
-    setLoading(true); // Set loading to true when submission starts
+    setLoading(true);
     try {
       const response = await backofficeGateway.createProfile(data);
 
       if ("ok" in response) {
-        // Update profile in the context
         setProfile({
           username: data.username,
           email: data.email,
@@ -56,13 +51,13 @@ export default function Profile() {
     } catch (error) {
       console.error("Error creating profile:", error);
     } finally {
-      setLoading(false); // Set loading to false when submission ends
+      setLoading(false);
     }
   };
+
   useEffect(() => {
-    debugger;
     if (submissionSuccess) {
-      window.location.reload(); // Reload the page on successful submission
+      window.location.reload();
     }
   }, [submissionSuccess]);
 
@@ -76,41 +71,53 @@ export default function Profile() {
               type="text"
               placeholder="Username"
               className={`h-10 w-11/12 rounded-lg border ${errors.username ? "border-red-500" : "border-gray-300"} px-2`}
-              {...register("username", { required: true })}
+              {...register("username", { 
+                required: "Username is required", 
+                pattern: {
+                  value: /^[a-zA-Z0-9_]{5,15}$/,
+                  message: "Invalid username format. Use 5-15 characters including letters, numbers, and underscores."
+                }
+              })}
             />
-            <span className="text-red-500 h-2">{errors.username ? "Username is required" : ""}</span>
+            <span className="text-red-500 h-2">{errors.username ? errors.username.message : ""}</span>
           </div>
           <div className="flex flex-col">
             <input
               type="text"
               placeholder="Firstname"
               className={`h-10 w-11/12 rounded-lg border ${errors.firstName ? "border-red-500" : "border-gray-300"} px-2`}
-              {...register("firstName", { required: true })}
+              {...register("firstName", { required: "First name is required" })}
             />
-            <span className="text-red-500 h-2">{errors.firstName ? "First name is required" : ""}</span>
+            <span className="text-red-500 h-2">{errors.firstName ? errors.firstName.message : ""}</span>
           </div>
           <div className="flex flex-col">
             <input
               type="text"
               placeholder="Lastname"
               className={`h-10 w-11/12 rounded-lg border ${errors.lastName ? "border-red-500" : "border-gray-300"} px-2`}
-              {...register("lastName", { required: true })}
+              {...register("lastName", { required: "Last name is required" })}
             />
-            <span className="text-red-500 h-2">{errors.lastName ? "Last name is required" : ""}</span>
+            <span className="text-red-500 h-2">{errors.lastName ? errors.lastName.message : ""}</span>
           </div>
           <div className="flex flex-col">
             <input
               type="text"
               placeholder="Email"
               className={`h-10 w-11/12 rounded-lg border ${errors.email ? "border-red-500" : "border-gray-300"} px-2`}
-              {...register("email", { required: true })}
+              {...register("email", { 
+                required: "Email is required", 
+                pattern: {
+                  value: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
+                  message: "Invalid email format. Example: email@example.com"
+                }
+              })}
             />
-            <span className="text-red-500 h-2">{errors.email ? "Email is required" : ""}</span>
+            <span className="text-red-500 h-2">{errors.email ? errors.email.message : ""}</span>
           </div>
           <button
             type="submit"
             className={`bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4 flex items-center justify-center ${loading ? "cursor-wait" : ""}`}
-            disabled={loading} // Disable button when loading
+            disabled={loading}
           >
             {loading ? (
               <svg

@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 interface Workspace {
   id: string;
@@ -20,9 +20,9 @@ const SelectWorkspace: React.FC<SelectWorkspaceProps> = ({ myworkspaces, getList
 
   useEffect(() => {
     if (!isInitialized && myworkspaces.length > 0) {
-      const firstWorkspace = myworkspaces[0];
-      setSelectedOption(firstWorkspace.name);
-      getList(firstWorkspace.id);
+      const lastWorkspace = myworkspaces[myworkspaces.length - 1];
+      setSelectedOption(lastWorkspace.name);
+      getList(lastWorkspace.id);
       setIsInitialized(true);
     }
   }, [myworkspaces, getList, isInitialized]);
