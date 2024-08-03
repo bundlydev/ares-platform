@@ -53,6 +53,10 @@ actor {
 			if (profile.username == data.username) {
 				return #err(#usernameAlreadyExists);
 			};
+
+			if (profile.email == data.email) {
+				return #err(#emailAlreadyExists);
+			};
 		};
 
 		let newProfile : Models.Profile = {

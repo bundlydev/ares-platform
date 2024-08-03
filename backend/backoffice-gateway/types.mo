@@ -27,6 +27,7 @@ module {
 		#userNotAuthenticated;
 		#principalAlreadyRegistered;
 		#usernameAlreadyExists;
+		#emailAlreadyExists;
 		#requiredField : Text;
 	};
 
@@ -117,6 +118,7 @@ module {
 		#unauthorized;
 		#workspaceNotFound;
 		#memberAlreadyRegistered;
+		#additionalOwnersNotAllowed;
 	};
 
 	public type AddWorkspaceMemberResponse = Result.Result<AddWorkspaceMemberResponseOk, AddWorkspaceMemberResponseErr>;

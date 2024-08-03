@@ -90,6 +90,7 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 	type AddMemberResultErr = {
 		#unauthorized;
 		#memberAlreadyRegistered;
+		#additionalOwnersNotAllowed;
 	};
 
 	type AddMemberResult = Result.Result<AddMemberResultOk, AddMemberResultErr>;
@@ -99,7 +100,9 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 			return #err(#unauthorized);
 		};
 
-		// TODO: Prevent adding members with owner role
+		if (roleId == Role.DEFAULT_OWNER_ROLE_ID) {
+			return #err(#additionalOwnersNotAllowed);
+		};
 
 		let result = memberService.add(userId, roleId);
 
