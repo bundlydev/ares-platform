@@ -38,7 +38,7 @@ export default function Profile() {
     setLoading(true);
     try {
       const response = await backofficeGateway.createProfile(data);
-
+debugger
       if ("ok" in response) {
         setProfile({
           username: data.username,

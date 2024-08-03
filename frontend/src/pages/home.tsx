@@ -1,8 +1,6 @@
-import { Principal } from "@dfinity/principal";
 import React, { useEffect, useRef, useState } from "react";
-
+import { Principal } from "@dfinity/principal";
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
-
 import { CandidActors } from "@app/canisters/index";
 import { useAuthGuard } from "@app/hooks/useGuard";
 
@@ -11,6 +9,7 @@ import ModalDelete from "../components/ModalDelete";
 import SelectWorkspace from "../components/SelectWorkspace";
 import { useProfile } from "../hooks/useProfile";
 import { useWorkspace } from "../hooks/useWorkspace";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function Home() {
   type Workspace = {
@@ -39,17 +38,18 @@ export default function Home() {
   const [idDataworkspaces, setIdDataworkspaces] = useState<string>("");
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [dataworkspaces, setDataworkspaces] = useState<WorkspaceData[]>([]);
+  const [loading, setLoading] = useState<boolean>(false); // Estado de carga
   const workspaces = useWorkspace();
   const profiles = useProfile();
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
-  const [isOpen, setIsOpen] = useState<boolean>(false); // Definir estado para controlar el menú de logout
+  const [isOpen, setIsOpen] = useState<boolean>(false); 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const identity = useIdentities();
-  const loading = useAuthGuard({ isPrivate: true });
+  const loadingAuth = useAuthGuard({ isPrivate: true });
 
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const hasFetchedWorkspaces = useRef(false); // Definir useRef para controlar la carga inicial
+  const hasFetchedWorkspaces = useRef(false); 
 
   const getFirstLetter = (text: string): string => {
     return text.charAt(0).toUpperCase();
@@ -93,7 +93,7 @@ export default function Home() {
   useEffect(() => {
     if (!hasFetchedWorkspaces.current) {
       getWorkspaceList();
-      hasFetchedWorkspaces.current = true; // Marcar como ejecutada
+      hasFetchedWorkspaces.current = true;
     }
   }, [currentIdentity, workspaces]);
 
@@ -148,6 +148,7 @@ export default function Home() {
   };
 
   const deleteIdmember = async (idMember: string) => {
+    setLoading(true);
     try {
       const workspaceId = Principal.fromText(idDataworkspaces);
       const memberId = Principal.fromText(idMember);
@@ -161,14 +162,20 @@ export default function Home() {
       if (member) getList(idDataworkspaces);
     } catch (error) {
       console.error("error response", { error });
+    } finally {
+      setLoading(false);
+      window.location.reload(); 
     }
   };
 
   const addMemberWorkspace = async (userId: string) => {
+    setLoading(true);
     try {
       const workspaceId = Principal.fromText(idDataworkspaces);
       const memberId = Principal.fromText(userId);
       const response = await backofficeGateway.addWorkspaceMember(workspaceId, memberId, BigInt(2));
+
+			debugger
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
@@ -178,10 +185,15 @@ export default function Home() {
         const member = response.ok;
         if (member) {
           getList(idDataworkspaces);
+          
         }
       }
     } catch (error) {
       console.error("error response", { error });
+    } finally {
+      setLoading(false);
+			setShowModal(false); 
+      window.location.reload(); 
     }
   };
 
@@ -214,7 +226,7 @@ export default function Home() {
     setWorkspaceIsOpen(false);
   };
 
-  if (loading) {
+  if (loadingAuth) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full" role="status">
@@ -309,13 +321,17 @@ export default function Home() {
                   <div>{item.name}</div>
                   <div>{item.role}</div>
                   <div>
-                    <button
-                      className="bg-red-500 text-white py-1 px-3 rounded-lg"
-                      onClick={() => {
-                        deleteIdmember(item.id);
-                      }}>
-                      Eliminar
-                    </button>
+                    {item.role !== 'Owner' &&
+                      <button
+                        className="bg-red-500 text-white py-1 px-3 rounded-lg"
+                        onClick={() => {
+                          deleteIdmember(item.id);
+                        }}
+                        disabled={loading}
+                      >
+                        {loading ? <LoadingSpinner /> : "Delete"}
+                      </button>
+                    }
                   </div>
                 </div>
               ))}
@@ -329,6 +345,7 @@ export default function Home() {
         addMemberWorkspace={addMemberWorkspace}
         getListFindName={getListFindName}
         dataNameSearch={dataNameSearch}
+        loading={loading} 
       />
       <ModalDelete
         showModalDelete={showModalDelete}

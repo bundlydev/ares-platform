@@ -69,7 +69,6 @@ export default function Workspace() {
   };
 
   useEffect(() => {
-		debugger
     if (submissionSuccess) {
       window.location.reload(); // Reload the page on successful submission
     }
