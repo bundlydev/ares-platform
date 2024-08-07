@@ -16,5 +16,6 @@ module {
 		ref : WorkspaceClass.WorkspaceClass;
 		members : [Principal];
 	};
+
 	public type Workspaces = Map.Map<Principal, Workspace>;
 };
