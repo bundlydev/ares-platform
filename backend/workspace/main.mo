@@ -1,8 +1,14 @@
+// Base Modules
 import Result "mo:base/Result";
 import Nat "mo:base/Nat";
 import Map "mo:map/Map";
 import Principal "mo:base/Principal";
+import Cycles "mo:base/ExperimentalCycles";
 
+// Mops Modules
+import IC "mo:ic";
+
+// Custom Modules
 import Member "./member";
 import Role "./role";
 
@@ -14,6 +20,7 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 	private stable let _members = Map.new<Principal, Member.Member>();
 
 	// Services
+	private let ic = actor ("aaaaa-aa") : IC.Service;
 	private let roleService = Role.RoleService(_roles);
 	private let memberService = Member.MemberService(_members);
 
@@ -27,6 +34,45 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 		if (Principal.equal(caller, _creator)) return true;
 
 		return false;
+	};
+
+	type DeleteResponseOk = {
+		refundedCycles : Nat;
+	};
+
+	type DeleteResponseErr = {
+		#unauthorized;
+	};
+
+	type DeleteResponse = Result.Result<DeleteResponseOk, DeleteResponseErr>;
+
+	public shared ({ caller }) func onDelete(requester : Principal) : async DeleteResponse {
+		if (not hasAccess(caller)) {
+			return #err(#unauthorized);
+		};
+
+		switch (memberService.isOwner(requester)) {
+			case (false) #err(#unauthorized);
+			case (true) {
+				let balance : Nat = Cycles.balance();
+
+				// TODO: Validate if 100_000_000_000 is the correct amount and if it should be a constant
+				let cycles : Nat = balance - 100_000_000_000;
+
+				if (cycles > 0) {
+					Cycles.add(cycles);
+					await ic.deposit_cycles({ canister_id = _creator });
+
+					return #ok({
+						refundedCycles = cycles;
+					});
+				};
+
+				#ok({
+					refundedCycles = 0;
+				});
+			};
+		};
 	};
 
 	type GetInfoResponseOk = {
@@ -90,6 +136,7 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 	type AddMemberResultErr = {
 		#unauthorized;
 		#memberAlreadyRegistered;
+		#additionalOwnersNotAllowed;
 	};
 
 	type AddMemberResult = Result.Result<AddMemberResultOk, AddMemberResultErr>;
@@ -99,7 +146,9 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 			return #err(#unauthorized);
 		};
 
-		// TODO: Prevent adding members with owner role
+		if (roleId == Role.DEFAULT_OWNER_ROLE_ID) {
+			return #err(#additionalOwnersNotAllowed);
+		};
 
 		let result = memberService.add(userId, roleId);
 

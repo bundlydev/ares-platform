@@ -1,6 +1,7 @@
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Iter "mo:base/Iter";
+
 import Map "mo:map/Map";
 import { phash } "mo:map/Map";
 
@@ -68,6 +69,15 @@ module {
 						#ok();
 					};
 				};
+			};
+		};
+
+		public func isOwner(memberId : Principal) : Bool {
+			let existingMember = Map.get<Principal, Member>(_members, phash, memberId);
+
+			switch existingMember {
+				case (null) false;
+				case (?member) member.roleId == Role.DEFAULT_OWNER_ROLE_ID;
 			};
 		};
 	};

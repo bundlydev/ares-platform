@@ -1,24 +1,37 @@
+// Base Modules
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Cycles "mo:base/ExperimentalCycles";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
+import Time "mo:base/Time";
+import List "mo:base/List";
 
+// Mops Modules
 import Map "mo:map/Map";
 import { phash } "mo:map/Map";
+import IC "mo:ic";
+
+// Custom Modules
 import TextValidator "mo:validators/Text";
 
 import Member "../workspace/member";
 import Role "../workspace/role";
-
 import WorkspaceClass "../workspace/main";
+
 import Types "./types";
 import Models "./models";
+import CyclesLedger "./modules/cycles-ledger";
 
 actor {
 	// Database
 	stable let _profiles = Map.new<Principal, Models.Profile>();
 	stable let _workspaces = Map.new<Principal, Models.Workspace>();
+	stable var _cyclesLedgerStorage: CyclesLedger.CyclesLederModel = List.nil();
+
+	// Services
+	private let ic = actor("aaaaa-aa") : IC.Service;
+	private let cyclesLedgerService = CyclesLedger.CyclesLedgerService(_cyclesLedgerStorage);
 
 	public shared query ({ caller }) func getProfile() : async Types.GetProfileResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
@@ -52,6 +65,10 @@ actor {
 		for (profile in Map.vals(_profiles)) {
 			if (profile.username == data.username) {
 				return #err(#usernameAlreadyExists);
+			};
+
+			if (profile.email == data.email) {
+				return #err(#emailAlreadyExists);
 			};
 		};
 
@@ -136,6 +153,7 @@ actor {
 			return #err(#requiredField("name"));
 		};
 
+		// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
 		Cycles.add(113_846_199_230);
 
 		let workspace = await WorkspaceClass.WorkspaceClass(data.name, caller);
@@ -176,6 +194,40 @@ actor {
 		};
 	};
 
+	public shared ({caller}) func deleteWorkspace(workspaceId : Principal) : async Types.DeleteWorkspaceResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+
+		let maybeWorkspace = Map.get(_workspaces, phash, workspaceId);
+
+		switch maybeWorkspace {
+			case null #err(#workspaceNotFound);
+			case (?workspace) {
+				let onDeleteResult = await workspace.ref.onDelete(caller);
+
+				switch onDeleteResult {
+					case (#ok(result)) {
+						await ic.stop_canister({canister_id = Principal.fromActor(workspace.ref)});
+						await ic.delete_canister({canister_id = Principal.fromActor(workspace.ref)});
+
+						ignore Map.remove<Principal, Models.Workspace>(_workspaces, phash, workspaceId);
+
+						let newCyclesEntry: CyclesLedger.CyclesLedgerEntity = {
+							amount = result.refundedCycles;
+							recipient = caller;
+							transactionDate = Time.now();
+						};
+
+						cyclesLedgerService.addEntry(newCyclesEntry);
+
+						#ok({ refundedCycles = result.refundedCycles });
+					};
+					case (#err(_error)) #err(_error);
+				};
+			};
+		};
+	};
+
 	private func setGetWorkspaceMembersResult(members : [Member.Member], roles : [Role.Role]): Types.GetWorkspaceMembersResponseOk  {
 		let result = Array.map<Member.Member, { id : Principal; name : Text; role : { id : Nat; name : Text } }>(
 			members,
@@ -197,7 +249,7 @@ actor {
 					// TODO: Handle case when role or profile is not found
 					// case(_) {
 						
-					// };	
+					// };
 				};
 			},
 		);
@@ -324,5 +376,14 @@ actor {
 				};
 			};
 		};
+	};
+
+	public shared query ({caller}) func getMyBalance(): async Types.GetMyBalanceResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+
+		let balance = cyclesLedgerService.getUserBalance(caller);
+
+		#ok({balance});
 	};
 };

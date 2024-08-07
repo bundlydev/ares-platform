@@ -27,6 +27,7 @@ module {
 		#userNotAuthenticated;
 		#principalAlreadyRegistered;
 		#usernameAlreadyExists;
+		#emailAlreadyExists;
 		#requiredField : Text;
 	};
 
@@ -89,6 +90,19 @@ module {
 
 	public type GetWorkspaceInfoResponse = Result.Result<GetWorkspaceInfoResponseOk, GetWorkspaceInfoResponseErr>;
 
+	public type DeleteWorkspaceResponseOk = {
+		refundedCycles : Nat;
+	};
+
+	public type DeleteWorkspaceResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+		#workspaceNotFound;
+		#unauthorized;
+	};
+
+	public type DeleteWorkspaceResponse = Result.Result<DeleteWorkspaceResponseOk, DeleteWorkspaceResponseErr>;
+
 	public type GetWorkspaceMembersResponseOk = [{
 		id : Principal;
 		name : Text;
@@ -117,6 +131,7 @@ module {
 		#unauthorized;
 		#workspaceNotFound;
 		#memberAlreadyRegistered;
+		#additionalOwnersNotAllowed;
 	};
 
 	public type AddWorkspaceMemberResponse = Result.Result<AddWorkspaceMemberResponseOk, AddWorkspaceMemberResponseErr>;
@@ -144,4 +159,15 @@ module {
 	};
 
 	public type GetWorkspaceRolesResponse = Result.Result<GetWorkspaceRolesResponseOk, GetWorkspaceRolesResponseErr>;
+
+	public type GetMyBalanceResponseOk = {
+		balance : Nat;
+	};
+
+	public type GetMyBalanceResponseErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+	};
+
+	public type GetMyBalanceResponse = Result.Result<GetMyBalanceResponseOk, GetMyBalanceResponseErr>;
 };
