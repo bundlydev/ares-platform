@@ -42,7 +42,7 @@ export default function IcConnectPage() {
 
   async function getProfile() {
     try {
-      const response = await backofficeGateway.getProfile();
+      const response = await backofficeGateway.getMyProfile();
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -120,7 +120,7 @@ function CreateProfileForm({ onSubmit, loading }: ProfileFormProps) {
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           type="submit"
-          disabled={loading} // Disable button while loading
+          disabled={loading} 
         >
           {loading ? "Creating Profile..." : "Create Profile"}
         </button>

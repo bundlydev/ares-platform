@@ -69,7 +69,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
       if (isAuthenticated) {
         try {
           const [profileResponse, workspacesResponse] = await Promise.all([
-            backofficeGateway.getProfile(),
+            backofficeGateway.getMyProfile(),
             backofficeGateway.getMyWorkspaces(),
           ]);
 

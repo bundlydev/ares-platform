@@ -1,15 +1,17 @@
-import React, { useEffect, useRef, useState } from "react";
 import { Principal } from "@dfinity/principal";
+import React, { useEffect, useRef, useState } from "react";
+
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters/index";
 import { useAuthGuard } from "@app/hooks/useGuard";
 
+import LoadingSpinner from "../components/LoadingSpinner";
 import Modal from "../components/Modal";
 import ModalDelete from "../components/ModalDelete";
 import SelectWorkspace from "../components/SelectWorkspace";
 import { useProfile } from "../hooks/useProfile";
 import { useWorkspace } from "../hooks/useWorkspace";
-import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function Home() {
   type Workspace = {
@@ -31,6 +33,7 @@ export default function Home() {
     "backofficeGateway",
     currentIdentity
   ) as CandidActors["backofficeGateway"];
+
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
   const [deleteItem, setDeleteItem] = useState<string>("");
@@ -42,14 +45,16 @@ export default function Home() {
   const workspaces = useWorkspace();
   const profiles = useProfile();
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
-  const [isOpen, setIsOpen] = useState<boolean>(false); 
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const identity = useIdentities();
   const loadingAuth = useAuthGuard({ isPrivate: true });
 
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const hasFetchedWorkspaces = useRef(false); 
+  const hasFetchedWorkspaces = useRef(false);
+
+ 
 
   const getFirstLetter = (text: string): string => {
     return text.charAt(0).toUpperCase();
@@ -61,9 +66,12 @@ export default function Home() {
     }
 
     try {
+			const workspaceActor = useCandidActor<CandidActors>("workspace", currentIdentity, {
+				canisterId: idDataworkspaces,
+			}) as CandidActors["workspace"];
       const promises = workspaces.map(async (workspace) => {
         const workspaceId = Principal.fromText(workspace.id);
-        const response = await backofficeGateway.getWorkspaceInfo(workspaceId);
+        const response = await workspaceActor.getInfo();
         if ("err" in response) {
           if ("userNotAuthenticated" in response.err) {
             console.log("User not authenticated");
@@ -164,7 +172,7 @@ export default function Home() {
       console.error("error response", { error });
     } finally {
       setLoading(false);
-      window.location.reload(); 
+      window.location.reload();
     }
   };
 
@@ -175,7 +183,7 @@ export default function Home() {
       const memberId = Principal.fromText(userId);
       const response = await backofficeGateway.addWorkspaceMember(workspaceId, memberId, BigInt(2));
 
-			debugger
+      debugger;
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
@@ -185,15 +193,14 @@ export default function Home() {
         const member = response.ok;
         if (member) {
           getList(idDataworkspaces);
-          
         }
       }
     } catch (error) {
       console.error("error response", { error });
     } finally {
       setLoading(false);
-			setShowModal(false); 
-      window.location.reload(); 
+      setShowModal(false);
+      window.location.reload();
     }
   };
 
@@ -245,12 +252,7 @@ export default function Home() {
               <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
             </div>
           )}
-          {hasFetchedWorkspaces.current && (
-            <SelectWorkspace
-              myworkspaces={myworkspaces}
-              getList={getList}
-            />
-          )}
+          {hasFetchedWorkspaces.current && <SelectWorkspace myworkspaces={myworkspaces} getList={getList} />}
         </div>
         {profiles && (
           <div className="relative inline-block text-left" ref={menuRef}>
@@ -301,9 +303,13 @@ export default function Home() {
         <div
           style={{ height: "calc(100vh - 64px)" }}
           className="flex flex-col justify-start items-center bg-cyan-950 w-56 gap-10 pt-10">
-          <div className="cursor-pointer w-48 h-12 rounded-lg flex justify-center items-center bg-slate-100 text-cyan-950 text-2xl font-semibold">IAM</div>
+          <div className="cursor-pointer w-48 h-12 rounded-lg flex justify-center items-center bg-slate-100 text-cyan-950 text-2xl font-semibold">
+            IAM
+          </div>
         </div>
-        <div style={{ height: "calc(100vh - 64px)" }} className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
+        <div
+          style={{ height: "calc(100vh - 64px)" }}
+          className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
           <button
             className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
             onClick={() => setShowModal(true)}>
@@ -321,17 +327,16 @@ export default function Home() {
                   <div>{item.name}</div>
                   <div>{item.role}</div>
                   <div>
-                    {item.role !== 'Owner' &&
+                    {item.role !== "Owner" && (
                       <button
                         className="bg-red-500 text-white py-1 px-3 rounded-lg"
                         onClick={() => {
                           deleteIdmember(item.id);
                         }}
-                        disabled={loading}
-                      >
+                        disabled={loading}>
                         {loading ? <LoadingSpinner /> : "Delete"}
                       </button>
-                    }
+                    )}
                   </div>
                 </div>
               ))}
@@ -345,7 +350,7 @@ export default function Home() {
         addMemberWorkspace={addMemberWorkspace}
         getListFindName={getListFindName}
         dataNameSearch={dataNameSearch}
-        loading={loading} 
+        loading={loading}
       />
       <ModalDelete
         showModalDelete={showModalDelete}
