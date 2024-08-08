@@ -10,6 +10,14 @@
         "output": "frontend/src/declarations/backoffice-gateway"
       }
     },
+    "workspace": {
+      "type": "motoko",
+      "main": "backend/workspace/main.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/workspace"
+      }
+    },
     "frontend": {
       "type": "assets",
       "dependencies": ["backoffice-gateway"],

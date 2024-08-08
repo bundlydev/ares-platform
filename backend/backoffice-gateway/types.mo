@@ -1,6 +1,8 @@
+// Base Modules
 import Result "mo:base/Result";
 
-import Role "../workspace/role";
+// External Modules
+import RoleModule "../workspace/modules/role";
 
 import Models "./models";
 
@@ -149,7 +151,7 @@ module {
 
 	public type RemoveWorkspaceMemberResponse = Result.Result<RemoveWorkspaceMemberResponseOk, RemoveWorkspaceMemberResponseErr>;
 
-	public type GetWorkspaceRolesResponseOk = [Role.Role];
+	public type GetWorkspaceRolesResponseOk = [RoleModule.RoleEntity];
 
 	public type GetWorkspaceRolesResponseErr = {
 		#userNotAuthenticated;
@@ -170,4 +172,13 @@ module {
 	};
 
 	public type GetMyBalanceResponse = Result.Result<GetMyBalanceResponseOk, GetMyBalanceResponseErr>;
+
+	public type WebhookHandlerResultOk = ();
+
+	public type WebhookHandlerResultErr = {
+		#unauthorized;
+		#workspaceNotFound;
+	};
+
+	public type WebhookHandlerResult = Result.Result<WebhookHandlerResultOk, WebhookHandlerResultErr>;
 };

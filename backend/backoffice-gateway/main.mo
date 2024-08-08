@@ -15,17 +15,19 @@ import IC "mo:ic";
 // Custom Modules
 import TextValidator "mo:validators/Text";
 
+// External Modules
+import MemberModule "../workspace/modules/member";
+import RoleModule "../workspace/modules/role";
+import WebhookModule "../workspace/modules/webhook";
+import WorkspaceClass "../workspace/main";
+
 // Local Modules
 import CyclesLedgerModule "./modules/cycles-ledger";
-
-import Member "../workspace/member";
-import Role "../workspace/role";
-import WorkspaceClass "../workspace/main";
 
 import Types "./types";
 import Models "./models";
 
-actor {
+actor BackofficeGateway {
 	// Database
 	stable let _profileStorage: Models.ProfileStorage = Map.new<Principal, Models.ProfileEntity>();
 	stable let _workspaceStorate: Models.WorkspaceStorage = Map.new<Principal, Models.WorkspaceEntity>();
@@ -188,12 +190,14 @@ actor {
 		// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
 		Cycles.add(113_846_199_230);
 
-		let workspace = await WorkspaceClass.WorkspaceActorClass(data.name, caller);
+		let workspace = await WorkspaceClass.WorkspaceActorClass(data.name);
 		let workspaceId = Principal.fromActor(workspace);
+		ignore await workspace.addWebhookListener(Principal.fromActor(BackofficeGateway));
+		ignore await workspace.addFirstOwner(caller);
 
 		let newWorkspace : Models.WorkspaceEntity = {
 			ref = workspace;
-			members = [caller];
+			members = [];
 		};
 
 		Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, newWorkspace);
@@ -261,11 +265,11 @@ actor {
 		};
 	};
 
-	private func setGetWorkspaceMembersResult(members : [Member.Member], roles : [Role.Role]): Types.GetWorkspaceMembersResponseOk  {
-		let result = Array.map<Member.Member, { id : Principal; name : Text; role : { id : Nat; name : Text } }>(
+	private func setGetWorkspaceMembersResult(members : [MemberModule.MemberEntity], roles : [RoleModule.RoleEntity]): Types.GetWorkspaceMembersResponseOk  {
+		let result = Array.map<MemberModule.MemberEntity, { id : Principal; name : Text; role : { id : Nat; name : Text } }>(
 			members,
 			func member {
-				let role = Array.find<Role.Role>(roles, func r = r.id == member.roleId);
+				let role = Array.find<RoleModule.RoleEntity>(roles, func r = r.id == member.roleId);
 				let profile = Map.find<Principal, Models.ProfileEntity>(_profileStorage, func (id, _) = Principal.equal(id, member.id));
 
 				switch ((role, profile)) {
@@ -410,4 +414,54 @@ actor {
 			};
 		};
 	};
+
+	private func _addWorkspaceMember(workspace : Models.WorkspaceEntity, newMember : WebhookModule.MemberAddedEvent) {
+		let members : [Principal] = Array.append<Principal>(workspace.members, [newMember.userId]);
+
+		let workspaceUpdate : Models.WorkspaceEntity = {
+			ref = workspace.ref;
+			members;
+		};
+
+		let workspaceId = Principal.fromActor(workspace.ref);
+
+		Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, workspaceUpdate);
+	};
+
+	private func _removeWorkspaceMember(workspace : Models.WorkspaceEntity, removedMember : WebhookModule.MemberRemovedEvent) {
+		let members : [Principal] = Array.filter<Principal>(workspace.members, func mem = not Principal.equal(mem, removedMember.userId));
+
+		let workspaceUpdate : Models.WorkspaceEntity = {
+			ref = workspace.ref;
+			members;
+		};
+
+		let workspaceId = Principal.fromActor(workspace.ref);
+
+		Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, workspaceUpdate);
+	};
+
+	public shared ({caller}) func webhook_handler(event : WebhookModule.WebhookEvent): async Types.WebhookHandlerResult {
+		if (Principal.isAnonymous(caller)) return #err(#unauthorized);
+
+		let maybeWorksace = getWorkspace(caller);
+
+		switch maybeWorksace {
+			case (?workspace) {
+				switch event {
+					case (#memberAdded(newMember)) {
+						_addWorkspaceMember(workspace, newMember);
+
+						#ok();
+					};
+					case (#memberRemoved(removedMember)) {
+						_removeWorkspaceMember(workspace, removedMember);
+
+						#ok();
+					};
+				};
+			};
+			case null #err(#workspaceNotFound);
+		};
+	}
 };
