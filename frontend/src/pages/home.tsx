@@ -34,22 +34,18 @@ export default function Home() {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
   const [deleteItem, setDeleteItem] = useState<string>("");
-  const [myworkspaces, setMyworkspace] = useState<Workspace[]>([]);
-  const [idDataworkspaces, setIdDataworkspaces] = useState<string>("");
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
-  const [dataworkspaces, setDataworkspaces] = useState<WorkspaceData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const workspaces = useWorkspaces();
   const profiles = useProfile();
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const identity = useIdentities();
   const loadingAuth = useAuthGuard({ isPrivate: true });
+  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceData[]>([]);
 
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const hasFetchedWorkspaces = useRef(false);
 
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
@@ -62,56 +58,45 @@ export default function Home() {
       }) as CandidActors["workspace"])
     : null;
 
-  const getFirstLetter = (text: string): string => {
-    return text.charAt(0).toUpperCase();
+  useEffect(() => {
+    getWorkspaceMembers();
+  });
+
+  const getWorkspaceMembers = async () => {
+    // TODO: Should I catch errors here?
+    if (!workspaceActor) return;
+
+    let getMembersResult = await workspaceActor.getMembers();
+
+    if ("ok" in getMembersResult) {
+      let members = getMembersResult.ok;
+      let getRolesResult = await workspaceActor.getRoles();
+      let roles = "ok" in getRolesResult ? getRolesResult.ok : [];
+
+      let results = [];
+
+      for (let member of members) {
+        let role = roles.find((role) => role.id === member.roleId);
+        let getProfileResult = await backofficeGateway.getProfileById(member.id);
+        let profile = "ok" in getProfileResult ? getProfileResult.ok : undefined;
+        let name = profile ? profile.firstName + " " + profile.lastName : "Unknown";
+
+        results.push({
+          id: member.id.toString(),
+          name: name,
+          role: role ? role.name : "Unknown",
+        });
+      }
+
+      return setWorkspaceMembers(results);
+    } else {
+      let error = getMembersResult.err;
+      console.error(error);
+    }
   };
 
-  const getList = async (idWorkspace: string) => {
-    if (!workspaceActor) return;
-    setIdDataworkspaces(idWorkspace);
-    try {
-      const members = await workspaceActor.getMembers();
-      const roles = await workspaceActor.getRoles();
-
-      if ("err" in members) {
-        if ("userNotAuthenticated" in members.err) console.log("User not authenticated");
-        else console.log("Error fetching profile");
-        return;
-      }
-
-      if ("err" in roles) {
-        if ("userNotAuthenticated" in roles.err) console.log("User not authenticated");
-        else console.log("Error fetching profile");
-        return;
-      }
-
-      const memberList = members.ok;
-      const roleList = roles.ok;
-
-      if (memberList) {
-        const newWorkspaceList = await Promise.all(
-          memberList.map(async (member) => {
-            let profileInfo = await backofficeGateway.getProfileById(member.id);
-
-            let memberName = "Unknown";
-
-            if ("ok" in profileInfo) {
-              memberName = profileInfo.ok.username;
-            }
-
-            return {
-              id: member.id.toString(),
-              name: memberName,
-              role: roleList.find((role) => role.id === member.roleId)?.name || "Unknown",
-            };
-          })
-        );
-
-        setDataworkspaces(newWorkspaceList);
-      }
-    } catch (error) {
-      console.error("error response", { error });
-    }
+  const getFirstLetter = (text: string): string => {
+    return text.charAt(0).toUpperCase();
   };
 
   const getListFindName = async (nameText: string) => {
@@ -150,8 +135,8 @@ export default function Home() {
         else console.log("Error fetching profile");
         return;
       }
-      const member = "ok" in response ? response.ok : undefined;
-      if (member) getList(idDataworkspaces);
+
+      getWorkspaceMembers();
     } catch (error) {
       console.error("error response", { error });
     } finally {
@@ -173,12 +158,8 @@ export default function Home() {
         else console.log("Error fetching profile");
         return;
       }
-      if ("ok" in response) {
-        const member = response.ok;
-        if (member) {
-          getList(idDataworkspaces);
-        }
-      }
+
+      getWorkspaceMembers();
     } catch (error) {
       console.error("error response", { error });
     } finally {
@@ -230,7 +211,7 @@ export default function Home() {
               <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
             </div>
           )}
-          {workspaces && <SelectWorkspace myworkspaces={workspaces} getList={getList} />}
+          {workspaces && <SelectWorkspace />}
         </div>
         {profiles && (
           <div className="relative inline-block text-left" ref={menuRef}>
@@ -300,7 +281,7 @@ export default function Home() {
               <div>Action</div>
             </div>
             <div className="divide-y divide-gray-200">
-              {dataworkspaces.map((item, index) => (
+              {workspaceMembers.map((item, index) => (
                 <div key={index} className="grid grid-cols-3 p-4">
                   <div>{item.name}</div>
                   <div>{item.role}</div>
