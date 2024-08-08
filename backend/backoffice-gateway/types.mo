@@ -51,8 +51,6 @@ module {
 	public type GetMyWorkspacesResponseOkItem = {
 		id : Principal;
 		name : Text;
-		// TODO: Should be a Set?
-		members : [Principal];
 	};
 
 	public type GetMyWorkspacesResponseOk = [GetMyWorkspacesResponseOkItem];
