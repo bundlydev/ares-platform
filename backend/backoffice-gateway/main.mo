@@ -150,7 +150,7 @@ actor BackofficeGateway {
 		#ok({balance});
 	};
 
-	public shared query ({ caller }) func getMyWorkspaces() : async Types.GetMyWorkspacesResponse {
+	public shared composite query ({ caller }) func getMyWorkspaces() : async Types.GetMyWorkspacesResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
 		if (getProfile(caller) == null) return #err(#profileNotFound);
 
@@ -166,17 +166,20 @@ actor BackofficeGateway {
 			},
 		);
 		let workspaceIter = Map.vals(workspaceMap);
-		let workspaces = Iter.toArray(workspaceIter);
 
-		let result = Array.map<Models.WorkspaceEntity, { id : Principal; members : [Principal] }>(
-			workspaces,
-			func item = {
-				id = Principal.fromActor(item.ref);
-				members = item.members;
-			},
-		);
+		var workspaceList: List.List<Types.GetMyWorkspacesResponseOkItem> = List.nil();
 
-		return #ok(result);
+		for (workspace in workspaceIter) {
+			let info = {
+				id = Principal.fromActor(workspace.ref);
+				name = await workspace.ref.getName();
+				members = workspace.members;
+			};
+
+			workspaceList := List.push<Types.GetMyWorkspacesResponseOkItem>(info, workspaceList);
+		};
+
+		return #ok(List.toArray(workspaceList));
 	};
 
 	public shared ({ caller }) func createWorkspace(data : Types.CreateWorkspaceData) : async Types.CreateWorkspaceResponse {
@@ -203,31 +206,6 @@ actor BackofficeGateway {
 		Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, newWorkspace);
 
 		#ok({ workspaceId });
-	};
-
-	public shared composite query ({ caller }) func getWorkspaceInfo(workspaceId : Principal) : async Types.GetWorkspaceInfoResponse {
-		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (getProfile(caller) == null) return #err(#profileNotFound);
-
-		let workspace = getWorkspace(workspaceId);
-
-		switch workspace {
-			case null { #err(#workspaceNotFound) };
-			case (?wp) {
-				let memberId = Array.find<Principal>(wp.members, func mem = Principal.equal(mem, caller));
-
-				switch memberId {
-					case (null) #err(#unauthorized);
-					case (_) {
-						let result = await wp.ref.getInfo();
-						switch result {
-							case (#ok(info)) #ok(info);
-							case (_) result;
-						};
-					};
-				};
-			};
-		};
 	};
 
 	public shared ({caller}) func deleteWorkspace(workspaceId : Principal) : async Types.DeleteWorkspaceResponse {
@@ -441,7 +419,7 @@ actor BackofficeGateway {
 		Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, workspaceUpdate);
 	};
 
-	public shared ({caller}) func webhookHandler(event : WebhookModule.WebhookEvent): async Types.WebhookHandlerResult {
+	public shared ({caller}) func webhook_handler(event : WebhookModule.WebhookEvent): async Types.WebhookHandlerResult {
 		if (Principal.isAnonymous(caller)) return #err(#unauthorized);
 
 		let maybeWorksace = getWorkspace(caller);
