@@ -60,56 +60,13 @@ export default function Home() {
     return text.charAt(0).toUpperCase();
   };
 
-  async function getWorkspaceList() {
-    if (!workspaces || workspaces.length === 0) {
-      return;
-    }
-
-    try {
-			const workspaceActor = useCandidActor<CandidActors>("workspace", currentIdentity, {
-				canisterId: idDataworkspaces,
-			}) as CandidActors["workspace"];
-      const promises = workspaces.map(async (workspace) => {
-        const workspaceId = Principal.fromText(workspace.id);
-        const response = await workspaceActor.getInfo();
-        if ("err" in response) {
-          if ("userNotAuthenticated" in response.err) {
-            console.log("User not authenticated");
-          } else {
-            console.log("Error fetching profile");
-          }
-          return null;
-        }
-
-        const profile = "ok" in response ? response.ok : undefined;
-        if ("ok" in response) {
-          const profile = response.ok;
-          if (profile) {
-            return { id: profile.id.toString(), name: profile.name };
-          }
-        }
-      });
-
-      const results = await Promise.all(promises);
-      const validResults = results.filter((result) => result !== null);
-      setMyworkspace(validResults as Workspace[]);
-    } catch (error) {
-      console.error("error response", { error });
-    }
-  }
-
-  useEffect(() => {
-    if (!hasFetchedWorkspaces.current) {
-      getWorkspaceList();
-      hasFetchedWorkspaces.current = true;
-    }
-  }, [currentIdentity, workspaces]);
-
   const getList = async (idWorkspace: string) => {
+		debugger
     setIdDataworkspaces(idWorkspace);
     try {
       const workspaceId = Principal.fromText(idWorkspace);
       const response = await backofficeGateway.getWorkspaceMembers(workspaceId);
+			debugger
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
@@ -252,7 +209,7 @@ export default function Home() {
               <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
             </div>
           )}
-          {hasFetchedWorkspaces.current && <SelectWorkspace myworkspaces={myworkspaces} getList={getList} />}
+          {workspaces && <SelectWorkspace myworkspaces={workspaces} getList={getList} />}
         </div>
         {profiles && (
           <div className="relative inline-block text-left" ref={menuRef}>

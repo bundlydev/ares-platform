@@ -28,6 +28,7 @@ const SelectWorkspace: React.FC<SelectWorkspaceProps> = ({ myworkspaces, getList
   }, [myworkspaces, getList, isInitialized]);
 
   const handleOptionClick = (option: Workspace) => {
+		debugger
     setSelectedOption(option.name);
     setIsDropdownOpen(false);
     getList(option.id);

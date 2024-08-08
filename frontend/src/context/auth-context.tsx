@@ -16,7 +16,7 @@ export type AuthUserProfile = {
 
 export type AuthUserWorkspace = {
   id: string;
-  members: string[];
+  name: string;
 };
 
 // Define Zod schemas
@@ -34,7 +34,7 @@ const ZResponseSchema = z.object({
 
 const ZWorkspaceSchema = z.object({
   id: z.string(),
-  members: z.array(z.string()),
+  name: z.string(),
 });
 
 const ZResponseWorksSchema = z.object({
@@ -94,7 +94,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
               ? workspacesResponse.ok.map((workspace: any) => ({
                   ...workspace,
                   id: workspace.id.toString(), // Convert `principal` to string
-                  members: workspace.members.map((member: any) => member.toString()), // Convert each `member` to string
+                  name: workspace.name.toString(), // Convert each `member` to string
                 }))
               : [];
 
