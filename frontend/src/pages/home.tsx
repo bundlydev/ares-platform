@@ -38,7 +38,7 @@ export default function Home() {
   const [idDataworkspaces, setIdDataworkspaces] = useState<string>("");
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [dataworkspaces, setDataworkspaces] = useState<WorkspaceData[]>([]);
-  const [loading, setLoading] = useState<boolean>(false); 
+  const [loading, setLoading] = useState<boolean>(false);
   const workspaces = useWorkspace();
   const profiles = useProfile();
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
@@ -56,9 +56,11 @@ export default function Home() {
     currentIdentity
   ) as CandidActors["backofficeGateway"];
 
-  const workspaceActor = workspaceId ? useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceId,
-  }) as CandidActors["workspace"] : null;
+  const workspaceActor = workspaceId
+    ? (useCandidActor<CandidActors>("workspace", currentIdentity, {
+        canisterId: workspaceId,
+      }) as CandidActors["workspace"])
+    : null;
 
   useEffect(() => {
     if (workspaces && workspaces.length > 0 && !workspaceId) {
@@ -141,11 +143,14 @@ export default function Home() {
   };
 
   const deleteIdmember = async (idMember: string) => {
+    if (!workspaceActor) return;
+
     setLoading(true);
+
     try {
-      const workspaceId = Principal.fromText(idDataworkspaces);
       const memberId = Principal.fromText(idMember);
-      const response = await backofficeGateway.removeWorkspaceMember(workspaceId, memberId);
+      const response = await workspaceActor.removeMember(memberId);
+
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
@@ -162,11 +167,12 @@ export default function Home() {
   };
 
   const addMemberWorkspace = async (userId: string) => {
+    if (!workspaceActor) return;
+
     setLoading(true);
     try {
-      const workspaceId = Principal.fromText(idDataworkspaces);
       const memberId = Principal.fromText(userId);
-      const response = await backofficeGateway.addWorkspaceMember(workspaceId, memberId, BigInt(2));
+      const response = await workspaceActor.addMember(memberId, BigInt(2));
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");

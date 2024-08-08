@@ -1,9 +1,6 @@
 // Base Modules
 import Result "mo:base/Result";
 
-// External Modules
-import RoleModule "../workspace/modules/role";
-
 import Models "./models";
 
 module {
@@ -100,63 +97,6 @@ module {
 
 	public type DeleteWorkspaceResponse = Result.Result<DeleteWorkspaceResponseOk, DeleteWorkspaceResponseErr>;
 
-	public type GetWorkspaceMembersResponseOk = [{
-		id : Principal;
-		name : Text;
-		role : {
-			id : Nat;
-			name : Text;
-		};
-	}];
-
-	public type GetWorkspaceMembersResponseErr = {
-		#userNotAuthenticated;
-		#profileNotFound;
-		#workspaceNotFound;
-		#errorGettingMembers;
-		#errorGettingRoles;
-		#errorGettingMembersInfo;
-	};
-
-	public type GetWorkspaceMembersResponse = Result.Result<GetWorkspaceMembersResponseOk, GetWorkspaceMembersResponseErr>;
-
-	public type AddWorkspaceMemberResponseOk = ();
-
-	public type AddWorkspaceMemberResponseErr = {
-		#userNotAuthenticated;
-		#profileNotFound;
-		#unauthorized;
-		#workspaceNotFound;
-		#memberAlreadyRegistered;
-		#additionalOwnersNotAllowed;
-	};
-
-	public type AddWorkspaceMemberResponse = Result.Result<AddWorkspaceMemberResponseOk, AddWorkspaceMemberResponseErr>;
-
-	public type RemoveWorkspaceMemberResponseOk = ();
-
-	public type RemoveWorkspaceMemberResponseErr = {
-		#userNotAuthenticated;
-		#profileNotFound;
-		#unauthorized;
-		#workspaceNotFound;
-		#memberNotFound;
-		#ownersCannotBeRemoved;
-	};
-
-	public type RemoveWorkspaceMemberResponse = Result.Result<RemoveWorkspaceMemberResponseOk, RemoveWorkspaceMemberResponseErr>;
-
-	public type GetWorkspaceRolesResponseOk = [RoleModule.RoleEntity];
-
-	public type GetWorkspaceRolesResponseErr = {
-		#userNotAuthenticated;
-		#profileNotFound;
-		#workspaceNotFound;
-		#unauthorized;
-	};
-
-	public type GetWorkspaceRolesResponse = Result.Result<GetWorkspaceRolesResponseOk, GetWorkspaceRolesResponseErr>;
-
 	public type GetMyBalanceResponseOk = {
 		balance : Nat;
 	};
@@ -172,7 +112,6 @@ module {
 
 	public type WebhookHandlerResultErr = {
 		#unauthorized;
-		#workspaceNotFound;
 	};
 
 	public type WebhookHandlerResult = Result.Result<WebhookHandlerResultOk, WebhookHandlerResultErr>;
