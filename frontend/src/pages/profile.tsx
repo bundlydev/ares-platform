@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters";
 import { useAuthGuard } from "@app/hooks/useGuard";
 
@@ -38,7 +39,6 @@ export default function Profile() {
     setLoading(true);
     try {
       const response = await backofficeGateway.createProfile(data);
-debugger
       if ("ok" in response) {
         setProfile({
           username: data.username,
@@ -71,12 +71,13 @@ debugger
               type="text"
               placeholder="Username"
               className={`h-10 w-11/12 rounded-lg border ${errors.username ? "border-red-500" : "border-gray-300"} px-2`}
-              {...register("username", { 
-                required: "Username is required", 
+              {...register("username", {
+                required: "Username is required",
                 pattern: {
                   value: /^[a-zA-Z0-9_]{5,15}$/,
-                  message: "Invalid username format. Use 5-15 characters including letters, numbers, and underscores."
-                }
+                  message:
+                    "Invalid username format. Use 5-15 characters including letters, numbers, and underscores.",
+                },
               })}
             />
             <span className="text-red-500 h-2">{errors.username ? errors.username.message : ""}</span>
@@ -104,12 +105,12 @@ debugger
               type="text"
               placeholder="Email"
               className={`h-10 w-11/12 rounded-lg border ${errors.email ? "border-red-500" : "border-gray-300"} px-2`}
-              {...register("email", { 
-                required: "Email is required", 
+              {...register("email", {
+                required: "Email is required",
                 pattern: {
                   value: /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/,
-                  message: "Invalid email format. Example: email@example.com"
-                }
+                  message: "Invalid email format. Example: email@example.com",
+                },
               })}
             />
             <span className="text-red-500 h-2">{errors.email ? errors.email.message : ""}</span>
@@ -117,8 +118,7 @@ debugger
           <button
             type="submit"
             className={`bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4 flex items-center justify-center ${loading ? "cursor-wait" : ""}`}
-            disabled={loading}
-          >
+            disabled={loading}>
             {loading ? (
               <svg
                 className="animate-spin h-5 w-5 mr-3"

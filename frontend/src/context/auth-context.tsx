@@ -1,11 +1,7 @@
-import React, { ReactNode, createContext, useEffect, useState } from "react";
+import React, { ReactNode, createContext, useEffect, useState, useContext } from "react";
 import z from "zod";
-
 import { useAuth, useCandidActor } from "@bundly/ares-react";
-
 import { CandidActors } from "@app/canisters/index";
-
-// Define your types and schemas...
 
 export type AuthUserProfile = {
   username: string;
@@ -19,7 +15,6 @@ export type AuthUserWorkspace = {
   name: string;
 };
 
-// Define Zod schemas
 const ZProfileSchema = z.object({
   username: z.string(),
   email: z.string().email(),
@@ -45,13 +40,17 @@ const ZResponseWorksSchema = z.object({
 export type AuthContextType = {
   profile?: AuthUserProfile;
   workspaces?: AuthUserWorkspace[];
+  workspaceId?: string; // Añadido aquí
   setProfile: (profile: AuthUserProfile) => void;
+  setWorkspaceId: (id: string) => void; // Añadido aquí
 };
 
 export const AuthContext = createContext<AuthContextType>({
   profile: undefined,
   workspaces: undefined,
-  setProfile: () => {}, // Default function does nothing
+  workspaceId: undefined, // Añadido aquí
+  setProfile: () => {},
+  setWorkspaceId: () => {},
 });
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
@@ -63,18 +62,17 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
 
   const [profile, setProfile] = useState<AuthUserProfile | undefined>();
   const [workspaces, setWorkspaces] = useState<AuthUserWorkspace[] | undefined>();
+  const [workspaceId, setWorkspaceId] = useState<string | undefined>(); // Añadido aquí
 
   useEffect(() => {
     async function loadProfileAndWorkspaces() {
       if (isAuthenticated) {
         try {
-					debugger
           const [profileResponse, workspacesResponse] = await Promise.all([
             backofficeGateway.getMyProfile(),
             backofficeGateway.getMyWorkspaces(),
           ]);
-					debugger
-          // Ensure responses are objects
+
           if (profileResponse == null || typeof profileResponse !== "object") {
             throw new Error("Invalid profile response");
           }
@@ -83,19 +81,17 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             throw new Error("Invalid workspaces response");
           }
 
-          // Parse responses with Zod
           const profileParse = ZResponseSchema.safeParse(profileResponse);
           if (!profileParse.success) {
             throw new Error(`Invalid profile response schema: ${profileParse.error}`);
           }
 
-          // Check if workspacesResponse has 'ok' property
           if ("ok" in workspacesResponse) {
             const convertedWorkspacesResponse = workspacesResponse.ok
               ? workspacesResponse.ok.map((workspace: any) => ({
                   ...workspace,
-                  id: workspace.id.toString(), // Convert `principal` to string
-                  name: workspace.name.toString(), // Convert each `member` to string
+                  id: workspace.id.toString(),
+                  name: workspace.name.toString(),
                 }))
               : [];
 
@@ -107,18 +103,16 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             if (!workspacesParse.success) {
               throw new Error(`Invalid workspaces response schema: ${workspacesParse.error}`);
             }
-						debugger
-            setProfile(profileParse.data.ok );
-            setWorkspaces(workspacesParse.data.ok );
+
+            setProfile(profileParse.data.ok);
+            setWorkspaces(workspacesParse.data.ok);
           } else {
             throw new Error("Workspaces response does not contain 'ok' property");
           }
         } catch (error) {
-					debugger
           console.error("Error loading profile or workspaces:", error);
         }
       } else {
-				debugger
         setProfile(undefined);
         setWorkspaces(undefined);
       }
@@ -132,7 +126,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ profile, workspaces, setProfile: updateProfile }}>
+    <AuthContext.Provider value={{ profile, workspaces, workspaceId, setProfile: updateProfile, setWorkspaceId }}>
       {children}
     </AuthContext.Provider>
   );

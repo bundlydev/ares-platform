@@ -1,5 +1,5 @@
 import { Principal } from "@dfinity/principal";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
 
@@ -10,6 +10,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import Modal from "../components/Modal";
 import ModalDelete from "../components/ModalDelete";
 import SelectWorkspace from "../components/SelectWorkspace";
+import { AuthContext } from "../context/auth-context";
 import { useProfile } from "../hooks/useProfile";
 import { useWorkspace } from "../hooks/useWorkspace";
 
@@ -29,6 +30,7 @@ export default function Home() {
   };
 
   const { currentIdentity } = useAuth();
+  const { workspaceId } = useContext(AuthContext);
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
@@ -202,7 +204,7 @@ export default function Home() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [menuRef, workspaceRef]);
-
+  console.log(workspaceId);
   const handleCreateWorkspace = (newWorkspace: Workspace) => {
     setMyworkspace((prevWorkspaces) => [...prevWorkspaces, newWorkspace]);
     setIdDataworkspaces(newWorkspace.id);
