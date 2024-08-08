@@ -13,7 +13,7 @@ module {
 	public type ProfileStorage = Map.Map<Principal, ProfileEntity>;
 
 	public type WorkspaceEntity = {
-		ref : WorkspaceClass.WorkspaceClass;
+		ref : WorkspaceClass.WorkspaceActorClass;
 		members : [Principal];
 	};
 

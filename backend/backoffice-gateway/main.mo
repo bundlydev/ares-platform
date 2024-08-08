@@ -27,9 +27,9 @@ import Models "./models";
 
 actor {
 	// Database
-	stable let _profileStorage = Map.new<Principal, Models.ProfileEntity>();
-	stable let _workspaceStorate = Map.new<Principal, Models.WorkspaceEntity>();
-	stable var _cyclesLedgerStorage: CyclesLedgerModule.CyclesLederModel = List.nil();
+	stable let _profileStorage: Models.ProfileStorage = Map.new<Principal, Models.ProfileEntity>();
+	stable let _workspaceStorate: Models.WorkspaceStorage = Map.new<Principal, Models.WorkspaceEntity>();
+	stable var _cyclesLedgerStorage: CyclesLedgerModule.CyclesLedgerStorage = List.nil();
 
 	// Services
 	private let ic = actor("aaaaa-aa") : IC.Service;
@@ -41,6 +41,19 @@ actor {
 
 	private func getWorkspace(workspaceId: Principal): ?Models.WorkspaceEntity {
 		return Map.get(_workspaceStorate, phash, workspaceId);
+	};
+
+	public shared query func getCanisterBalance(): async Nat {
+		// TODO: Add security check to prevent unauthorized access
+		return Cycles.balance();
+	};
+
+	public shared query func getCanisterAvailableBalance(): async Nat {
+		// TODO: Add security check to prevent unauthorized access
+		let totalBalance : Nat = Cycles.balance();
+		let availableBalance : Nat = totalBalance - cyclesLedgerService.getTotalBalance();
+
+		return availableBalance;
 	};
 
 	public shared query ({ caller }) func getMyProfile() : async Types.GetProfileResponse {
@@ -126,6 +139,15 @@ actor {
 		return #ok(result);
 	};
 
+	public shared query ({caller}) func getMyBalance(): async Types.GetMyBalanceResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
+
+		let balance = cyclesLedgerService.getUserBalance(caller);
+
+		#ok({balance});
+	};
+
 	public shared query ({ caller }) func getMyWorkspaces() : async Types.GetMyWorkspacesResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
 		if (getProfile(caller) == null) return #err(#profileNotFound);
@@ -166,7 +188,7 @@ actor {
 		// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
 		Cycles.add(113_846_199_230);
 
-		let workspace = await WorkspaceClass.WorkspaceClass(data.name, caller);
+		let workspace = await WorkspaceClass.WorkspaceActorClass(data.name, caller);
 		let workspaceId = Principal.fromActor(workspace);
 
 		let newWorkspace : Models.WorkspaceEntity = {
@@ -222,13 +244,14 @@ actor {
 
 						ignore Map.remove<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId);
 
-						let newCyclesEntry: CyclesLedgerModule.CyclesLedgerEntity = {
+						let newCyclesEntry: CyclesLedgerModule.CycleTransaction = {
 							amount = result.refundedCycles;
 							recipient = caller;
 							transactionDate = Time.now();
+							transactionType = #deposit;
 						};
 
-						cyclesLedgerService.addEntry(newCyclesEntry);
+						cyclesLedgerService.addTransaction(newCyclesEntry);
 
 						#ok({ refundedCycles = result.refundedCycles });
 					};
@@ -386,14 +409,5 @@ actor {
 				};
 			};
 		};
-	};
-
-	public shared query ({caller}) func getMyBalance(): async Types.GetMyBalanceResponse {
-		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (getProfile(caller) == null) return #err(#profileNotFound);
-
-		let balance = cyclesLedgerService.getUserBalance(caller);
-
-		#ok({balance});
 	};
 };

@@ -12,7 +12,7 @@ import IC "mo:ic";
 import Member "./member";
 import Role "./role";
 
-shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Principal) = this {
+shared ({ caller = creator }) actor class WorkspaceActorClass(name : Text, owner : Principal) = this {
 	// Database
 	private stable let _creator : Principal = creator;
 	private stable var _name : Text = name;
