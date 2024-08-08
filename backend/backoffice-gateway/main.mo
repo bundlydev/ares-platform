@@ -58,6 +58,18 @@ actor BackofficeGateway {
 		return availableBalance;
 	};
 
+	public shared query ({ caller }) func getProfileById(profileId: Principal): async Types.GetProfileByIdResult {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		// TODO: Should I add extra security check to prevent unauthorized access to other profiles?
+
+		let maybeProfile = getProfile(profileId);
+
+		switch maybeProfile {
+			case (?profile) #ok(profile);
+			case null #err(#profileNotFound);
+		};
+	};
+
 	public shared query ({ caller }) func getMyProfile() : async Types.GetProfileResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
 

@@ -7,6 +7,15 @@ import RoleModule "../workspace/modules/role";
 import Models "./models";
 
 module {
+	public type GetProfileByIdResultOk = Models.ProfileEntity;
+
+	public type GetProfileByIdResultErr = {
+		#userNotAuthenticated;
+		#profileNotFound;
+	};
+
+	public type GetProfileByIdResult = Result.Result<GetProfileByIdResultOk, GetProfileByIdResultErr>;
+
 	public type GetProgileResponseOk = Models.ProfileEntity;
 
 	public type GetProfileResponseErr = {

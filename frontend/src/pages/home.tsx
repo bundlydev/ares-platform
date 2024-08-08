@@ -29,10 +29,6 @@ export default function Home() {
   };
 
   const { currentIdentity } = useAuth();
-  const backofficeGateway = useCandidActor<CandidActors>(
-    "backofficeGateway",
-    currentIdentity
-  ) as CandidActors["backofficeGateway"];
 
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
@@ -54,7 +50,14 @@ export default function Home() {
   const menuRef = useRef<HTMLDivElement>(null);
   const hasFetchedWorkspaces = useRef(false);
 
- 
+  const backofficeGateway = useCandidActor<CandidActors>(
+    "backofficeGateway",
+    currentIdentity
+  ) as CandidActors["backofficeGateway"];
+
+  const workspaceActor = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: "b77ix-eeaaa-aaaaa-qaada-cai",
+  }) as CandidActors["workspace"];
 
   const getFirstLetter = (text: string): string => {
     return text.charAt(0).toUpperCase();
@@ -63,26 +66,45 @@ export default function Home() {
   const getList = async (idWorkspace: string) => {
     setIdDataworkspaces(idWorkspace);
     try {
-      const workspaceId = Principal.fromText(idWorkspace);
-      const response = await backofficeGateway.getWorkspaceMembers(workspaceId);
-      if ("err" in response) {
-        if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
+      const members = await workspaceActor.getMembers();
+      const roles = await workspaceActor.getRoles();
+
+      if ("err" in members) {
+        if ("userNotAuthenticated" in members.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
         return;
       }
-      const list = "ok" in response ? response.ok : undefined;
-      if (list) {
-        const newWorkspaceList = list.map(
-          (member: { id: { toString: () => any }; name: any; role: { name: any } }) => ({
-            id: member.id.toString(),
-            name: member.name,
-            role: member.role.name,
+
+      if ("err" in roles) {
+        if ("userNotAuthenticated" in roles.err) console.log("User not authenticated");
+        else console.log("Error fetching profile");
+        return;
+      }
+
+      const memberList = members.ok;
+      const roleList = roles.ok;
+
+      if (memberList) {
+        const newWorkspaceList = await Promise.all(
+          memberList.map(async (member) => {
+            let profileInfo = await backofficeGateway.getProfileById(member.id);
+
+            let memberName = "Unknown";
+
+            if ("ok" in profileInfo) {
+              memberName = profileInfo.ok.username;
+            }
+
+            return {
+              id: member.id.toString(),
+              name: memberName,
+              role: roleList.find((role) => role.id === member.roleId)?.name || "Unknown",
+            };
           })
         );
 
         setDataworkspaces(newWorkspaceList);
       }
-      console.log(list, "mi lista");
     } catch (error) {
       console.error("error response", { error });
     }
