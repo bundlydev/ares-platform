@@ -5,7 +5,7 @@ import Role "../workspace/role";
 import Models "./models";
 
 module {
-	public type GetProgileResponseOk = Models.Profile;
+	public type GetProgileResponseOk = Models.ProfileEntity;
 
 	public type GetProfileResponseErr = {
 		#userNotAuthenticated;
