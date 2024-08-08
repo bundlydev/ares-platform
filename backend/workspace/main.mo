@@ -59,17 +59,17 @@ shared ({ caller = creator }) actor class WorkspaceActorClass(name : Text) = Sel
 		#ok();
 	};
 
-	type DeleteResponseOk = {
+	type DeleteResultOk = {
 		refundedCycles : Nat;
 	};
 
-	type DeleteResponseErr = {
+	type DeleteResultErr = {
 		#unauthorized;
 	};
 
-	type DeleteResponse = Result.Result<DeleteResponseOk, DeleteResponseErr>;
+	type DeleteResult = Result.Result<DeleteResultOk, DeleteResultErr>;
 
-	public shared ({ caller }) func onDelete(requester : Principal) : async DeleteResponse {
+	public shared ({ caller }) func onDelete(requester : Principal) : async DeleteResult {
 		if (not Principal.equal(caller, _creator)) {
 			return #err(#unauthorized);
 		};
@@ -98,18 +98,18 @@ shared ({ caller = creator }) actor class WorkspaceActorClass(name : Text) = Sel
 		};
 	};
 
-	type GetInfoResponseOk = {
+	type GetInfoResultOk = {
 		id : Principal;
 		name : Text;
 	};
 
-	type GetInfoResponseErr = {
+	type GetInfoResultErr = {
 		#unauthorized;
 	};
 
-	type GetInfoResponse = Result.Result<GetInfoResponseOk, GetInfoResponseErr>;
+	type GetInfoResult = Result.Result<GetInfoResultOk, GetInfoResultErr>;
 
-	public shared query ({ caller }) func getInfo() : async GetInfoResponse {
+	public shared query ({ caller }) func getInfo() : async GetInfoResult {
 		if (not memberService.isMember(caller)) {
 			return #err(#unauthorized);
 		};
@@ -122,15 +122,15 @@ shared ({ caller = creator }) actor class WorkspaceActorClass(name : Text) = Sel
 		return #ok(result);
 	};
 
-	type GetRolesResponseOk = [RoleModule.RoleEntity];
+	type GetRolesResultOk = [RoleModule.RoleEntity];
 
-	type GetRolesResponseErr = {
+	type GetRolesResultErr = {
 		#unauthorized;
 	};
 
-	type GetRolesResponse = Result.Result<GetRolesResponseOk, GetRolesResponseErr>;
+	type GetRolesResult = Result.Result<GetRolesResultOk, GetRolesResultErr>;
 
-	public shared query ({ caller }) func getRoles() : async GetRolesResponse {
+	public shared query ({ caller }) func getRoles() : async GetRolesResult {
 		if (not memberService.isMember(caller)) {
 			return #err(#unauthorized);
 		};
@@ -138,15 +138,15 @@ shared ({ caller = creator }) actor class WorkspaceActorClass(name : Text) = Sel
 		return #ok(roleService.getAllArray());
 	};
 
-	type GetMembersResponseOk = [MemberModule.MemberEntity];
+	type GetMembersResultOk = [MemberModule.MemberEntity];
 
-	type GetMembersResponseErr = {
+	type GetMembersResultErr = {
 		#unauthorized;
 	};
 
-	type GetMembersResponse = Result.Result<GetMembersResponseOk, GetMembersResponseErr>;
+	type GetMembersResult = Result.Result<GetMembersResultOk, GetMembersResultErr>;
 
-	public shared query ({ caller }) func getMembers() : async GetMembersResponse {
+	public shared query ({ caller }) func getMembers() : async GetMembersResult {
 		if (not hasAdminAccess(caller)) {
 			return #err(#unauthorized);
 		};
