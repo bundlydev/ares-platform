@@ -61,12 +61,10 @@ export default function Home() {
   };
 
   const getList = async (idWorkspace: string) => {
-		debugger
     setIdDataworkspaces(idWorkspace);
     try {
       const workspaceId = Principal.fromText(idWorkspace);
       const response = await backofficeGateway.getWorkspaceMembers(workspaceId);
-			debugger
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
@@ -140,7 +138,6 @@ export default function Home() {
       const memberId = Principal.fromText(userId);
       const response = await backofficeGateway.addWorkspaceMember(workspaceId, memberId, BigInt(2));
 
-      debugger;
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
