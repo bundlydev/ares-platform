@@ -68,11 +68,12 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     async function loadProfileAndWorkspaces() {
       if (isAuthenticated) {
         try {
+					debugger
           const [profileResponse, workspacesResponse] = await Promise.all([
             backofficeGateway.getMyProfile(),
             backofficeGateway.getMyWorkspaces(),
           ]);
-
+					debugger
           // Ensure responses are objects
           if (profileResponse == null || typeof profileResponse !== "object") {
             throw new Error("Invalid profile response");
@@ -106,18 +107,18 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             if (!workspacesParse.success) {
               throw new Error(`Invalid workspaces response schema: ${workspacesParse.error}`);
             }
-
-            setProfile(profileParse.data.ok || undefined);
-            setWorkspaces(workspacesParse.data.ok || undefined);
+						debugger
+            setProfile(profileParse.data.ok );
+            setWorkspaces(workspacesParse.data.ok );
           } else {
             throw new Error("Workspaces response does not contain 'ok' property");
           }
         } catch (error) {
+					debugger
           console.error("Error loading profile or workspaces:", error);
-          setProfile(undefined);
-          setWorkspaces(undefined);
         }
       } else {
+				debugger
         setProfile(undefined);
         setWorkspaces(undefined);
       }

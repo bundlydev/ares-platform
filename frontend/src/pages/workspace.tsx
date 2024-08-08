@@ -53,7 +53,9 @@ export default function Workspace() {
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setLoading(true); // Start loading
     try {
+			debugger
       const response = await backofficeGateway.createWorkspace(data);
+			debugger
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
         throw new Error("Error creating workspace");
