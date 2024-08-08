@@ -26,12 +26,14 @@ module WebhookModule {
 
 	public type ListenerEntity = {
 		canisterId : Principal;
+		// TODO: Distinct between customers and backoffice Listeners
 	};
 
 	public type WebhookListenerStorage = Map.Map<Principal, ListenerEntity>;
 
 	public class WebhookService(_storage : WebhookListenerStorage) {
 		public func register(listener : ListenerEntity) : () {
+			// TODO: Limit the number of listeners
 			Map.set(_storage, phash, listener.canisterId, listener);
 		};
 
@@ -43,5 +45,7 @@ module WebhookModule {
 				canister.webhook_handler(event);
 			};
 		};
+
+		// TODO: Implement a way to unregister a listener avoiding remove Backoffice Gateway
 	};
 };
