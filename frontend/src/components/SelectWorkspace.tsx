@@ -1,5 +1,6 @@
 import { useRouter } from "next/router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
+import { AuthContext } from "../context/auth-context";
 
 interface Workspace {
   id: string;
@@ -13,6 +14,7 @@ interface SelectWorkspaceProps {
 
 const SelectWorkspace: React.FC<SelectWorkspaceProps> = ({ myworkspaces, getList }) => {
   const router = useRouter();
+  const { setWorkspaceId } = useContext(AuthContext);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -23,14 +25,16 @@ const SelectWorkspace: React.FC<SelectWorkspaceProps> = ({ myworkspaces, getList
       const lastWorkspace = myworkspaces[myworkspaces.length - 1];
       setSelectedOption(lastWorkspace.name);
       getList(lastWorkspace.id);
+      setWorkspaceId(lastWorkspace.id);
       setIsInitialized(true);
     }
-  }, [myworkspaces, getList, isInitialized]);
+  }, [myworkspaces, getList, isInitialized, setWorkspaceId]);
 
   const handleOptionClick = (option: Workspace) => {
     setSelectedOption(option.name);
     setIsDropdownOpen(false);
     getList(option.id);
+    setWorkspaceId(option.id);
   };
 
   const handleAddClick = () => {
@@ -57,14 +61,16 @@ const SelectWorkspace: React.FC<SelectWorkspaceProps> = ({ myworkspaces, getList
         <button
           type="button"
           className="inline-flex justify-between w-56 rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+        >
           {selectedOption || "Selecciona un espacio"}
           <svg
             className="-mr-1 ml-2 h-5 w-5"
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
-            aria-hidden="true">
+            aria-hidden="true"
+          >
             <path
               fillRule="evenodd"
               d="M10 3a1 1 0 01.832.445l7 10A1 1 0 0117 15H3a1 1 0 01-.832-1.555l7-10A1 1 0 0110 3zm0 2.236L4.618 14h10.764L10 5.236z"
@@ -82,14 +88,16 @@ const SelectWorkspace: React.FC<SelectWorkspaceProps> = ({ myworkspaces, getList
                   key={option.id}
                   onClick={() => handleOptionClick(option)}
                   className="cursor-pointer block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  role="menuitem">
+                  role="menuitem"
+                >
                   {option.name}
                 </div>
               ))}
             <div
               onClick={handleAddClick}
               className="cursor-pointer block px-4 py-2 text-sm text-blue-500 hover:bg-gray-100"
-              role="menuitem">
+              role="menuitem"
+            >
               Create Workspace
             </div>
           </div>

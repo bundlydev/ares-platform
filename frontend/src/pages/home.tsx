@@ -1,10 +1,11 @@
 import { Principal } from "@dfinity/principal";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
 
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
 import { useAuthGuard } from "@app/hooks/useGuard";
+import { AuthContext } from "../context/auth-context";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import Modal from "../components/Modal";
@@ -54,13 +55,14 @@ export default function Home() {
   const menuRef = useRef<HTMLDivElement>(null);
   const hasFetchedWorkspaces = useRef(false);
 
- 
+  const { workspaceId } = useContext(AuthContext);
 
   const getFirstLetter = (text: string): string => {
     return text.charAt(0).toUpperCase();
   };
 
   const getList = async (idWorkspace: string) => {
+		debugger
     setIdDataworkspaces(idWorkspace);
     try {
       const workspaceId = Principal.fromText(idWorkspace);
@@ -180,7 +182,7 @@ export default function Home() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [menuRef, workspaceRef]);
-
+console.log(workspaceId)
   const handleCreateWorkspace = (newWorkspace: Workspace) => {
     setMyworkspace((prevWorkspaces) => [...prevWorkspaces, newWorkspace]);
     setIdDataworkspaces(newWorkspace.id);
