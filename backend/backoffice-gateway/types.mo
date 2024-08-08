@@ -50,6 +50,8 @@ module {
 
 	public type GetMyWorkspacesResponseOkItem = {
 		id : Principal;
+		name : Text;
+		// TODO: Should be a Set?
 		members : [Principal];
 	};
 
@@ -77,20 +79,6 @@ module {
 	};
 
 	public type CreateWorkspaceResponse = Result.Result<CreateWorkspaceResponseOk, CreateWorkspaceResponseErr>;
-
-	public type GetWorkspaceInfoResponseOk = {
-		id : Principal;
-		name : Text;
-	};
-
-	public type GetWorkspaceInfoResponseErr = {
-		#userNotAuthenticated;
-		#profileNotFound;
-		#workspaceNotFound;
-		#unauthorized;
-	};
-
-	public type GetWorkspaceInfoResponse = Result.Result<GetWorkspaceInfoResponseOk, GetWorkspaceInfoResponseErr>;
 
 	public type DeleteWorkspaceResponseOk = {
 		refundedCycles : Nat;

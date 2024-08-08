@@ -98,6 +98,11 @@ shared ({ caller = creator }) actor class WorkspaceActorClass(name : Text) = Sel
 		};
 	};
 
+	public query func getName() : async Text {
+		// TODO: Should I add authorization here?
+		return _name;
+	};
+
 	type GetInfoResultOk = {
 		id : Principal;
 		name : Text;
