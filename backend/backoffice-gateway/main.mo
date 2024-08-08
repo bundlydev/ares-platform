@@ -441,7 +441,7 @@ actor BackofficeGateway {
 		Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, workspaceUpdate);
 	};
 
-	public shared ({caller}) func webhook_handler(event : WebhookModule.WebhookEvent): async Types.WebhookHandlerResult {
+	public shared ({caller}) func webhookHandler(event : WebhookModule.WebhookEvent): async Types.WebhookHandlerResult {
 		if (Principal.isAnonymous(caller)) return #err(#unauthorized);
 
 		let maybeWorksace = getWorkspace(caller);
