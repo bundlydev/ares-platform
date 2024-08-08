@@ -33,7 +33,7 @@ const SelectWorkspace: React.FC = () => {
 
   const handleAddClick = () => {
     setIsDropdownOpen(false);
-    router.push("/workspaces/new");
+    router.push("/addworkspace");
   };
 
   const handleClickOutside = (event: MouseEvent) => {
