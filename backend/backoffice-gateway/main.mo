@@ -173,7 +173,6 @@ actor BackofficeGateway {
 			let info = {
 				id = Principal.fromActor(workspace.ref);
 				name = await workspace.ref.getName();
-				members = workspace.members;
 			};
 
 			workspaceList := List.push<Types.GetMyWorkspacesResponseOkItem>(info, workspaceList);
