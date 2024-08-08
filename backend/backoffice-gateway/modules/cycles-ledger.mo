@@ -1,7 +1,7 @@
 import Principal "mo:base/Principal";
 import List "mo:base/List";
 
-module CyclesLedger {
+module CyclesLedgerModule {
 	public type CycleTransaction = {
 		amount : Nat;
 		recipient : Principal;
