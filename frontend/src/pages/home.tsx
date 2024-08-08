@@ -30,8 +30,7 @@ export default function Home() {
   };
 
   const { currentIdentity } = useAuth();
-  const { workspaceId } = useContext(AuthContext);
-
+  const { workspaceId, setWorkspaceId } = useContext(AuthContext);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
   const [deleteItem, setDeleteItem] = useState<string>("");
@@ -39,7 +38,7 @@ export default function Home() {
   const [idDataworkspaces, setIdDataworkspaces] = useState<string>("");
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [dataworkspaces, setDataworkspaces] = useState<WorkspaceData[]>([]);
-  const [loading, setLoading] = useState<boolean>(false); // Estado de carga
+  const [loading, setLoading] = useState<boolean>(false); 
   const workspaces = useWorkspace();
   const profiles = useProfile();
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
@@ -57,15 +56,22 @@ export default function Home() {
     currentIdentity
   ) as CandidActors["backofficeGateway"];
 
-  const workspaceActor = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: "b77ix-eeaaa-aaaaa-qaada-cai",
-  }) as CandidActors["workspace"];
+  const workspaceActor = workspaceId ? useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
+  }) as CandidActors["workspace"] : null;
+
+  useEffect(() => {
+    if (workspaces && workspaces.length > 0 && !workspaceId) {
+      setWorkspaceId(workspaces[0].id);
+    }
+  }, [workspaces, workspaceId, setWorkspaceId]);
 
   const getFirstLetter = (text: string): string => {
     return text.charAt(0).toUpperCase();
   };
 
   const getList = async (idWorkspace: string) => {
+    if (!workspaceActor) return;
     setIdDataworkspaces(idWorkspace);
     try {
       const members = await workspaceActor.getMembers();
@@ -204,14 +210,8 @@ export default function Home() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [menuRef, workspaceRef]);
-  console.log(workspaceId);
-  const handleCreateWorkspace = (newWorkspace: Workspace) => {
-    setMyworkspace((prevWorkspaces) => [...prevWorkspaces, newWorkspace]);
-    setIdDataworkspaces(newWorkspace.id);
-    setWorkspaceIsOpen(false);
-  };
 
-  if (loadingAuth) {
+  if (loadingAuth || workspaceId === undefined) {
     return (
       <div className="flex justify-center items-center h-screen">
         <div className="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full" role="status">

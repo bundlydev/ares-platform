@@ -16,21 +16,18 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
   const profile = useProfile();
   const workspaces = useWorkspace();
   const [loading, setLoading] = useState(true);
-  console.log(profile, workspaces, "profileandworkspace");
   useEffect(() => {
     const redirect = (path: string) => {
       if (router.pathname !== path) {
         router.push(path);
       }
     };
-
     if (isPrivate) {
       if (!isAuthenticated) {
-        redirect("/");
+        redirect("/signin");
         setLoading(false);
         return;
       }
-
       if (profile) {
         if (router.pathname === "/addworkspace") {
           setLoading(false);

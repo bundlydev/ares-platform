@@ -12,7 +12,7 @@ export default function Header() {
         <div className="lg:flex lg:flex-1 lg:justify-end">
 				<InternetIdentityButton style={{display: 'flex', alignItems: 'center',background: '#083344', padding: '0 ', borderRadius: '8px', width: '350px', justifyContent: 'center'}}>
             <img src={iconICP.src} alt="Icon" className="w-20" />
-            <span className="text-white text-[14px] font-medium ml-2">LOGIN WITH INTERNET IDENTITY</span>
+            <span className="text-white text-[14px] font-medium ml-2"> INTERNET IDENTITY</span>
           </InternetIdentityButton>
         </div>
       </nav>
