@@ -12,7 +12,7 @@ import ModalDelete from "../components/ModalDelete";
 import SelectWorkspace from "../components/SelectWorkspace";
 import { AuthContext } from "../context/auth-context";
 import { useProfile } from "../hooks/useProfile";
-import { useWorkspace } from "../hooks/useWorkspace";
+import { useWorkspaces } from "../hooks/useWorkspaces";
 
 export default function Home() {
   type Workspace = {
@@ -30,7 +30,7 @@ export default function Home() {
   };
 
   const { currentIdentity } = useAuth();
-  const { workspaceId, setWorkspaceId } = useContext(AuthContext);
+  const { workspaceId } = useContext(AuthContext);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
   const [deleteItem, setDeleteItem] = useState<string>("");
@@ -39,7 +39,7 @@ export default function Home() {
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [dataworkspaces, setDataworkspaces] = useState<WorkspaceData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const workspaces = useWorkspace();
+  const workspaces = useWorkspaces();
   const profiles = useProfile();
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -61,12 +61,6 @@ export default function Home() {
         canisterId: workspaceId,
       }) as CandidActors["workspace"])
     : null;
-
-  useEffect(() => {
-    if (workspaces && workspaces.length > 0 && !workspaceId) {
-      setWorkspaceId(workspaces[0].id);
-    }
-  }, [workspaces, workspaceId, setWorkspaceId]);
 
   const getFirstLetter = (text: string): string => {
     return text.charAt(0).toUpperCase();

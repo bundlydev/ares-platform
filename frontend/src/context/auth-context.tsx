@@ -1,6 +1,8 @@
-import React, { ReactNode, createContext, useEffect, useState, useContext } from "react";
+import React, { ReactNode, createContext, useEffect, useState } from "react";
 import z from "zod";
+
 import { useAuth, useCandidActor } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters/index";
 
 export type AuthUserProfile = {
@@ -39,7 +41,7 @@ const ZResponseWorksSchema = z.object({
 
 export type AuthContextType = {
   profile?: AuthUserProfile;
-  workspaces?: AuthUserWorkspace[];
+  workspaces: AuthUserWorkspace[];
   workspaceId?: string; // Añadido aquí
   setProfile: (profile: AuthUserProfile) => void;
   setWorkspaceId: (id: string) => void; // Añadido aquí
@@ -47,7 +49,7 @@ export type AuthContextType = {
 
 export const AuthContext = createContext<AuthContextType>({
   profile: undefined,
-  workspaces: undefined,
+  workspaces: [],
   workspaceId: undefined, // Añadido aquí
   setProfile: () => {},
   setWorkspaceId: () => {},
@@ -60,8 +62,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     currentIdentity
   ) as CandidActors["backofficeGateway"];
 
+  const [isReady, setIsReady] = useState(false);
   const [profile, setProfile] = useState<AuthUserProfile | undefined>();
-  const [workspaces, setWorkspaces] = useState<AuthUserWorkspace[] | undefined>();
+  const [workspaces, setWorkspaces] = useState<AuthUserWorkspace[]>([]);
   const [workspaceId, setWorkspaceId] = useState<string | undefined>(); // Añadido aquí
 
   useEffect(() => {
@@ -104,8 +107,14 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
               throw new Error(`Invalid workspaces response schema: ${workspacesParse.error}`);
             }
 
+            let retrievedWorkspaces = workspacesParse.data.ok || [];
+
             setProfile(profileParse.data.ok);
-            setWorkspaces(workspacesParse.data.ok);
+            setWorkspaces(retrievedWorkspaces);
+
+            if (retrievedWorkspaces.length > 0) {
+              setWorkspaceId(retrievedWorkspaces[0].id);
+            }
           } else {
             throw new Error("Workspaces response does not contain 'ok' property");
           }
@@ -114,8 +123,10 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
         }
       } else {
         setProfile(undefined);
-        setWorkspaces(undefined);
+        setWorkspaces([]);
       }
+
+      setIsReady(true);
     }
 
     loadProfileAndWorkspaces();
@@ -126,8 +137,11 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ profile, workspaces, workspaceId, setProfile: updateProfile, setWorkspaceId }}>
-      {children}
-    </AuthContext.Provider>
+    isReady && (
+      <AuthContext.Provider
+        value={{ profile, workspaces, workspaceId, setProfile: updateProfile, setWorkspaceId }}>
+        {children}
+      </AuthContext.Provider>
+    )
   );
 };
