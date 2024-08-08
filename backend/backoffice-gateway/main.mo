@@ -15,28 +15,53 @@ import IC "mo:ic";
 // Custom Modules
 import TextValidator "mo:validators/Text";
 
-import Member "../workspace/member";
-import Role "../workspace/role";
+// External Modules
+import MemberModule "../workspace/modules/member";
+import RoleModule "../workspace/modules/role";
+import WebhookModule "../workspace/modules/webhook";
 import WorkspaceClass "../workspace/main";
+
+// Local Modules
+import CyclesLedgerModule "./modules/cycles-ledger";
 
 import Types "./types";
 import Models "./models";
-import CyclesLedger "./modules/cycles-ledger";
 
-actor {
+actor BackofficeGateway {
 	// Database
-	stable let _profiles = Map.new<Principal, Models.Profile>();
-	stable let _workspaces = Map.new<Principal, Models.Workspace>();
-	stable var _cyclesLedgerStorage: CyclesLedger.CyclesLederModel = List.nil();
+	stable let _profileStorage: Models.ProfileStorage = Map.new<Principal, Models.ProfileEntity>();
+	stable let _workspaceStorate: Models.WorkspaceStorage = Map.new<Principal, Models.WorkspaceEntity>();
+	stable var _cyclesLedgerStorage: CyclesLedgerModule.CyclesLedgerStorage = List.nil();
 
 	// Services
 	private let ic = actor("aaaaa-aa") : IC.Service;
-	private let cyclesLedgerService = CyclesLedger.CyclesLedgerService(_cyclesLedgerStorage);
+	private let cyclesLedgerService = CyclesLedgerModule.CyclesLedgerService(_cyclesLedgerStorage);
 
-	public shared query ({ caller }) func getProfile() : async Types.GetProfileResponse {
+	private func getProfile(profileId: Principal): ?Models.ProfileEntity {
+		return Map.get(_profileStorage, phash, profileId);
+	};
+
+	private func getWorkspace(workspaceId: Principal): ?Models.WorkspaceEntity {
+		return Map.get(_workspaceStorate, phash, workspaceId);
+	};
+
+	public shared query func getCanisterBalance(): async Nat {
+		// TODO: Add security check to prevent unauthorized access
+		return Cycles.balance();
+	};
+
+	public shared query func getCanisterAvailableBalance(): async Nat {
+		// TODO: Add security check to prevent unauthorized access
+		let totalBalance : Nat = Cycles.balance();
+		let availableBalance : Nat = totalBalance - cyclesLedgerService.getTotalBalance();
+
+		return availableBalance;
+	};
+
+	public shared query ({ caller }) func getMyProfile() : async Types.GetProfileResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
 
-		let maybeProfile = Map.get(_profiles, phash, caller);
+		let maybeProfile = getProfile(caller);
 
 		switch maybeProfile {
 			case (?profile) #ok(profile);
@@ -46,7 +71,7 @@ actor {
 
 	public shared ({ caller }) func createProfile(data : Types.CreateProfileData) : async Types.CreateProfileResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) != null) return #err(#principalAlreadyRegistered);
+		if (getProfile(caller) != null) return #err(#principalAlreadyRegistered);
 
 		if (TextValidator.isEmpty(data.username)) {
 		// TODO: Validate username with regex ^[a-zA-Z0-9_]{5,15}$
@@ -62,7 +87,7 @@ actor {
 			return #err(#requiredField("lastName"));
 		};
 
-		for (profile in Map.vals(_profiles)) {
+		for (profile in Map.vals(_profileStorage)) {
 			if (profile.username == data.username) {
 				return #err(#usernameAlreadyExists);
 			};
@@ -72,25 +97,25 @@ actor {
 			};
 		};
 
-		let newProfile : Models.Profile = {
+		let newProfile : Models.ProfileEntity = {
 			username = data.username;
 			firstName = data.firstName;
 			lastName = data.lastName;
 			email = data.email;
 		};
 
-		Map.set<Principal, Models.Profile>(_profiles, phash, caller, newProfile);
+		Map.set<Principal, Models.ProfileEntity>(_profileStorage, phash, caller, newProfile);
 
 		#ok();
 	};
 
 	public shared query ({ caller }) func findProfilesByUsernameChunk(chunk : Text) : async Types.FindProfilesByUsernameChunkResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
 		if (Text.size(chunk) < 3) return #err(#chunkTooShort);
 
-		let matchedProfiles = Map.filter<Principal, Models.Profile>(
-			_profiles,
+		let matchedProfiles = Map.filter<Principal, Models.ProfileEntity>(
+			_profileStorage,
 			phash,
 			func(key, value) {
 				return Text.contains(value.username, #text chunk) and not Principal.equal(key, caller);
@@ -99,7 +124,7 @@ actor {
 
 		let matchedProfilesArray = Iter.toArray(Map.entries(matchedProfiles));
 
-		let preResult = Array.map<(Principal, Models.Profile), { id : Principal; username : Text }>(
+		let preResult = Array.map<(Principal, Models.ProfileEntity), { id : Principal; username : Text }>(
 			matchedProfilesArray,
 			func(item) {
 				return {
@@ -116,12 +141,21 @@ actor {
 		return #ok(result);
 	};
 
+	public shared query ({caller}) func getMyBalance(): async Types.GetMyBalanceResponse {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
+
+		let balance = cyclesLedgerService.getUserBalance(caller);
+
+		#ok({balance});
+	};
+
 	public shared query ({ caller }) func getMyWorkspaces() : async Types.GetMyWorkspacesResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
 
-		let workspaceMap = Map.filter<Principal, Models.Workspace>(
-			_workspaces,
+		let workspaceMap = Map.filter<Principal, Models.WorkspaceEntity>(
+			_workspaceStorate,
 			phash,
 			func(key, value) {
 				let index = Array.indexOf(caller, value.members, Principal.equal);
@@ -134,7 +168,7 @@ actor {
 		let workspaceIter = Map.vals(workspaceMap);
 		let workspaces = Iter.toArray(workspaceIter);
 
-		let result = Array.map<Models.Workspace, { id : Principal; members : [Principal] }>(
+		let result = Array.map<Models.WorkspaceEntity, { id : Principal; members : [Principal] }>(
 			workspaces,
 			func item = {
 				id = Principal.fromActor(item.ref);
@@ -147,7 +181,7 @@ actor {
 
 	public shared ({ caller }) func createWorkspace(data : Types.CreateWorkspaceData) : async Types.CreateWorkspaceResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
 
 		if (TextValidator.isEmpty(data.name)) {
 			return #err(#requiredField("name"));
@@ -156,24 +190,26 @@ actor {
 		// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
 		Cycles.add(113_846_199_230);
 
-		let workspace = await WorkspaceClass.WorkspaceClass(data.name, caller);
+		let workspace = await WorkspaceClass.WorkspaceActorClass(data.name);
 		let workspaceId = Principal.fromActor(workspace);
+		ignore await workspace.addWebhookListener(Principal.fromActor(BackofficeGateway));
+		ignore await workspace.addFirstOwner(caller);
 
-		let newWorkspace : Models.Workspace = {
+		let newWorkspace : Models.WorkspaceEntity = {
 			ref = workspace;
-			members = [caller];
+			members = [];
 		};
 
-		Map.set<Principal, Models.Workspace>(_workspaces, phash, workspaceId, newWorkspace);
+		Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, newWorkspace);
 
 		#ok({ workspaceId });
 	};
 
 	public shared composite query ({ caller }) func getWorkspaceInfo(workspaceId : Principal) : async Types.GetWorkspaceInfoResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
 
-		let workspace = Map.get(_workspaces, phash, workspaceId);
+		let workspace = getWorkspace(workspaceId);
 
 		switch workspace {
 			case null { #err(#workspaceNotFound) };
@@ -196,9 +232,9 @@ actor {
 
 	public shared ({caller}) func deleteWorkspace(workspaceId : Principal) : async Types.DeleteWorkspaceResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
 
-		let maybeWorkspace = Map.get(_workspaces, phash, workspaceId);
+		let maybeWorkspace = Map.get(_workspaceStorate, phash, workspaceId);
 
 		switch maybeWorkspace {
 			case null #err(#workspaceNotFound);
@@ -210,15 +246,16 @@ actor {
 						await ic.stop_canister({canister_id = Principal.fromActor(workspace.ref)});
 						await ic.delete_canister({canister_id = Principal.fromActor(workspace.ref)});
 
-						ignore Map.remove<Principal, Models.Workspace>(_workspaces, phash, workspaceId);
+						ignore Map.remove<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId);
 
-						let newCyclesEntry: CyclesLedger.CyclesLedgerEntity = {
+						let newCyclesEntry: CyclesLedgerModule.CycleTransaction = {
 							amount = result.refundedCycles;
 							recipient = caller;
 							transactionDate = Time.now();
+							transactionType = #deposit;
 						};
 
-						cyclesLedgerService.addEntry(newCyclesEntry);
+						cyclesLedgerService.addTransaction(newCyclesEntry);
 
 						#ok({ refundedCycles = result.refundedCycles });
 					};
@@ -228,12 +265,12 @@ actor {
 		};
 	};
 
-	private func setGetWorkspaceMembersResult(members : [Member.Member], roles : [Role.Role]): Types.GetWorkspaceMembersResponseOk  {
-		let result = Array.map<Member.Member, { id : Principal; name : Text; role : { id : Nat; name : Text } }>(
+	private func setGetWorkspaceMembersResult(members : [MemberModule.MemberEntity], roles : [RoleModule.RoleEntity]): Types.GetWorkspaceMembersResponseOk  {
+		let result = Array.map<MemberModule.MemberEntity, { id : Principal; name : Text; role : { id : Nat; name : Text } }>(
 			members,
 			func member {
-				let role = Array.find<Role.Role>(roles, func r = r.id == member.roleId);
-				let profile = Map.find<Principal, Models.Profile>(_profiles, func (id, _) = Principal.equal(id, member.id));
+				let role = Array.find<RoleModule.RoleEntity>(roles, func r = r.id == member.roleId);
+				let profile = Map.find<Principal, Models.ProfileEntity>(_profileStorage, func (id, _) = Principal.equal(id, member.id));
 
 				switch ((role, profile)) {
 					case ((?r, ?p)) {
@@ -259,9 +296,9 @@ actor {
 
 	public shared composite query ({caller}) func getWorkspaceMembers(workspaceId: Principal): async Types.GetWorkspaceMembersResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
 
-		let workspace = Map.get(_workspaces, phash, workspaceId);
+		let workspace = getWorkspace(workspaceId);
 
 		switch workspace {
 			case null { #err(#workspaceNotFound) };
@@ -285,9 +322,9 @@ actor {
 
 	public shared ({ caller }) func addWorkspaceMember(workspaceId : Principal, userId : Principal, roleId: Nat) : async Types.AddWorkspaceMemberResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
 
-		let workspace = Map.get(_workspaces, phash, workspaceId);
+		let workspace = getWorkspace(workspaceId);
 
 		switch workspace {
 			case null #err(#workspaceNotFound);
@@ -304,12 +341,12 @@ actor {
 								let members : [Principal] = Array.append<Principal>(wp.members, [userId]);
 								let workspaceId : Principal = Principal.fromActor(wp.ref);
 
-								let workspaceUpdate : Models.Workspace = {
+								let workspaceUpdate : Models.WorkspaceEntity = {
 									ref = wp.ref;
 									members;
 								};
 
-								Map.set<Principal, Models.Workspace>(_workspaces, phash, workspaceId, workspaceUpdate);
+								Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, workspaceUpdate);
 
 								#ok();
 							};
@@ -323,9 +360,9 @@ actor {
 
 	public shared ({ caller }) func removeWorkspaceMember(workspaceId : Principal, userId : Principal) : async Types.RemoveWorkspaceMemberResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
 
-		let workspace = Map.get(_workspaces, phash, workspaceId);
+		let workspace = getWorkspace(workspaceId);
 
 		switch workspace {
 			case null #err(#workspaceNotFound);
@@ -342,12 +379,12 @@ actor {
 								let members : [Principal] = Array.filter<Principal>(wp.members, func mem = not Principal.equal(mem, userId));
 								let workspaceId : Principal = Principal.fromActor(wp.ref);
 
-								let workspaceUpdate : Models.Workspace = {
+								let workspaceUpdate : Models.WorkspaceEntity = {
 									ref = wp.ref;
 									members;
 								};
 
-								Map.set<Principal, Models.Workspace>(_workspaces, phash, workspaceId, workspaceUpdate);
+								Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, workspaceUpdate);
 
 								#ok();
 							};
@@ -361,9 +398,9 @@ actor {
 
 	public shared composite query ({caller}) func getWorkspaceRoles(workspaceId: Principal): async Types.GetWorkspaceRolesResponse {
 		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+		if (getProfile(caller) == null) return #err(#profileNotFound);
 
-		let workspace = Map.get(_workspaces, phash, workspaceId);
+		let workspace = getWorkspace(workspaceId);
 
 		switch workspace {
 			case null #err(#workspaceNotFound);
@@ -378,12 +415,53 @@ actor {
 		};
 	};
 
-	public shared query ({caller}) func getMyBalance(): async Types.GetMyBalanceResponse {
-		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (Map.get(_profiles, phash, caller) == null) return #err(#profileNotFound);
+	private func _addWorkspaceMember(workspace : Models.WorkspaceEntity, newMember : WebhookModule.MemberAddedEvent) {
+		let members : [Principal] = Array.append<Principal>(workspace.members, [newMember.userId]);
 
-		let balance = cyclesLedgerService.getUserBalance(caller);
+		let workspaceUpdate : Models.WorkspaceEntity = {
+			ref = workspace.ref;
+			members;
+		};
 
-		#ok({balance});
+		let workspaceId = Principal.fromActor(workspace.ref);
+
+		Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, workspaceUpdate);
 	};
+
+	private func _removeWorkspaceMember(workspace : Models.WorkspaceEntity, removedMember : WebhookModule.MemberRemovedEvent) {
+		let members : [Principal] = Array.filter<Principal>(workspace.members, func mem = not Principal.equal(mem, removedMember.userId));
+
+		let workspaceUpdate : Models.WorkspaceEntity = {
+			ref = workspace.ref;
+			members;
+		};
+
+		let workspaceId = Principal.fromActor(workspace.ref);
+
+		Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, workspaceUpdate);
+	};
+
+	public shared ({caller}) func webhook_handler(event : WebhookModule.WebhookEvent): async Types.WebhookHandlerResult {
+		if (Principal.isAnonymous(caller)) return #err(#unauthorized);
+
+		let maybeWorksace = getWorkspace(caller);
+
+		switch maybeWorksace {
+			case (?workspace) {
+				switch event {
+					case (#memberAdded(newMember)) {
+						_addWorkspaceMember(workspace, newMember);
+
+						#ok();
+					};
+					case (#memberRemoved(removedMember)) {
+						_removeWorkspaceMember(workspace, removedMember);
+
+						#ok();
+					};
+				};
+			};
+			case null #err(#workspaceNotFound);
+		};
+	}
 };

@@ -9,45 +9,68 @@ import Cycles "mo:base/ExperimentalCycles";
 import IC "mo:ic";
 
 // Custom Modules
-import Member "./member";
-import Role "./role";
+import MemberModule "./modules/member";
+import RoleModule "./modules/role";
+import WebhookModule "./modules/webhook";
 
-shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Principal) = this {
-	// Database
-	private stable let _creator : Principal = creator;
-	private stable var _name : Text = name;
-	private stable let _roles = Map.new<Nat, Role.Role>();
-	private stable let _members = Map.new<Principal, Member.Member>();
+shared ({ caller = creator }) actor class WorkspaceActorClass(name : Text) = Self {
+	// Storage
+	private stable let _creator = creator;
+	private stable let _name = name;
+	private stable let _roles = Map.new<Nat, RoleModule.RoleEntity>();
+	private stable let _members = Map.new<Principal, MemberModule.MemberEntity>();
+	private stable let _webhooks = Map.new<Principal, WebhookModule.ListenerEntity>();
 
 	// Services
 	private let ic = actor ("aaaaa-aa") : IC.Service;
-	private let roleService = Role.RoleService(_roles);
-	private let memberService = Member.MemberService(_members);
+	private let webhookService = WebhookModule.WebhookService(_webhooks);
+	private let roleService = RoleModule.RoleService(_roles);
+	private let memberService = MemberModule.MemberService(_members, webhookService);
 
-	// Init Start
-	ignore memberService.add(owner, Role.DEFAULT_OWNER_ROLE_ID);
-	// Init End
-
-	private func hasAccess(caller : Principal) : Bool {
+	private func hasAdminAccess(caller : Principal) : Bool {
 		if (Principal.isAnonymous(caller)) return false;
+
+		if (memberService.isAdmin(caller)) return true;
+
+		if (memberService.isOwner(caller)) return true;
 
 		if (Principal.equal(caller, _creator)) return true;
 
 		return false;
 	};
 
-	type DeleteResponseOk = {
-		refundedCycles : Nat;
-	};
+	type AddFirstOwnerResultOk = ();
 
-	type DeleteResponseErr = {
+	type AddFirstOwnerResultErr = {
 		#unauthorized;
 	};
 
-	type DeleteResponse = Result.Result<DeleteResponseOk, DeleteResponseErr>;
+	type AddFirstOwnerResult = Result.Result<AddFirstOwnerResultOk, AddFirstOwnerResultErr>;
 
-	public shared ({ caller }) func onDelete(requester : Principal) : async DeleteResponse {
-		if (not hasAccess(caller)) {
+	public shared ({ caller }) func addFirstOwner(userId : Principal) : async AddFirstOwnerResult {
+		if (not Principal.equal(caller, _creator)) {
+			return #err(#unauthorized);
+		};
+
+		// TODO: Prevent adding if there is already an owner
+
+		ignore memberService.add(userId, RoleModule.DEFAULT_OWNER_ROLE_ID);
+
+		#ok();
+	};
+
+	type DeleteResultOk = {
+		refundedCycles : Nat;
+	};
+
+	type DeleteResultErr = {
+		#unauthorized;
+	};
+
+	type DeleteResult = Result.Result<DeleteResultOk, DeleteResultErr>;
+
+	public shared ({ caller }) func onDelete(requester : Principal) : async DeleteResult {
+		if (not Principal.equal(caller, _creator)) {
 			return #err(#unauthorized);
 		};
 
@@ -75,56 +98,56 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 		};
 	};
 
-	type GetInfoResponseOk = {
+	type GetInfoResultOk = {
 		id : Principal;
 		name : Text;
 	};
 
-	type GetInfoResponseErr = {
+	type GetInfoResultErr = {
 		#unauthorized;
 	};
 
-	type GetInfoResponse = Result.Result<GetInfoResponseOk, GetInfoResponseErr>;
+	type GetInfoResult = Result.Result<GetInfoResultOk, GetInfoResultErr>;
 
-	public shared query ({ caller }) func getInfo() : async GetInfoResponse {
-		if (not hasAccess(caller)) {
+	public shared query ({ caller }) func getInfo() : async GetInfoResult {
+		if (not memberService.isMember(caller)) {
 			return #err(#unauthorized);
 		};
 
 		let result = {
-			id = Principal.fromActor(this);
+			id = Principal.fromActor(Self);
 			name = _name;
 		};
 
 		return #ok(result);
 	};
 
-	type GetRolesResponseOk = [Role.Role];
+	type GetRolesResultOk = [RoleModule.RoleEntity];
 
-	type GetRolesResponseErr = {
+	type GetRolesResultErr = {
 		#unauthorized;
 	};
 
-	type GetRolesResponse = Result.Result<GetRolesResponseOk, GetRolesResponseErr>;
+	type GetRolesResult = Result.Result<GetRolesResultOk, GetRolesResultErr>;
 
-	public shared query ({ caller }) func getRoles() : async GetRolesResponse {
-		if (not hasAccess(caller)) {
+	public shared query ({ caller }) func getRoles() : async GetRolesResult {
+		if (not memberService.isMember(caller)) {
 			return #err(#unauthorized);
 		};
 
 		return #ok(roleService.getAllArray());
 	};
 
-	type GetMembersResponseOk = [Member.Member];
+	type GetMembersResultOk = [MemberModule.MemberEntity];
 
-	type GetMembersResponseErr = {
+	type GetMembersResultErr = {
 		#unauthorized;
 	};
 
-	type GetMembersResponse = Result.Result<GetMembersResponseOk, GetMembersResponseErr>;
+	type GetMembersResult = Result.Result<GetMembersResultOk, GetMembersResultErr>;
 
-	public shared query ({ caller }) func getMembers() : async GetMembersResponse {
-		if (not hasAccess(caller)) {
+	public shared query ({ caller }) func getMembers() : async GetMembersResult {
+		if (not hasAdminAccess(caller)) {
 			return #err(#unauthorized);
 		};
 
@@ -142,19 +165,21 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 	type AddMemberResult = Result.Result<AddMemberResultOk, AddMemberResultErr>;
 
 	public shared ({ caller }) func addMember(userId : Principal, roleId : Nat) : async AddMemberResult {
-		if (not hasAccess(caller)) {
+		if (not hasAdminAccess(caller)) {
 			return #err(#unauthorized);
 		};
 
-		if (roleId == Role.DEFAULT_OWNER_ROLE_ID) {
+		// TODO: Validate if userId has a profile in the backoffice-gateway
+
+		if (roleId == RoleModule.DEFAULT_OWNER_ROLE_ID) {
 			return #err(#additionalOwnersNotAllowed);
 		};
 
-		let result = memberService.add(userId, roleId);
+		let addResult = await memberService.add(userId, roleId);
 
-		switch (result) {
-			case (#err(#memberAlreadyRegistered)) #err(#memberAlreadyRegistered);
-			case (#ok(_)) #ok();
+		switch (addResult) {
+			case (#ok()) #ok();
+			case (error) error;
 		};
 	};
 
@@ -169,10 +194,28 @@ shared ({ caller = creator }) actor class WorkspaceClass(name : Text, owner : Pr
 	type RemoveMemberResult = Result.Result<RemoveMemberResultOk, RemoveMemberResultErr>;
 
 	public shared ({ caller }) func removeMember(userId : Principal) : async RemoveMemberResult {
-		if (not hasAccess(caller)) {
+		if (not hasAdminAccess(caller)) {
 			return #err(#unauthorized);
 		};
 
-		return memberService.remove(userId);
+		return await memberService.remove(userId);
+	};
+
+	type AddWebhookListenerResultOk = ();
+
+	type AddWebhookListenerResultErr = {
+		#unauthorized;
+	};
+
+	type AddWebhookListenerResult = Result.Result<AddWebhookListenerResultOk, AddWebhookListenerResultErr>;
+
+	public shared ({ caller }) func addWebhookListener(canisterId : Principal) : async AddWebhookListenerResult {
+		if (not hasAdminAccess(caller)) {
+			return #err(#unauthorized);
+		};
+
+		webhookService.register({ canisterId });
+
+		#ok();
 	};
 };
