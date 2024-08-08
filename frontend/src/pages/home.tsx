@@ -60,7 +60,7 @@ export default function Home() {
 
   useEffect(() => {
     getWorkspaceMembers();
-  }, []);
+  }, [workspaceId]);
 
   const getWorkspaceMembers = async () => {
     // TODO: Should I catch errors here?
