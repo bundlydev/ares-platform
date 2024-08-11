@@ -7,8 +7,8 @@ import { CandidActors } from "@app/canisters/index";
 import { useAuthGuard } from "@app/hooks/useGuard";
 
 import LoadingSpinner from "../components/LoadingSpinner";
+import Menu from "../components/Menu";
 import Modal from "../components/Modal";
-import ModalDelete from "../components/ModalDelete";
 import SelectWorkspace from "../components/SelectWorkspace";
 import { AuthContext } from "../context/auth-context";
 import { useProfile } from "../hooks/useProfile";
@@ -259,13 +259,7 @@ export default function Home() {
         )}
       </div>
       <div className="flex items-start">
-        <div
-          style={{ height: "calc(100vh - 64px)" }}
-          className="flex flex-col justify-start items-center bg-cyan-950 w-56 gap-10 pt-10">
-          <div className="cursor-pointer w-48 h-12 rounded-lg flex justify-center items-center bg-slate-100 text-cyan-950 text-2xl font-semibold">
-            IAM
-          </div>
-        </div>
+        <Menu />
         <div
           style={{ height: "calc(100vh - 64px)" }}
           className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
@@ -310,11 +304,6 @@ export default function Home() {
         getListFindName={getListFindName}
         dataNameSearch={dataNameSearch}
         loading={loading}
-      />
-      <ModalDelete
-        showModalDelete={showModalDelete}
-        setShowModalDelete={setShowModalDelete}
-        deleteItem={deleteItem}
       />
     </div>
   );

@@ -23,28 +23,36 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
         router.push(path);
       }
     };
+
     if (isPrivate) {
       if (!isAuthenticated) {
         redirect("/signin");
         setLoading(false);
         return;
       }
-      if (profile) {
-        if (router.pathname === "/addworkspace") {
-          setLoading(false);
-          return;
-        }
 
-        if (workspaces.length > 0) {
-          redirect("/home");
-        } else {
-          redirect("/workspace");
+      if (profile) {
+        if (router.pathname === "/settings") {
+          if (workspaces.length > 0) {
+            setLoading(false);
+            return;
+          } else {
+            redirect("/workspace");
+            return;
+          }
+        }
+        if (router.pathname !== "/settings" && router.pathname !== "/addworkspace") {
+          if (workspaces.length > 0) {
+            redirect("/home");
+          } else {
+            redirect("/workspace");
+          }
         }
       } else {
         redirect("/profile");
       }
     } else {
-      if (isAuthenticated && router.pathname !== "/addworkspace") {
+      if (isAuthenticated && router.pathname !== "/addworkspace" && router.pathname !== "/settings") {
         redirect("/home");
       }
     }
