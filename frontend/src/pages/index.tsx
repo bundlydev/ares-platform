@@ -8,7 +8,9 @@ import Header from "@app/components/header";
 
 type Profile = {
   username: string;
-  bio: string;
+  email: string;
+  firstName: string;
+  lastName: string;
 };
 
 export default function IcConnectPage() {
@@ -16,9 +18,10 @@ export default function IcConnectPage() {
   const identities = useIdentities();
   const [profile, setProfile] = useState<Profile | undefined>();
   const [loading, setLoading] = useState(false); // State for loader
-  const test = useCandidActor<CandidActors>("test", currentIdentity, {
-    canisterId: process.env.NEXT_PUBLIC_TEST_CANISTER_ID,
-  }) as CandidActors["test"];
+  const workspaceIndex = useCandidActor<CandidActors>(
+    "workspaceIndex",
+    currentIdentity
+  ) as CandidActors["workspaceIndex"];
 
   useEffect(() => {
     getProfile();
@@ -37,7 +40,7 @@ export default function IcConnectPage() {
 
   async function getProfile() {
     try {
-      const response = await test.getProfile();
+      const response = await workspaceIndex.getProfile();
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -51,10 +54,18 @@ export default function IcConnectPage() {
     }
   }
 
-  async function registerProfile(username: string, bio: string) {
+  async function registerProfile(username: string, email: string, firstName: string, lastName: string) {
     try {
       setLoading(true); // Show loader
-      const response = await test.createProfile(username, bio);
+
+      const profile = {
+        username,
+        email,
+        firstName,
+        lastName,
+      };
+
+      const response = await workspaceIndex.createProfile(profile);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
@@ -63,7 +74,7 @@ export default function IcConnectPage() {
         throw new Error("Error creating profile");
       }
 
-      setProfile({ username, bio });
+      setProfile(profile);
     } catch (error) {
       console.error({ error });
     } finally {
@@ -92,7 +103,7 @@ export default function IcConnectPage() {
                     <strong>Username: </strong> {profile.username}
                   </p>
                   <p>
-                    <strong>Bio: </strong> {profile.bio}
+                    <strong>Email: </strong> {profile.email}
                   </p>
                 </>
               ) : (
@@ -133,32 +144,33 @@ export default function IcConnectPage() {
 }
 
 type ProfileFormProps = {
-  onSubmit: (username: string, bio: string) => Promise<void>;
+  onSubmit: (username: string, email: string, firstName: string, lastName: string) => Promise<void>;
   loading: boolean; // Loader state
 };
 
 function CreateProfileForm({ onSubmit, loading }: ProfileFormProps) {
   const [username, setUsername] = useState("");
-  const [bio, setBio] = useState("");
+  const [email, setEmail] = useState("");
 
   const handleUsernameChange = (event: ChangeEvent<HTMLInputElement>) => {
     setUsername(event.target.value);
   };
 
-  const handleBioChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    setBio(event.target.value);
+  const handleEmailChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    await onSubmit(username, bio);
+    // Get firstName and lastName fields from form
+    await onSubmit(username, email, "", "");
     resetForm();
   };
 
   const resetForm = () => {
     setUsername("");
-    setBio("");
+    setEmail("");
   };
 
   return (
@@ -177,15 +189,15 @@ function CreateProfileForm({ onSubmit, loading }: ProfileFormProps) {
         />
       </div>
       <div className="mb-6">
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="bio">
-          Bio
+        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+          Email
         </label>
-        <textarea
+        <input
           className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          id="bio"
-          placeholder="Bio"
-          value={bio}
-          onChange={handleBioChange}
+          id="email"
+          placeholder="Email"
+          value={email}
+          onChange={handleEmailChange}
         />
       </div>
       <div className="flex items-center justify-between">

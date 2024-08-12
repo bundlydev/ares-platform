@@ -1,11 +1,11 @@
 import { CandidCanister } from "@bundly/ares-core";
 
-import { TestActor, test } from "./test";
+import { WorkspaceIndexActor, workspaceIndex } from "./workspace-index";
 
 export type CandidActors = {
-  test: TestActor;
+  workspaceIndex: WorkspaceIndexActor;
 };
 
 export let candidCanisters: Record<keyof CandidActors, CandidCanister> = {
-  test,
+  workspaceIndex,
 };

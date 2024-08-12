@@ -2,21 +2,29 @@
   "version": 1,
   "dfx": "0.20.1",
   "canisters": {
-    "test": {
+    "backoffice-gateway": {
       "type": "motoko",
-      "main": "backend/test/main.mo",
+      "main": "backend/backoffice-gateway/main.mo",
       "declarations": {
         "node_compatibility": true,
-        "output": "frontend/src/declarations/test"
+        "output": "frontend/src/declarations/backoffice-gateway"
+      }
+    },
+    "workspace": {
+      "type": "motoko",
+      "main": "backend/workspace/main.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/workspace"
       }
     },
     "frontend": {
-      "dependencies": ["test"],
+      "type": "assets",
+      "dependencies": ["backoffice-gateway"],
       "frontend": {
         "entrypoint": "frontend/build/index.html"
       },
-      "source": ["frontend/build"],
-      "type": "assets"
+      "source": ["frontend/build"]
     },
     "internet-identity": {
       "type": "custom",
@@ -28,6 +36,11 @@
           "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
         }
       }
+    }
+  },
+  "defaults": {
+    "build": {
+      "packtool": "mops sources"
     }
   }
 }
