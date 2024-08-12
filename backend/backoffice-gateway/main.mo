@@ -16,8 +16,6 @@ import IC "mo:ic";
 import TextValidator "mo:validators/Text";
 
 // External Modules
-import MemberModule "../workspace/modules/member";
-import RoleModule "../workspace/modules/role";
 import WebhookModule "../workspace/modules/webhook";
 import WorkspaceClass "../workspace/main";
 
@@ -56,6 +54,18 @@ actor BackofficeGateway {
 		let availableBalance : Nat = totalBalance - cyclesLedgerService.getTotalBalance();
 
 		return availableBalance;
+	};
+
+	public shared query ({ caller }) func getProfileById(profileId: Principal): async Types.GetProfileByIdResult {
+		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
+		// TODO: Should I add extra security check to prevent unauthorized access to other profiles?
+
+		let maybeProfile = getProfile(profileId);
+
+		switch maybeProfile {
+			case (?profile) #ok(profile);
+			case null #err(#profileNotFound);
+		};
 	};
 
 	public shared query ({ caller }) func getMyProfile() : async Types.GetProfileResponse {
@@ -242,156 +252,6 @@ actor BackofficeGateway {
 		};
 	};
 
-	private func setGetWorkspaceMembersResult(members : [MemberModule.MemberEntity], roles : [RoleModule.RoleEntity]): Types.GetWorkspaceMembersResponseOk  {
-		let result = Array.map<MemberModule.MemberEntity, { id : Principal; name : Text; role : { id : Nat; name : Text } }>(
-			members,
-			func member {
-				let role = Array.find<RoleModule.RoleEntity>(roles, func r = r.id == member.roleId);
-				let profile = Map.find<Principal, Models.ProfileEntity>(_profileStorage, func (id, _) = Principal.equal(id, member.id));
-
-				switch ((role, profile)) {
-					case ((?r, ?p)) {
-						{
-							id = member.id;
-							name = p.1.firstName # " " # p.1.lastName;
-							role = {
-								id = r.id;
-								name = r.name;
-							};
-						};
-					};
-					// TODO: Handle case when role or profile is not found
-					// case(_) {
-						
-					// };
-				};
-			},
-		);
-
-		return result;
-	};
-
-	public shared composite query ({caller}) func getWorkspaceMembers(workspaceId: Principal): async Types.GetWorkspaceMembersResponse {
-		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (getProfile(caller) == null) return #err(#profileNotFound);
-
-		let workspace = getWorkspace(workspaceId);
-
-		switch workspace {
-			case null { #err(#workspaceNotFound) };
-			case (?wp) {
-				let getMembersResult = await wp.ref.getMembers();
-				let getRolesResult = await wp.ref.getRoles();
-
-				switch ((getMembersResult, getRolesResult)) {
-					case ((#ok(members), #ok(roles))) {
-						let result = setGetWorkspaceMembersResult(members, roles);
-
-						#ok(result);
-					};
-					case ((#ok(_), #err(_))) #err(#errorGettingMembers);
-					case ((#err(_), #ok(_))) #err(#errorGettingRoles);
-					case ((#err(_), #err(_))) #err(#errorGettingMembersInfo);
-				};
-			};
-		};
-	};
-
-	public shared ({ caller }) func addWorkspaceMember(workspaceId : Principal, userId : Principal, roleId: Nat) : async Types.AddWorkspaceMemberResponse {
-		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (getProfile(caller) == null) return #err(#profileNotFound);
-
-		let workspace = getWorkspace(workspaceId);
-
-		switch workspace {
-			case null #err(#workspaceNotFound);
-			case (?wp) {
-				let memberId = Array.find<Principal>(wp.members, func mem = Principal.equal(mem, caller));
-
-				switch memberId {
-					case (null) #err(#unauthorized);
-					case (_) {
-						let result = await wp.ref.addMember(userId, roleId);
-
-						switch result {
-							case (#ok()) {
-								let members : [Principal] = Array.append<Principal>(wp.members, [userId]);
-								let workspaceId : Principal = Principal.fromActor(wp.ref);
-
-								let workspaceUpdate : Models.WorkspaceEntity = {
-									ref = wp.ref;
-									members;
-								};
-
-								Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, workspaceUpdate);
-
-								#ok();
-							};
-							case (_) result;
-						};
-					};
-				};
-			};
-		};
-	};
-
-	public shared ({ caller }) func removeWorkspaceMember(workspaceId : Principal, userId : Principal) : async Types.RemoveWorkspaceMemberResponse {
-		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (getProfile(caller) == null) return #err(#profileNotFound);
-
-		let workspace = getWorkspace(workspaceId);
-
-		switch workspace {
-			case null #err(#workspaceNotFound);
-			case (?wp) {
-				let memberId = Array.find<Principal>(wp.members, func mem = Principal.equal(mem, caller));
-
-				switch memberId {
-					case (null) #err(#unauthorized);
-					case (_) {
-						let result = await wp.ref.removeMember(userId);
-
-						switch result {
-							case (#ok()) {
-								let members : [Principal] = Array.filter<Principal>(wp.members, func mem = not Principal.equal(mem, userId));
-								let workspaceId : Principal = Principal.fromActor(wp.ref);
-
-								let workspaceUpdate : Models.WorkspaceEntity = {
-									ref = wp.ref;
-									members;
-								};
-
-								Map.set<Principal, Models.WorkspaceEntity>(_workspaceStorate, phash, workspaceId, workspaceUpdate);
-
-								#ok();
-							};
-							case (_) result;
-						};
-					};
-				};
-			};
-		};
-	};
-
-	public shared composite query ({caller}) func getWorkspaceRoles(workspaceId: Principal): async Types.GetWorkspaceRolesResponse {
-		if (Principal.isAnonymous(caller)) return #err(#userNotAuthenticated);
-		if (getProfile(caller) == null) return #err(#profileNotFound);
-
-		let workspace = getWorkspace(workspaceId);
-
-		switch workspace {
-			case null #err(#workspaceNotFound);
-			case (?wp) {
-				let getRolesResult = await wp.ref.getRoles();
-
-				switch getRolesResult {
-					case (#ok(result)) #ok(result);
-					case (_) getRolesResult;
-				};
-			};
-		};
-	};
-
 	private func _addWorkspaceMember(workspace : Models.WorkspaceEntity, newMember : WebhookModule.MemberAddedEvent) {
 		let members : [Principal] = Array.append<Principal>(workspace.members, [newMember.userId]);
 
@@ -438,7 +298,7 @@ actor BackofficeGateway {
 					};
 				};
 			};
-			case null #err(#workspaceNotFound);
+			case null #err(#unauthorized);
 		};
 	}
 };

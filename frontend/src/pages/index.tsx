@@ -5,6 +5,7 @@ import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ar
 
 import { CandidActors } from "@app/canisters";
 import Header from "@app/components/header";
+import { useAuthGuard } from "@app/hooks/useGuard";
 
 type Profile = {
   username: string;
@@ -18,10 +19,11 @@ export default function IcConnectPage() {
   const identities = useIdentities();
   const [profile, setProfile] = useState<Profile | undefined>();
   const [loading, setLoading] = useState(false); // State for loader
-  const workspaceIndex = useCandidActor<CandidActors>(
-    "workspaceIndex",
+  useAuthGuard({ isPrivate: false });
+  const backofficeGateway = useCandidActor<CandidActors>(
+    "backofficeGateway",
     currentIdentity
-  ) as CandidActors["workspaceIndex"];
+  ) as CandidActors["backofficeGateway"];
 
   useEffect(() => {
     getProfile();
@@ -40,7 +42,7 @@ export default function IcConnectPage() {
 
   async function getProfile() {
     try {
-      const response = await workspaceIndex.getProfile();
+      const response = await backofficeGateway.getMyProfile();
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -50,97 +52,11 @@ export default function IcConnectPage() {
       const profile = "ok" in response ? response.ok : undefined;
       setProfile(profile);
     } catch (error) {
-      console.error({ error });
+      console.error("error response", { error });
     }
   }
 
-  async function registerProfile(username: string, email: string, firstName: string, lastName: string) {
-    try {
-      setLoading(true); // Show loader
-
-      const profile = {
-        username,
-        email,
-        firstName,
-        lastName,
-      };
-
-      const response = await workspaceIndex.createProfile(profile);
-
-      if ("err" in response) {
-        if ("userNotAuthenticated" in response.err) alert("User not authenticated");
-        if ("profileAlreadyExists" in response.err) alert("Profile already exists");
-
-        throw new Error("Error creating profile");
-      }
-
-      setProfile(profile);
-    } catch (error) {
-      console.error({ error });
-    } finally {
-      setLoading(false); // Hide loader
-    }
-  }
-
-  return (
-    <>
-      <Header />
-      <main className="p-6">
-        <div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-8">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold mb-2">User Info</h2>
-              <p className="mt-4 text-sm text-gray-500">
-                <strong>Status:</strong> {isAuthenticated ? "Authenticated" : "Not Authenticated"}
-              </p>
-              <p className="text-gray-700">
-                <strong>Current Identity:</strong> {currentIdentity.getPrincipal().toString()}
-              </p>
-              <h2 className="text-xl font-bold mb-2">Profile</h2>
-              {profile ? (
-                <>
-                  <p>
-                    <strong>Username: </strong> {profile.username}
-                  </p>
-                  <p>
-                    <strong>Email: </strong> {profile.email}
-                  </p>
-                </>
-              ) : (
-                <CreateProfileForm onSubmit={registerProfile} loading={loading} />
-              )}
-            </div>
-
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-bold mb-2">Identities</h2>
-              <ul className="divide-y divide-gray-200">
-                {identities.map((identity, index) => (
-                  <li key={index} className="flex items-center justify-between py-4">
-                    <span className="text-gray-900">
-                      {identity.provider} : {formatPrincipal(identity.identity.getPrincipal().toString())}
-                    </span>
-                    <div className="flex gap-2">
-                      <button
-                        className={`px-3 py-1 text-sm rounded-md ${
-                          disableIdentityButton(identity.identity)
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-blue-500 text-white"
-                        }`}
-                        disabled={disableIdentityButton(identity.identity)}
-                        onClick={() => changeCurrentIdentity(identity.identity)}>
-                        Select
-                      </button>
-                      <LogoutButton identity={identity.identity} />
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </main>
-    </>
-  );
+  return <Header />;
 }
 
 type ProfileFormProps = {
@@ -204,7 +120,7 @@ function CreateProfileForm({ onSubmit, loading }: ProfileFormProps) {
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           type="submit"
-          disabled={loading} // Disable button while loading
+          disabled={loading} 
         >
           {loading ? "Creating Profile..." : "Create Profile"}
         </button>
