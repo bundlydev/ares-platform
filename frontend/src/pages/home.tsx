@@ -58,6 +58,10 @@ export default function Home() {
       }) as CandidActors["workspace"])
     : null;
 
+  // const workspaceActor = useCandidActor<CandidActors>("workspace", currentIdentity, {
+  //   canisterId: workspaceId,
+  // }) as CandidActors["workspace"];
+
   useEffect(() => {
     getWorkspaceMembers();
   }, [workspaceId]);

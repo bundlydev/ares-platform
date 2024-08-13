@@ -5,7 +5,6 @@
     "backoffice-gateway": {
       "type": "motoko",
       "main": "backend/backoffice-gateway/main.mo",
-      "dependencies": ["internet-identity"],
       "declarations": {
         "node_compatibility": true,
         "output": "frontend/src/declarations/backoffice-gateway"
