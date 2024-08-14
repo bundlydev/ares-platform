@@ -12,6 +12,7 @@ import IC "mo:ic";
 import MemberModule "./modules/member";
 import RoleModule "./modules/role";
 import WebhookModule "./modules/webhook";
+import AppModule "./modules/app";
 
 shared ({ caller = creator }) actor class WorkspaceActorClass(name : Text) = Self {
 	// Storage
@@ -20,12 +21,14 @@ shared ({ caller = creator }) actor class WorkspaceActorClass(name : Text) = Sel
 	private stable let _roles = Map.new<Nat, RoleModule.RoleEntity>();
 	private stable let _members = Map.new<Principal, MemberModule.MemberEntity>();
 	private stable let _webhooks = Map.new<Principal, WebhookModule.ListenerEntity>();
+	private stable let _apps = Map.new<Principal, AppModule.AppEntity>();
 
 	// Services
 	private let ic = actor ("aaaaa-aa") : IC.Service;
 	private let webhookService = WebhookModule.WebhookService(_webhooks);
 	private let roleService = RoleModule.RoleService(_roles);
 	private let memberService = MemberModule.MemberService(_members, webhookService);
+	private let appService = AppModule.AppService(_apps, webhookService);
 
 	private func hasAdminAccess(caller : Principal) : Bool {
 		if (Principal.isAnonymous(caller)) return false;
@@ -222,5 +225,57 @@ shared ({ caller = creator }) actor class WorkspaceActorClass(name : Text) = Sel
 		webhookService.register({ canisterId });
 
 		#ok();
+	};
+
+	type GetAppsResultOk = [AppModule.AppEntity];
+
+	type GetAppsResultErr = {
+		#unauthorized;
+	};
+
+	type GetAppsResult = Result.Result<GetAppsResultOk, GetAppsResultErr>;
+
+	public shared query ({ caller }) func getApps() : async GetAppsResult {
+		if (not hasAdminAccess(caller)) {
+			return #err(#unauthorized);
+		};
+
+		return #ok(appService.getAllArray());
+	};
+
+	type AddAppResultOk = ();
+
+	type AddAppResultErr = {
+		#unauthorized;
+		#principalAlreadyRegistered;
+		#nameAlreadyTaken;
+		#noEmptyNameAllowed;
+	};
+
+	type AddAppResult = Result.Result<AddAppResultOk, AddAppResultErr>;
+
+	public shared ({ caller }) func addApp(appId : Principal, name : Text) : async AddAppResult {
+		if (not hasAdminAccess(caller)) {
+			return #err(#unauthorized);
+		};
+
+		return await appService.add(appId, name);
+	};
+
+	type RemoveAppResultOk = ();
+
+	type RemoveAppResultErr = {
+		#unauthorized;
+		#appNotFound;
+	};
+
+	type RemoveAppResult = Result.Result<RemoveAppResultOk, RemoveAppResultErr>;
+
+	public shared ({ caller }) func removeApp(appId : Principal) : async RemoveAppResult {
+		if (not hasAdminAccess(caller)) {
+			return #err(#unauthorized);
+		};
+
+		return await appService.remove(appId);
 	};
 };

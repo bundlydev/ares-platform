@@ -15,9 +15,21 @@ module WebhookModule {
 		userId : Principal;
 	};
 
+	public type AppAddedEvent = {
+		principal : Principal;
+		name : Text;
+	};
+
+	public type AppRemovedEvent = {
+		principal : Principal;
+		name : Text;
+	};
+
 	public type WebhookEvent = {
 		#memberAdded : MemberAddedEvent;
 		#memberRemoved : MemberRemovedEvent;
+		#appAdded : AppAddedEvent;
+		#appRemoved : AppRemovedEvent;
 	};
 
 	public type Listener = actor {
