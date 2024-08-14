@@ -296,6 +296,10 @@ actor BackofficeGateway {
 
 						#ok();
 					};
+					// TODO: Add more event handlers if needed
+					case (_) {
+						#ok();
+					}
 				};
 			};
 			case null #err(#unauthorized);
