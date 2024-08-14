@@ -29,7 +29,7 @@ actor BackofficeGateway {
 	// Database
 	stable let _profileStorage: Models.ProfileStorage = Map.new<Principal, Models.ProfileEntity>();
 	stable let _workspaceStorate: Models.WorkspaceStorage = Map.new<Principal, Models.WorkspaceEntity>();
-	stable var _cyclesLedgerStorage: CyclesLedgerModule.CyclesLedgerStorage = List.nil();
+	stable var _cyclesLedgerStorage: CyclesLedgerModule.CyclesLedgerStorage = Map.new<Nat, CyclesLedgerModule.CycleTransaction>();
 
 	// Services
 	private let ic = actor("aaaaa-aa") : IC.Service;
@@ -241,6 +241,8 @@ actor BackofficeGateway {
 							transactionDate = Time.now();
 							transactionType = #deposit;
 						};
+
+						// TODO: Prevent canister creation and deletion to steal our cycles
 
 						cyclesLedgerService.addTransaction(newCyclesEntry);
 
