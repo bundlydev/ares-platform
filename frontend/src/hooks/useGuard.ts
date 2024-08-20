@@ -41,7 +41,7 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
             return;
           }
         }
-        if (router.pathname !== "/settings" && router.pathname !== "/addworkspace") {
+        if (router.pathname !== "/settings" && router.pathname !== "/addworkspace"&& router.pathname !== "/apps") {
           if (workspaces.length > 0) {
             redirect("/home");
           } else {
@@ -52,7 +52,7 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
         redirect("/profile");
       }
     } else {
-      if (isAuthenticated && router.pathname !== "/addworkspace" && router.pathname !== "/settings") {
+      if (isAuthenticated && router.pathname !== "/addworkspace" && router.pathname !== "/settings"&& router.pathname !== "/apps") {
         redirect("/home");
       }
     }

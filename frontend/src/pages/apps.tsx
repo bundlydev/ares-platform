@@ -8,13 +8,13 @@ import { useAuthGuard } from "@app/hooks/useGuard";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import Menu from "../components/Menu";
-import Modal from "../components/Modal";
+import ModalApps from "../components/ModalApps";
 import SelectWorkspace from "../components/SelectWorkspace";
 import { AuthContext } from "../context/auth-context";
 import { useProfile } from "../hooks/useProfile";
 import { useWorkspaces } from "../hooks/useWorkspaces";
 
-export default function Home() {
+export default function Apps() {
   type Workspace = {
     id: string;
     name: string;
@@ -22,7 +22,6 @@ export default function Home() {
   type WorkspaceData = {
     id: string;
     name: string;
-    role: string;
   };
   type UsernameData = {
     id: string;
@@ -58,37 +57,25 @@ export default function Home() {
       }) as CandidActors["workspace"])
     : null;
 
+  // const workspaceActor = useCandidActor<CandidActors>("workspace", currentIdentity, {
+  //   canisterId: workspaceId,
+  // }) as CandidActors["workspace"];
+
   useEffect(() => {
-    getWorkspaceMembers();
+    getApps();
   }, [workspaceId]);
 
-  const getWorkspaceMembers = async () => {
+  const getApps = async () => {
     // TODO: Should I catch errors here?
     if (!workspaceActor) return;
 
-    let getMembersResult = await workspaceActor.getMembers();
-
+    const getMembersResult = await workspaceActor.getApps();
     if ("ok" in getMembersResult) {
-      let members = getMembersResult.ok;
-      let getRolesResult = await workspaceActor.getRoles();
-      let roles = "ok" in getRolesResult ? getRolesResult.ok : [];
-
-      let results = [];
-
-      for (let member of members) {
-        let role = roles.find((role) => role.id === member.roleId);
-        let getProfileResult = await backofficeGateway.getProfileById(member.id);
-        let profile = "ok" in getProfileResult ? getProfileResult.ok : undefined;
-        let name = profile ? profile.firstName + " " + profile.lastName : "Unknown";
-
-        results.push({
-          id: member.id.toString(),
-          name: name,
-          role: role ? role.name : "Unknown",
-        });
-      }
-
-      return setWorkspaceMembers(results);
+			const NameList = getMembersResult.ok.map((item: { principal: { toString: () => any; }; name: any; }) => ({
+				id: item.principal.toString(),
+				name: item.name,
+			}));
+			setWorkspaceMembers(NameList)
     } else {
       let error = getMembersResult.err;
       console.error(error);
@@ -121,14 +108,14 @@ export default function Home() {
     }
   };
 
-  const deleteIdmember = async (idMember: string) => {
+  const deleteIdapp = async (idApp: string) => {
     if (!workspaceActor) return;
 
     setLoading(true);
 
     try {
-      const memberId = Principal.fromText(idMember);
-      const response = await workspaceActor.removeMember(memberId);
+      const appId = Principal.fromText(idApp);
+      const response = await workspaceActor.removeApp(appId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -136,7 +123,7 @@ export default function Home() {
         return;
       }
 
-      getWorkspaceMembers();
+      getApps();
     } catch (error) {
       console.error("error response", { error });
     } finally {
@@ -159,7 +146,7 @@ export default function Home() {
         return;
       }
 
-      getWorkspaceMembers();
+      getApps();
     } catch (error) {
       console.error("error response", { error });
     } finally {
@@ -271,25 +258,21 @@ export default function Home() {
           <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
             <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
               <div>Name</div>
-              <div>Role</div>
               <div>Action</div>
             </div>
             <div className="divide-y divide-gray-200">
               {workspaceMembers.map((item, index) => (
                 <div key={index} className="grid grid-cols-3 p-4">
                   <div>{item.name}</div>
-                  <div>{item.role}</div>
                   <div>
-                    {item.role !== "Owner" && (
                       <button
                         className="bg-red-500 text-white py-1 px-3 rounded-lg"
                         onClick={() => {
-                          deleteIdmember(item.id);
+                          deleteIdapp(item.id);
                         }}
                         disabled={loading}>
                         {loading ? <LoadingSpinner /> : "Delete"}
                       </button>
-                    )}
                   </div>
                 </div>
               ))}
@@ -297,13 +280,12 @@ export default function Home() {
           </div>
         </div>
       </div>
-      <Modal
+      <ModalApps
         showModal={showModal}
         setShowModal={setShowModal}
         addMemberWorkspace={addMemberWorkspace}
         getListFindName={getListFindName}
         dataNameSearch={dataNameSearch}
-        loading={loading}
       />
     </div>
   );
