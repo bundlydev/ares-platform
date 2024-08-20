@@ -63,7 +63,6 @@ export default function Home() {
   }, [workspaceId]);
 
   const getWorkspaceMembers = async () => {
-    // TODO: Should I catch errors here?
     if (!workspaceActor) return;
 
     let getMembersResult = await workspaceActor.getMembers();
@@ -203,97 +202,40 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="flex h-16 bg-cyan-950 items-center justify-between px-2">
-        <div ref={workspaceRef} className="flex w-1/4 justify-around">
-          {profiles && (
-            <div className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center">
-              <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
-            </div>
-          )}
-          {workspaces && <SelectWorkspace />}
-        </div>
-        {profiles && (
-          <div className="relative inline-block text-left" ref={menuRef}>
-            <div
-              className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center cursor-pointer"
-              onClick={handleToggle}>
-              <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
-            </div>
-            {isOpen && identity.length > 0 && (
-              <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                <div role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
-                  <LogoutButton
-                    identity={identity[0].identity}
-                    style={{
-                      display: "flex",
-                      width: "100%",
-                      justifyContent: "flex-start",
-                      color: "red",
-                      fontSize: "18px",
-                      alignItems: "center",
-                      fontWeight: 500,
-                      padding: "10px 15px",
-                      gap: "15px",
-                    }}>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="feather feather-log-out"
-                      style={{ width: "24px", height: "24px" }}>
-                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                      <polyline points="16 17 21 12 16 7"></polyline>
-                      <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    <span>Logout</span>
-                  </LogoutButton>
+    <div className="flex flex-col w-full ">
+      <div
+        style={{ height: "calc(100vh - 64px)" }}
+        className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
+        <button
+          className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
+          onClick={() => setShowModal(true)}>
+          New
+        </button>
+        <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
+          <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
+            <div>Name</div>
+            <div>Role</div>
+            <div>Action</div>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {workspaceMembers.map((item, index) => (
+              <div key={index} className="grid grid-cols-3 p-4">
+                <div>{item.name}</div>
+                <div>{item.role}</div>
+                <div>
+                  {item.role !== "Owner" && (
+                    <button
+                      className="bg-red-500 text-white py-1 px-3 rounded-lg"
+                      onClick={() => {
+                        deleteIdmember(item.id);
+                      }}
+                      disabled={loading}>
+                      {loading ? <LoadingSpinner /> : "Delete"}
+                    </button>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="flex items-start">
-        <Menu />
-        <div
-          style={{ height: "calc(100vh - 64px)" }}
-          className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
-          <button
-            className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
-            onClick={() => setShowModal(true)}>
-            New
-          </button>
-          <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
-            <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
-              <div>Name</div>
-              <div>Role</div>
-              <div>Action</div>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {workspaceMembers.map((item, index) => (
-                <div key={index} className="grid grid-cols-3 p-4">
-                  <div>{item.name}</div>
-                  <div>{item.role}</div>
-                  <div>
-                    {item.role !== "Owner" && (
-                      <button
-                        className="bg-red-500 text-white py-1 px-3 rounded-lg"
-                        onClick={() => {
-                          deleteIdmember(item.id);
-                        }}
-                        disabled={loading}>
-                        {loading ? <LoadingSpinner /> : "Delete"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
         </div>
       </div>

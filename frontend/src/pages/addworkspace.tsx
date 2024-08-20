@@ -14,7 +14,7 @@ type FormValues = {
   name: string;
 };
 
-export default function Workspace() {
+function Workspace() {
   const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
   const backofficeGateway = useCandidActor<CandidActors>(
@@ -22,7 +22,7 @@ export default function Workspace() {
     currentIdentity
   ) as CandidActors["backofficeGateway"];
   const [image, setImage] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false); // Estado para loading
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const {
@@ -49,7 +49,7 @@ export default function Workspace() {
   };
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    setLoading(true); // Start loading
+    setLoading(true);
     try {
       const response = await backofficeGateway.createWorkspace(data);
       if ("err" in response) {
@@ -58,12 +58,12 @@ export default function Workspace() {
         throw new Error("Error creating profile");
       }
       if ("ok" in response) {
-        window.location.href = "/home"; // Redirige y recarga completamente la página de inicio
+        window.location.href = "/home";
       }
     } catch (error) {
       console.error({ error });
     } finally {
-      setLoading(false); // End loading
+      setLoading(false);
     }
   };
 
@@ -84,8 +84,7 @@ export default function Workspace() {
           <button
             type="submit"
             className={`bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4 flex items-center justify-center ${loading ? "cursor-wait" : ""}`}
-            disabled={loading} // Disable button when loading
-          >
+            disabled={loading}>
             {loading ? (
               <svg
                 className="animate-spin h-5 w-5 mr-3"
@@ -113,3 +112,9 @@ export default function Workspace() {
     </div>
   );
 }
+
+Workspace.getLayout = function getLayout(page: React.ReactNode) {
+  return page;
+};
+
+export default Workspace;

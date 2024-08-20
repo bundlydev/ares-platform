@@ -9,24 +9,23 @@ import { useAuthGuard } from "@app/hooks/useGuard";
 
 import { AuthContext } from "../context/auth-context";
 
-// Import your AuthContext
-
 type FormValues = {
   name: string;
 };
 
-export default function Workspace() {
+function Workspace() {
   const { isAuthenticated, currentIdentity } = useAuth();
-	useAuthGuard({ isPrivate: true });
+  useAuthGuard({ isPrivate: true });
   const router = useRouter();
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
     currentIdentity
   ) as CandidActors["backofficeGateway"];
   const [image, setImage] = useState<File | null>(null);
-  const [submissionSuccess, setSubmissionSuccess] = useState(false); // State for submission success
-  const [loading, setLoading] = useState(false); // State for loading
-	const { setWorkspaceId } = useContext(AuthContext);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { setWorkspaceId } = useContext(AuthContext);
+
   const {
     register,
     handleSubmit,
@@ -51,7 +50,7 @@ export default function Workspace() {
   };
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    setLoading(true); 
+    setLoading(true);
     try {
       const response = await backofficeGateway.createWorkspace(data);
       if ("err" in response) {
@@ -59,21 +58,21 @@ export default function Workspace() {
         throw new Error("Error creating workspace");
       }
       if ("ok" in response) {
-				setWorkspaceId(response.ok.workspaceId.toString())
-        setSubmissionSuccess(true); 
+        setWorkspaceId(response.ok.workspaceId.toString());
+        setSubmissionSuccess(true);
       }
     } catch (error) {
       console.error({ error });
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
-	useEffect(() => {
+
+  useEffect(() => {
     if (submissionSuccess) {
-      window.location.reload(); 
+      window.location.reload();
     }
   }, [submissionSuccess]);
-
 
   return (
     <div className="flex justify-center">
@@ -92,8 +91,7 @@ export default function Workspace() {
           <button
             type="submit"
             className={`bg-green-400 w-11/12 text-white px-8 py-2 rounded-lg mb-4 flex items-center justify-center ${loading ? "cursor-wait" : ""}`}
-            disabled={loading} // Disable button when loading
-          >
+            disabled={loading}>
             {loading ? (
               <svg
                 className="animate-spin h-5 w-5 mr-3"
@@ -121,3 +119,9 @@ export default function Workspace() {
     </div>
   );
 }
+
+Workspace.getLayout = function getLayout(page: React.ReactNode) {
+  return page;
+};
+
+export default Workspace;

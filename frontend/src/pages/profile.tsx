@@ -16,7 +16,7 @@ type ProfileInputs = {
   email: string;
 };
 
-export default function Profile() {
+function Profile() {
   useAuthGuard({ isPrivate: true });
 
   const { isAuthenticated, currentIdentity } = useAuth();
@@ -146,3 +146,9 @@ export default function Profile() {
     </div>
   );
 }
+
+Profile.getLayout = function getLayout(page: React.ReactNode) {
+  return page;
+};
+
+export default Profile;

@@ -1,15 +1,18 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
 import { Principal } from "@dfinity/principal";
+import React, { useContext, useEffect, useRef, useState } from "react";
+
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters/index";
 import { useAuthGuard } from "@app/hooks/useGuard";
+
 import LoadingSpinner from "../components/LoadingSpinner";
 import Menu from "../components/Menu";
+import ModalDelete from "../components/ModalDelete";
 import SelectWorkspace from "../components/SelectWorkspace";
 import { AuthContext } from "../context/auth-context";
 import { useProfile } from "../hooks/useProfile";
 import { useWorkspaces } from "../hooks/useWorkspaces";
-import ModalDelete from "../components/ModalDelete";
 
 export default function Settings() {
   type Workspace = {
@@ -21,7 +24,7 @@ export default function Settings() {
   const { workspaceId } = useContext(AuthContext);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
-  const [deleteInProgress, setDeleteInProgress] = useState<boolean>(false); // Nuevo estado para el loading del delete
+  const [deleteInProgress, setDeleteInProgress] = useState<boolean>(false);
 
   const workspaces = useWorkspaces();
   const profiles = useProfile();
@@ -43,7 +46,7 @@ export default function Settings() {
 
   const deleteIdworkspace = async (idWorkspace: string) => {
     try {
-      setDeleteInProgress(true); // Iniciar el loading específico para el delete
+      setDeleteInProgress(true);
       const workspaceId = Principal.fromText(idWorkspace);
       const response = await backofficeGateway.deleteWorkspace(workspaceId);
 
@@ -52,13 +55,12 @@ export default function Settings() {
         else console.log("Error fetching profile");
         return;
       }
-      // Si la petición fue exitosa, cerrar el modal y recargar la página
       setShowModalDelete(false);
       window.location.reload();
     } catch (error) {
       console.error("error response", { error });
     } finally {
-      setDeleteInProgress(false); // Detener el loading específico para el delete
+      setDeleteInProgress(false);
     }
   };
 
@@ -79,31 +81,17 @@ export default function Settings() {
   }
 
   return (
-    <div className="flex flex-col">
-      <div className="flex h-16 bg-cyan-950 items-center justify-between px-2">
-        <div ref={workspaceRef} className="flex w-1/4 justify-around">
-          {profiles && (
-            <div className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center">
-              <span className="text-white">{profiles?.firstName.charAt(0).toUpperCase()}</span>
-            </div>
-          )}
-          {workspaces && <SelectWorkspace />}
-        </div>
-      </div>
-      <div className="flex items-start">
-        <Menu />
-        <div
-          style={{ height: "calc(100vh - 64px)" }}
-          className="container w-full flex flex-col justify-start items-start bg-slate-100 h-full p-6 rounded-lg"
-        >
-          <span className="font-bold text-4xl">Settings workspace</span>
-          <div className="flex items-end h-11 gap-4">
-            <span className="font-medium text-xl">My workspace: </span>
-            {findWorkspaceName()}
-            <button onClick={handleDelete} className="bg-red-500 text-white py-2 px-6 rounded-lg">
-              Delete
-            </button>
-          </div>
+    <div className="flex flex-col w-full">
+      <div
+        style={{ height: "calc(100vh - 64px)" }}
+        className="container w-full flex flex-col justify-start items-start bg-slate-100 h-full p-6 rounded-lg">
+        <span className="font-bold text-4xl">Settings workspace</span>
+        <div className="flex items-end h-11 gap-4">
+          <span className="font-medium text-xl">My workspace: </span>
+          {findWorkspaceName()}
+          <button onClick={handleDelete} className="bg-red-500 text-white py-2 px-6 rounded-lg">
+            Delete
+          </button>
         </div>
       </div>
       <ModalDelete

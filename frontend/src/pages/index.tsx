@@ -18,7 +18,7 @@ export default function IcConnectPage() {
   const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
   const identities = useIdentities();
   const [profile, setProfile] = useState<Profile | undefined>();
-  const [loading, setLoading] = useState(false); // State for loader
+  const [loading, setLoading] = useState(false); 
   useAuthGuard({ isPrivate: false });
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
@@ -61,7 +61,7 @@ export default function IcConnectPage() {
 
 type ProfileFormProps = {
   onSubmit: (username: string, email: string, firstName: string, lastName: string) => Promise<void>;
-  loading: boolean; // Loader state
+  loading: boolean; 
 };
 
 function CreateProfileForm({ onSubmit, loading }: ProfileFormProps) {
@@ -79,7 +79,6 @@ function CreateProfileForm({ onSubmit, loading }: ProfileFormProps) {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    // Get firstName and lastName fields from form
     await onSubmit(username, email, "", "");
     resetForm();
   };
@@ -120,8 +119,7 @@ function CreateProfileForm({ onSubmit, loading }: ProfileFormProps) {
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
           type="submit"
-          disabled={loading} 
-        >
+          disabled={loading}>
           {loading ? "Creating Profile..." : "Create Profile"}
         </button>
       </div>

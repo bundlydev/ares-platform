@@ -9,6 +9,8 @@ import { IcpConnectContextProvider } from "@bundly/ares-react";
 import { candidCanisters } from "@app/canisters/index";
 import { AuthContextProvider } from "@app/context/auth-context";
 
+import Layout from "../components/Layout";
+
 export default function MyApp({ Component, pageProps }: AppProps) {
   const client = Client.create({
     agentConfig: {
@@ -22,12 +24,10 @@ export default function MyApp({ Component, pageProps }: AppProps) {
       }),
     ],
   });
-
+  const getLayout = (Component as any).getLayout || ((page: React.ReactNode) => <Layout>{page}</Layout>);
   return (
     <IcpConnectContextProvider client={client}>
-      <AuthContextProvider>
-        <Component {...pageProps} />
-      </AuthContextProvider>
+      <AuthContextProvider>{getLayout(<Component {...pageProps} />)}</AuthContextProvider>
     </IcpConnectContextProvider>
   );
 }

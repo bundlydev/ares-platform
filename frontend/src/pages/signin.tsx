@@ -3,30 +3,30 @@ import React, { useContext, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
-import Header from '../components/header';
+
 import { CandidActors } from "@app/canisters";
 import { useAuthGuard } from "@app/hooks/useGuard";
 
+import Header from "../components/header";
 import { AuthContext } from "../context/auth-context";
-
-// Import your AuthContext
 
 type FormValues = {
   name: string;
 };
 
-export default function Sigin() {
+function Sigin() {
   const { isAuthenticated, currentIdentity } = useAuth();
-	useAuthGuard({ isPrivate: true });
+  useAuthGuard({ isPrivate: true });
   const router = useRouter();
   const backofficeGateway = useCandidActor<CandidActors>(
     "backofficeGateway",
     currentIdentity
   ) as CandidActors["backofficeGateway"];
   const [image, setImage] = useState<File | null>(null);
-  const [submissionSuccess, setSubmissionSuccess] = useState(false); 
-  const [loading, setLoading] = useState(false); 
-	const { setWorkspaceId } = useContext(AuthContext);
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { setWorkspaceId } = useContext(AuthContext);
+
   const {
     register,
     handleSubmit,
@@ -51,7 +51,7 @@ export default function Sigin() {
   };
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    setLoading(true); 
+    setLoading(true);
     try {
       const response = await backofficeGateway.createWorkspace(data);
       if ("err" in response) {
@@ -59,23 +59,27 @@ export default function Sigin() {
         throw new Error("Error creating workspace");
       }
       if ("ok" in response) {
-				setWorkspaceId(response.ok.workspaceId.toString())
-        setSubmissionSuccess(true); 
+        setWorkspaceId(response.ok.workspaceId.toString());
+        setSubmissionSuccess(true);
       }
     } catch (error) {
       console.error({ error });
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
-	useEffect(() => {
+
+  useEffect(() => {
     if (submissionSuccess) {
-      window.location.reload(); 
+      window.location.reload();
     }
   }, [submissionSuccess]);
 
-
-  return (
-    <Header/>
-  );
+  return <Header />;
 }
+
+Sigin.getLayout = function getLayout(page: React.ReactNode) {
+  return page;
+};
+
+export default Sigin;
