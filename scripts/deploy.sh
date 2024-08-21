@@ -50,14 +50,21 @@ fi
 # Generate declaration files
 echo "Generating declaration files..."
 
-dfx generate backoffice-gateway
-dfx generate workspace
+dfx generate account-manager
+dfx generate workspace-orchestrator
+dfx generate workspace-iam
 
 # Add specific code for each mode here
 if [ "$mode" = "dev" ]; then
   echo "Deploying in development environment..."
   dfx deploy internet-identity --network local
-  dfx deploy backoffice-gateway --network local
+  dfx deploy account-manager --network local
+	ACCOUNT_MANAGER_CANISTER_ID=$(dfx canister id account-manager)
+	dfx deploy workspace-orchestrator --network local --argument "(
+		record {
+			account_manager = principal \"$ACCOUNT_MANAGER_CANISTER_ID\"
+		},
+	)"
   if [ "$deploy_frontend" = true ]; then
     if [ "$force_frontend" = true ]; then
       echo "Building frontend..."
@@ -70,7 +77,13 @@ if [ "$mode" = "dev" ]; then
 else
   echo "Deploying in production environment..."
 	# TODO: Implement production deployment
-  # dfx deploy backoffice-gateway --network ic
+  # dfx deploy account-manager --network ic
+	# ACCOUNT_MANAGER_CANISTER_ID=$(dfx canister id account-manager --network ic)
+	# dfx deploy workspace-orchestrator --network ic --argument "(
+	# 	record {
+	# 		account_manager = principal \"$ACCOUNT_MANAGER_CANISTER_ID\"
+	# 	},
+	# )"
   # if [ "$force_frontend" = true ]; then
   #   echo "Building frontend..."
   #   cd frontend

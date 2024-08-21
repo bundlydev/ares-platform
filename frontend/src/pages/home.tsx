@@ -47,15 +47,15 @@ export default function Home() {
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const backofficeGateway = useCandidActor<CandidActors>(
-    "backofficeGateway",
+  const accountManager = useCandidActor<CandidActors>(
+    "accountManager",
     currentIdentity
-  ) as CandidActors["backofficeGateway"];
+  ) as CandidActors["accountManager"];
 
-  const workspaceActor = workspaceId
-    ? (useCandidActor<CandidActors>("workspace", currentIdentity, {
+  const workspaceIam = workspaceId
+    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
         canisterId: workspaceId,
-      }) as CandidActors["workspace"])
+      }) as CandidActors["workspaceIam"])
     : null;
 
   useEffect(() => {
@@ -63,27 +63,27 @@ export default function Home() {
   }, [workspaceId]);
 
   const getWorkspaceMembers = async () => {
-    if (!workspaceActor) return;
+    if (!workspaceIam) return;
 
-    let getMembersResult = await workspaceActor.getMembers();
+    let getMembersResult = await workspaceIam.get_access_list({ filters: { itype: { user: null } } });
 
     if ("ok" in getMembersResult) {
       let members = getMembersResult.ok;
-      let getRolesResult = await workspaceActor.getRoles();
+      let getRolesResult = await workspaceIam.get_roles();
       let roles = "ok" in getRolesResult ? getRolesResult.ok : [];
 
       let results = [];
 
       for (let member of members) {
-        let role = roles.find((role) => role.id === member.roleId);
-        let getProfileResult = await backofficeGateway.getProfileById(member.id);
+        let role = roles.find((role) => role.rid === member.roleId);
+        let getProfileResult = await accountManager.get_account(member.identity);
         let profile = "ok" in getProfileResult ? getProfileResult.ok : undefined;
         let name = profile ? profile.firstName + " " + profile.lastName : "Unknown";
 
         results.push({
-          id: member.id.toString(),
+          id: member.identity.toString(),
           name: name,
-          role: role ? role.name : "Unknown",
+          role: role ? role.displayName : "Unknown",
         });
       }
 
@@ -100,7 +100,7 @@ export default function Home() {
 
   const getListFindName = async (nameText: string) => {
     try {
-      const response = await backofficeGateway.findProfilesByUsernameChunk(nameText);
+      const response = await accountManager.find_account_by_username_chunk(nameText);
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
@@ -108,7 +108,7 @@ export default function Home() {
       }
       const listName = "ok" in response ? response.ok : undefined;
       if (listName) {
-        const searchNameList = listName.map((member: { id: { toString: () => any }; username: any }) => ({
+        const searchNameList = listName.map((member) => ({
           id: member.id.toString(),
           username: member.username,
         }));
@@ -121,13 +121,13 @@ export default function Home() {
   };
 
   const deleteIdmember = async (idMember: string) => {
-    if (!workspaceActor) return;
+    if (!workspaceIam) return;
 
     setLoading(true);
 
     try {
       const memberId = Principal.fromText(idMember);
-      const response = await workspaceActor.removeMember(memberId);
+      const response = await workspaceIam.delete_access(memberId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -145,12 +145,12 @@ export default function Home() {
   };
 
   const addMemberWorkspace = async (userId: string) => {
-    if (!workspaceActor) return;
+    if (!workspaceIam) return;
 
     setLoading(true);
     try {
       const memberId = Principal.fromText(userId);
-      const response = await workspaceActor.addMember(memberId, BigInt(2));
+      const response = await workspaceIam.create_access(memberId, "Administrator", { user: null });
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");

@@ -18,12 +18,12 @@ export default function IcConnectPage() {
   const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
   const identities = useIdentities();
   const [profile, setProfile] = useState<Profile | undefined>();
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
   useAuthGuard({ isPrivate: false });
-  const backofficeGateway = useCandidActor<CandidActors>(
-    "backofficeGateway",
+  const accountManager = useCandidActor<CandidActors>(
+    "accountManager",
     currentIdentity
-  ) as CandidActors["backofficeGateway"];
+  ) as CandidActors["accountManager"];
 
   useEffect(() => {
     getProfile();
@@ -42,7 +42,7 @@ export default function IcConnectPage() {
 
   async function getProfile() {
     try {
-      const response = await backofficeGateway.getMyProfile();
+      const response = await accountManager.get_my_info();
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -61,7 +61,7 @@ export default function IcConnectPage() {
 
 type ProfileFormProps = {
   onSubmit: (username: string, email: string, firstName: string, lastName: string) => Promise<void>;
-  loading: boolean; 
+  loading: boolean;
 };
 
 function CreateProfileForm({ onSubmit, loading }: ProfileFormProps) {

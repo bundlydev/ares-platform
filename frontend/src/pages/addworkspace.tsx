@@ -17,10 +17,10 @@ type FormValues = {
 function Workspace() {
   const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
-  const backofficeGateway = useCandidActor<CandidActors>(
-    "backofficeGateway",
+  const workspaceOrchestrator = useCandidActor<CandidActors>(
+    "workspaceOrchestrator",
     currentIdentity
-  ) as CandidActors["backofficeGateway"];
+  ) as CandidActors["workspaceOrchestrator"];
   const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -51,7 +51,7 @@ function Workspace() {
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setLoading(true);
     try {
-      const response = await backofficeGateway.createWorkspace(data);
+      const response = await workspaceOrchestrator.create_workspace(data);
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
 

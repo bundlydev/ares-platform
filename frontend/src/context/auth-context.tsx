@@ -57,10 +57,14 @@ export const AuthContext = createContext<AuthContextType>({
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const { isAuthenticated, currentIdentity } = useAuth();
-  const backofficeGateway = useCandidActor<CandidActors>(
-    "backofficeGateway",
+  const accountManager = useCandidActor<CandidActors>(
+    "accountManager",
     currentIdentity
-  ) as CandidActors["backofficeGateway"];
+  ) as CandidActors["accountManager"];
+  const workspaceOrchestrator = useCandidActor<CandidActors>(
+    "workspaceOrchestrator",
+    currentIdentity
+  ) as CandidActors["workspaceOrchestrator"];
 
   const [isReady, setIsReady] = useState(false);
   const [profile, setProfile] = useState<AuthUserProfile | undefined>();
@@ -72,8 +76,8 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
       if (isAuthenticated) {
         try {
           const [profileResponse, workspacesResponse] = await Promise.all([
-            backofficeGateway.getMyProfile(),
-            backofficeGateway.getMyWorkspaces(),
+            accountManager.get_my_info(),
+            workspaceOrchestrator.get_my_workspaces(),
           ]);
 
           if (profileResponse == null || typeof profileResponse !== "object") {
@@ -91,9 +95,9 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
 
           if ("ok" in workspacesResponse) {
             const convertedWorkspacesResponse = workspacesResponse.ok
-              ? workspacesResponse.ok.map((workspace: any) => ({
+              ? workspacesResponse.ok.map((workspace) => ({
                   ...workspace,
-                  id: workspace.id.toString(),
+                  id: workspace.wip.toString(),
                   name: workspace.name.toString(),
                 }))
               : [];

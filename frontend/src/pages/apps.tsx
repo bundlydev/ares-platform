@@ -46,33 +46,31 @@ export default function Apps() {
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const backofficeGateway = useCandidActor<CandidActors>(
-    "backofficeGateway",
+  const accountManager = useCandidActor<CandidActors>(
+    "accountManager",
     currentIdentity
-  ) as CandidActors["backofficeGateway"];
+  ) as CandidActors["accountManager"];
 
-  const workspaceActor = workspaceId
-    ? (useCandidActor<CandidActors>("workspace", currentIdentity, {
+  const workspaceIam = workspaceId
+    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
         canisterId: workspaceId,
-      }) as CandidActors["workspace"])
+      }) as CandidActors["workspaceIam"])
     : null;
-
-  // const workspaceActor = useCandidActor<CandidActors>("workspace", currentIdentity, {
-  //   canisterId: workspaceId,
-  // }) as CandidActors["workspace"];
 
   useEffect(() => {
     getApps();
   }, [workspaceId]);
 
   const getApps = async () => {
-    if (!workspaceActor) return;
+    if (!workspaceIam) return;
 
-    const getMembersResult = await workspaceActor.getApps();
+    const getMembersResult = await workspaceIam.get_access_list({ filters: { itype: { app: null } } });
     if ("ok" in getMembersResult) {
-      const NameList = getMembersResult.ok.map((item: { principal: { toString: () => any }; name: any }) => ({
-        id: item.principal.toString(),
-        name: item.name,
+      const NameList = getMembersResult.ok.map((item) => ({
+        id: item.identity.toString(),
+        // TODO: Check if we need to display the name of the app
+        // Due to the current implementation, the name is not available
+        name: item.identity.toString(),
       }));
       setWorkspaceMembers(NameList);
     } else {
@@ -87,7 +85,7 @@ export default function Apps() {
 
   const getListFindName = async (nameText: string) => {
     try {
-      const response = await backofficeGateway.findProfilesByUsernameChunk(nameText);
+      const response = await accountManager.find_account_by_username_chunk(nameText);
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
@@ -95,7 +93,7 @@ export default function Apps() {
       }
       const listName = "ok" in response ? response.ok : undefined;
       if (listName) {
-        const searchNameList = listName.map((member: { id: { toString: () => any }; username: any }) => ({
+        const searchNameList = listName.map((member) => ({
           id: member.id.toString(),
           username: member.username,
         }));
@@ -108,13 +106,13 @@ export default function Apps() {
   };
 
   const deleteIdapp = async (idApp: string) => {
-    if (!workspaceActor) return;
+    if (!workspaceIam) return;
 
     setLoading(true);
 
     try {
       const appId = Principal.fromText(idApp);
-      const response = await workspaceActor.removeApp(appId);
+      const response = await workspaceIam.delete_access(appId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -132,12 +130,12 @@ export default function Apps() {
   };
 
   const addMemberWorkspace = async (userId: string) => {
-    if (!workspaceActor) return;
+    if (!workspaceIam) return;
 
     setLoading(true);
     try {
       const memberId = Principal.fromText(userId);
-      const response = await workspaceActor.addMember(memberId, BigInt(2));
+      const response = await workspaceIam.create_access(memberId, "Administrator", { user: null });
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
