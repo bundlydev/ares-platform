@@ -17,10 +17,10 @@ function Workspace() {
   const { isAuthenticated, currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
   const router = useRouter();
-  const backofficeGateway = useCandidActor<CandidActors>(
-    "backofficeGateway",
+  const workspaceOrchestrator = useCandidActor<CandidActors>(
+    "workspaceOrchestrator",
     currentIdentity
-  ) as CandidActors["backofficeGateway"];
+  ) as CandidActors["workspaceOrchestrator"];
   const [image, setImage] = useState<File | null>(null);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -52,13 +52,13 @@ function Workspace() {
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
     setLoading(true);
     try {
-      const response = await backofficeGateway.createWorkspace(data);
+      const response = await workspaceOrchestrator.create_workspace(data);
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
         throw new Error("Error creating workspace");
       }
       if ("ok" in response) {
-        setWorkspaceId(response.ok.workspaceId.toString());
+        setWorkspaceId(response.ok.wip.toString());
         setSubmissionSuccess(true);
       }
     } catch (error) {

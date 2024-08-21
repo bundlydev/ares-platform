@@ -1,22 +1,25 @@
-import React, { ChangeEvent, FC, useState, useEffect, useContext } from "react";
-import LoadingSpinner from './LoadingSpinner';
-import { SubmitHandler, useForm } from "react-hook-form";
-import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
-import { AuthContext } from "../context/auth-context";
-import { CandidActors } from "@app/canisters/index";
 import { Principal } from "@dfinity/principal";
+import React, { ChangeEvent, FC, useContext, useEffect, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
+
+import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
+
+import { CandidActors } from "@app/canisters/index";
+
+import { AuthContext } from "../context/auth-context";
+import LoadingSpinner from "./LoadingSpinner";
 
 interface NameData {
-	id: string;
+  id: string;
   username: string;
 }
 
 type FormValues = {
-	name: string;
+  name: string;
 };
 
 interface ModalProps {
-	showModal: boolean;
+  showModal: boolean;
   setShowModal: (show: boolean) => void;
   addMemberWorkspace: (userId: string) => void;
   getListFindName: (nameText: string) => void;
@@ -24,16 +27,16 @@ interface ModalProps {
 }
 
 const ModalApps: FC<ModalProps> = ({
-	showModal,
+  showModal,
   setShowModal,
   addMemberWorkspace,
   getListFindName,
   dataNameSearch,
 }) => {
-	const { currentIdentity } = useAuth();
-	const [inputValue, setInputValue] = useState<string>("");
-	const { workspaceId } = useContext(AuthContext);
-  const [loading, setLoading] = useState(false); 
+  const { currentIdentity } = useAuth();
+  const [inputValue, setInputValue] = useState<string>("");
+  const { workspaceId } = useContext(AuthContext);
+  const [loading, setLoading] = useState(false);
   const [inputValueId, setInputValueId] = useState<string>("");
   const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
 
@@ -57,10 +60,7 @@ const ModalApps: FC<ModalProps> = ({
   const handleSelect = (id: string, username: string) => {
     setInputValue(username);
     setInputValueId(id);
-    setSelectedNames((prevSelectedNames) => [
-      ...prevSelectedNames,
-      { id, username },
-    ]);
+    setSelectedNames((prevSelectedNames) => [...prevSelectedNames, { id, username }]);
   };
 
   const handleAdd = () => {
@@ -68,11 +68,11 @@ const ModalApps: FC<ModalProps> = ({
     setInputValue("");
     setInputValueId("");
   };
-	const workspaceActor = workspaceId
-	? (useCandidActor<CandidActors>("workspace", currentIdentity, {
-			canisterId: workspaceId,
-		}) as CandidActors["workspace"])
-	: null;
+  const workspaceIam = workspaceId
+    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
+        canisterId: workspaceId,
+      }) as CandidActors["workspaceIam"])
+    : null;
   const filteredDataNameSearch = dataNameSearch.filter(
     (name) => !selectedNames.some((selected) => selected.id === name.id)
   );
@@ -88,12 +88,12 @@ const ModalApps: FC<ModalProps> = ({
   }
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-		if (!workspaceActor) return;
-    setLoading(true); 
+    if (!workspaceIam) return;
+    setLoading(true);
     try {
-			const number = 'bd3sg-teaaa-aaaaa-qaaba-cai'
-			const value= Principal.fromText(number);
-      const response = await workspaceActor.addApp(value,data.name);
+      const number = "bd3sg-teaaa-aaaaa-qaaba-cai";
+      const value = Principal.fromText(number);
+      const response = await workspaceIam.create_access(value, data.name, { app: null });
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
 
@@ -105,7 +105,7 @@ const ModalApps: FC<ModalProps> = ({
     } catch (error) {
       console.error({ error });
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -115,7 +115,7 @@ const ModalApps: FC<ModalProps> = ({
         <form className="flex flex-col gap-y-6" onSubmit={handleSubmit(onSubmit)}>
           <h2 className="text-xl mb-4">Add Apps</h2>
           <div className="flex flex-col">
-					<input
+            <input
               {...register("name", { required: "Name is required" })}
               type="text"
               placeholder="Type name"
@@ -127,14 +127,10 @@ const ModalApps: FC<ModalProps> = ({
             <button
               className="bg-white text-gray px-4 py-2"
               onClick={() => setShowModal(false)}
-              type="button"
-            >
+              type="button">
               Cancel
             </button>
-            <button
-              className="bg-green-400 text-white px-8 py-2 rounded-lg mr-2"
-							type="submit"
-            >
+            <button className="bg-green-400 text-white px-8 py-2 rounded-lg mr-2" type="submit">
               {loading ? <LoadingSpinner /> : "Add"}
             </button>
           </div>

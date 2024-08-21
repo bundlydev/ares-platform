@@ -26,10 +26,10 @@ function Profile() {
     formState: { errors },
   } = useForm<ProfileInputs>();
   const router = useRouter();
-  const backofficeGateway = useCandidActor<CandidActors>(
-    "backofficeGateway",
+  const accountManager = useCandidActor<CandidActors>(
+    "accountManager",
     currentIdentity
-  ) as CandidActors["backofficeGateway"];
+  ) as CandidActors["accountManager"];
 
   const { setProfile, profile } = useContext(AuthContext);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
@@ -38,7 +38,7 @@ function Profile() {
   const onSubmit: SubmitHandler<ProfileInputs> = async (data) => {
     setLoading(true);
     try {
-      const response = await backofficeGateway.createProfile(data);
+      const response = await accountManager.create(data);
       if ("ok" in response) {
         setProfile({
           username: data.username,

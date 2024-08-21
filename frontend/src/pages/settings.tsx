@@ -34,10 +34,10 @@ export default function Settings() {
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const backofficeGateway = useCandidActor<CandidActors>(
-    "backofficeGateway",
+  const workspaceOrchestrator = useCandidActor<CandidActors>(
+    "workspaceOrchestrator",
     currentIdentity
-  ) as CandidActors["backofficeGateway"];
+  ) as CandidActors["workspaceOrchestrator"];
 
   const findWorkspaceName = () => {
     const workspace = workspaces.find((workspace) => workspace.id === workspaceId);
@@ -48,7 +48,7 @@ export default function Settings() {
     try {
       setDeleteInProgress(true);
       const workspaceId = Principal.fromText(idWorkspace);
-      const response = await backofficeGateway.deleteWorkspace(workspaceId);
+      const response = await workspaceOrchestrator.delete_workspace(workspaceId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
