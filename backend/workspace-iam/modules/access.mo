@@ -58,16 +58,25 @@ module AccessModule {
 									case (?policy) {
 										for (statement in policy.statements.vals()) {
 											switch (statement.action, statement.effect) {
-												case ("*", #allow) { return true };
-												case ("*", #denied) { return false };
-												case (_) {};
-											};
+												case (#all, #allow) { return true };
+												case (#all, #denied) { return false };
+												case (#list(actions), #allow) {
+													for (a in actions.vals()) {
+														if (a == action) {
+															return true;
+														};
+													};
 
-											// TODO: Move this to above switch
-											if (statement.action == action) {
-												switch (statement.effect) {
-													case (#allow) { return true };
-													case (#denied) { return false };
+													return false;
+												};
+												case (#list(actions), #denied) {
+													for (a in actions.vals()) {
+														if (a == action) {
+															return false;
+														};
+													};
+
+													return true;
 												};
 											};
 										};
@@ -85,7 +94,7 @@ module AccessModule {
 			return false;
 		};
 
-		public func add(identity : Principal, roleId : Text, itype : AccessIdentityType) : async Access {
+		public func create(identity : Principal, roleId : Text, itype : AccessIdentityType) : async Access {
 			let maybeAccess = getById(identity);
 
 			if (maybeAccess != null) {
@@ -109,7 +118,7 @@ module AccessModule {
 			return access;
 		};
 
-		public func remove(identity : Principal) : async Access {
+		public func delete(identity : Principal) : async Access {
 			let maybeAccess = getById(identity);
 
 			switch (maybeAccess) {

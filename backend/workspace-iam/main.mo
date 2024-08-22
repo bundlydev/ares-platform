@@ -10,25 +10,19 @@ import IC "mo:ic";
 import Map "mo:map/Map";
 
 // Custom Modules
-import PolicyActionModule "./modules/policy-action";
+import AccessPermissionModule "./modules/access-permission";
 import PolicyModule "./modules/policy";
 import RoleModule "./modules/role";
 import AccessModule "./modules/access";
 
 import WorkspaceIamEventsModule "./events";
 
-// Actors
-import AccountManager "../account-manager/main";
-
-shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accountManager : Principal) = Self {
-	let POLICY_ACTIONS = PolicyActionModule.POLICY_ACTIONS;
+shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Self {
+	let ACCESS_PERMISSION_LIST = AccessPermissionModule.ACCESS_PERMISSION_LIST;
 
 	private stable let _creator = actor (Principal.toText(creator)) : actor {
 		event_listener : (data : WorkspaceIamEventsModule.EventVariants) -> ();
 	};
-
-	// Canisters
-	private stable let _accountManager = actor (Principal.toText(accountManager)) : AccountManager.AccountManager;
 
 	private stable let _owner = owner;
 
@@ -42,6 +36,26 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	private let policyService = PolicyModule.PolicyService(_policies);
 	private let roleService = RoleModule.RoleService(_roles, policyService);
 	private let accessService = AccessModule.AccessService(_accessList, policyService, roleService);
+
+	type AccessType = {
+		// TODO: Implement public access
+		// #public;
+		#authenticated;
+		#permission : Text;
+	};
+
+	private func identity_has_access(identity : Principal, access : AccessType) : Bool {
+		if (Principal.equal(identity, Principal.fromActor(_creator))) return true;
+
+		switch (access) {
+			// TODO: Implement public access
+			// case (#public) return true;
+			case (#authenticated) return not Principal.isAnonymous(identity);
+			case (#permission(permission)) {
+				return accessService.hasPermission(identity, permission);
+			};
+		};
+	};
 
 	type DeleteResultOk = {
 		refundedCycles : Nat;
@@ -77,7 +91,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 		});
 	};
 
-	type GetIamActionsResultOk = PolicyActionModule.PolicyActions;
+	type GetIamActionsResultOk = AccessPermissionModule.AccessPermissionList;
 
 	type GetIamActionsResultErr = {
 		#unauthorized;
@@ -85,11 +99,10 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 
 	type GetIamActionsResult = Result.Result<GetIamActionsResultOk, GetIamActionsResultErr>;
 
-	public shared composite query ({ caller }) func get_policy_actions() : async GetIamActionsResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.POLICY_READ.action });
-		if (not hasAccess) return #err(#unauthorized);
+	public shared composite query ({ caller }) func get_access_permission_list() : async GetIamActionsResult {
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.GET_ACCESS_PERMISSION_LIST.id))) return #err(#unauthorized);
 
-		return #ok(POLICY_ACTIONS);
+		return #ok(ACCESS_PERMISSION_LIST);
 	};
 
 	type GetPermissionsResultOk = [PolicyModule.Policy];
@@ -101,8 +114,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	type GetPermissionsResult = Result.Result<GetPermissionsResultOk, GetPermissionsResultErr>;
 
 	public shared composite query ({ caller }) func get_policies() : async GetPermissionsResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.POLICY_READ.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.GET_POLICIES.id))) return #err(#unauthorized);
 
 		return #ok(policyService.getAll());
 	};
@@ -117,11 +129,10 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	type AddPermissionResult = Result.Result<AddPermissionResultOk, AddPermissionResultErr>;
 
 	public shared ({ caller }) func create_policy(newPolicy : PolicyModule.Policy) : async AddPermissionResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.POLICY_WRITTE.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.CREATE_POLICY.id))) return #err(#unauthorized);
 
 		try {
-			await policyService.add(newPolicy);
+			await policyService.create(newPolicy);
 			return #ok();
 		} catch (_error) {
 			return #err(#permissionAlreadyAdded);
@@ -137,8 +148,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	type GetRolesResult = Result.Result<GetRolesResultOk, GetRolesResultErr>;
 
 	public shared composite query ({ caller }) func get_roles() : async GetRolesResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.ROLE_READ.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.GET_ROLES.id))) return #err(#unauthorized);
 
 		return #ok(roleService.getAll());
 	};
@@ -153,11 +163,10 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	type AddRoleResult = Result.Result<AddRoleResultOk, AddRoleResultErr>;
 
 	public shared ({ caller }) func create_role(displayName : Text, policies : [Text]) : async AddRoleResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.ROLE_WRITTE.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.CREATE_ROLE.id))) return #err(#unauthorized);
 
 		try {
-			let role = await roleService.add({ displayName; policies });
+			let role = await roleService.create({ displayName; policies });
 			return #ok(role);
 		} catch (_error) {
 			return #err(#roleAlreadyAdded);
@@ -174,12 +183,11 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	type RemoveRoleResult = Result.Result<RemoveRoleResultOk, RemoveRoleResultErr>;
 
 	public shared ({ caller }) func delete_role(roleId : Text, newRoleId : Text) : async RemoveRoleResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.ROLE_WRITTE.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.DELETE_ROLE.id))) return #err(#unauthorized);
 
 		try {
 			// TODO: Validate if role and newRole exist
-			ignore await roleService.remove(roleId);
+			ignore await roleService.delete(roleId);
 
 			let accessList = accessService.getAll();
 
@@ -204,8 +212,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	type AddPermissionToRoleResult = Result.Result<AddPermissionToRoleResultOk, AddPermissionToRoleResultErr>;
 
 	public shared ({ caller }) func add_policy_to_role(roleName : Text, policyId : Text) : async AddPermissionToRoleResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.ROLE_WRITTE.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.ADD_POLICY_TO_ROLE.id))) return #err(#unauthorized);
 
 		try {
 			// TODO: Validate if policy exists
@@ -228,8 +235,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	type RemovePermissionFromRoleResult = Result.Result<RemovePermissionFromRoleResultOk, RemovePermissionFromRoleResultErr>;
 
 	public shared ({ caller }) func remove_policy_from_role(roleName : Text, policyId : Text) : async RemovePermissionFromRoleResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.ROLE_WRITTE.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.REMOVE_POLICY_FROM_ROLE.id))) return #err(#unauthorized);
 
 		try {
 			ignore roleService.removePolicy(roleName, policyId);
@@ -257,8 +263,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	};
 
 	public shared composite query ({ caller }) func get_access_list(options : GetAccessListOptions) : async GetAccessListResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.ACCESS_READ.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.GET_ACCESS_LIST.id))) return #err(#unauthorized);
 
 		var accessList = accessService.getAll();
 
@@ -288,11 +293,10 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	type AddAccessResult = Result.Result<AddAccessResultOk, AddAccessResultErr>;
 
 	public shared ({ caller }) func create_access(identity : Principal, roleId : Text, itype : AccessModule.AccessIdentityType) : async AddAccessResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.ACCESS_WRITTE.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.CREATE_ACCESS.id))) return #err(#unauthorized);
 
 		try {
-			let access = await accessService.add(identity, roleId, itype);
+			let access = await accessService.create(identity, roleId, itype);
 			let newEvent : WorkspaceIamEventsModule.EventVariants = #workspaceAccessCreated(access);
 
 			_creator.event_listener(newEvent);
@@ -314,11 +318,10 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	type RemoveAccessResult = Result.Result<RemoveAccessResultOk, RemoveAccessResultErr>;
 
 	public shared ({ caller }) func delete_access(identity : Principal) : async RemoveAccessResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.ACCESS_WRITTE.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.DELETE_ACCESS.id))) return #err(#unauthorized);
 
 		try {
-			let access = await accessService.remove(identity);
+			let access = await accessService.delete(identity);
 			let newEvent : WorkspaceIamEventsModule.EventVariants = #workspaceAccessRemoved(access);
 
 			_creator.event_listener(newEvent);
@@ -339,8 +342,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 	type AssignRoleToPrincipalResult = Result.Result<AssignRoleToPrincipalResultOk, AssignRoleToPrincipalResultErr>;
 
 	public shared ({ caller }) func change_access_role(identity : Principal, roleId : Text) : async AssignRoleToPrincipalResult {
-		let hasAccess = await has_access(caller, { allowIncognito = false; isPublic = false; action = ?POLICY_ACTIONS.ACCESS_WRITTE.action });
-		if (not hasAccess) return #err(#unauthorized);
+		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.CHANGE_ACCESS_ROLE.id))) return #err(#unauthorized);
 
 		try {
 			ignore accessService.changeRole(identity, roleId);
@@ -351,29 +353,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal, accou
 		};
 	};
 
-	type ValidateAccessOptions = {
-		allowIncognito : Bool;
-		isPublic : Bool;
-		action : ?Text;
-	};
-
-	public shared query func has_access(identity : Principal, options : ValidateAccessOptions) : async Bool {
-		if (options.isPublic) return true;
-
-		if (not options.isPublic and Principal.isAnonymous(identity)) return false;
-
-		if (Principal.equal(identity, Principal.fromActor(_creator))) return true;
-
-		// TODO: Remove this validation?
-		if (not options.allowIncognito and Principal.isAnonymous(identity)) return false;
-
-		switch (options.action) {
-			case (?action) {
-				return accessService.hasPermission(identity, action);
-			};
-			case null {
-				return false;
-			};
-		};
+	public shared query func has_access(identity : Principal, access : AccessType) : async Bool {
+		return identity_has_access(identity, access);
 	};
 };

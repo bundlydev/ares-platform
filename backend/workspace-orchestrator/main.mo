@@ -18,14 +18,14 @@ import WorkspaceOrchestratorEvents "./events";
 import WorkspaceOrchestratorModels "./models";
 import WorkspaceOrchestratorTypes "./types";
 
-actor class WorkspaceOrchestrator({ account_manager : Principal }) {
+actor WorkspaceOrchestrator {
 	// Database
 	stable let _workspaces : WorkspaceOrchestratorModels.WorkspaceCollection = Map.new<Principal, WorkspaceOrchestratorModels.Workspace>();
 	stable var _cyclesLedger : CyclesLedgerModule.CyclesLedgerStorage = Map.new<Nat, CyclesLedgerModule.CycleTransaction>();
 
 	// Services
 	private let cyclesLedgerService = CyclesLedgerModule.CyclesLedgerService(_cyclesLedger);
-	private let workspaceManagerService = WorkspaceManager.WorkspaceManagerService(_workspaces, cyclesLedgerService, account_manager);
+	private let workspaceManagerService = WorkspaceManager.WorkspaceManagerService(_workspaces, cyclesLedgerService);
 
 	public shared query func get_canister_balance() : async Nat {
 		// TODO: Add security check to prevent unauthorized access

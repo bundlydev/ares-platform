@@ -59,12 +59,7 @@ if [ "$mode" = "dev" ]; then
   echo "Deploying in development environment..."
   dfx deploy internet-identity --network local
   dfx deploy account-manager --network local
-	ACCOUNT_MANAGER_CANISTER_ID=$(dfx canister id account-manager)
-	dfx deploy workspace-orchestrator --network local --argument "(
-		record {
-			account_manager = principal \"$ACCOUNT_MANAGER_CANISTER_ID\"
-		},
-	)"
+	dfx deploy workspace-orchestrator --network local
   if [ "$deploy_frontend" = true ]; then
     if [ "$force_frontend" = true ]; then
       echo "Building frontend..."
@@ -78,12 +73,7 @@ else
   echo "Deploying in production environment..."
 	# TODO: Implement production deployment
   # dfx deploy account-manager --network ic
-	# ACCOUNT_MANAGER_CANISTER_ID=$(dfx canister id account-manager --network ic)
-	# dfx deploy workspace-orchestrator --network ic --argument "(
-	# 	record {
-	# 		account_manager = principal \"$ACCOUNT_MANAGER_CANISTER_ID\"
-	# 	},
-	# )"
+	# dfx deploy workspace-orchestrator --network ic
   # if [ "$force_frontend" = true ]; then
   #   echo "Building frontend..."
   #   cd frontend

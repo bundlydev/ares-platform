@@ -7,12 +7,23 @@ import Map "mo:map/Map";
 import { thash } "mo:map/Map";
 
 module PolicyModule {
+	public type AccessPermission = Text;
+	public type PolicyStatementAction = {
+		#all;
+		#list : [AccessPermission];
+	};
+
 	public type PolicyStatement = {
 		effect : {
 			#allow;
 			#denied;
 		};
-		action : Text;
+		action : PolicyStatementAction;
+		// TODO: Implement resource validation
+		// resource : {
+		//   #all;
+		//   #list : [Text];
+		// };
 	};
 
 	public type PolicyType = {
@@ -39,7 +50,7 @@ module PolicyModule {
 			ptype = #managed;
 			statements = [{
 				effect = #allow;
-				action = "*";
+				action = #all;
 			}];
 		},
 	];
@@ -56,7 +67,7 @@ module PolicyModule {
 			return Map.get<Text, Policy>(_storage, thash, pid);
 		};
 
-		public func add(newPolicy : Policy) : async () {
+		public func create(newPolicy : Policy) : async () {
 			// TODO: Validate policy pid format (no spaces, special characters, etc)
 
 			if (getById(newPolicy.pid) != null) {
@@ -66,7 +77,7 @@ module PolicyModule {
 			ignore Map.put<Text, Policy>(_storage, thash, newPolicy.pid, newPolicy);
 		};
 
-		public func remove(pid : Text) : async Policy {
+		public func delete(pid : Text) : async Policy {
 			switch (getById(pid)) {
 				case (?policy) {
 					if (policy.ptype == #managed) {

@@ -44,7 +44,7 @@ module RoleModule {
 			return id;
 		};
 
-		public func add(data : { displayName : Text; policies : [Text] }) : async Role {
+		public func create(data : { displayName : Text; policies : [Text] }) : async Role {
 			for (policyId in data.policies.vals()) {
 				let maybePolicy = policyService.getById(policyId);
 
@@ -68,7 +68,7 @@ module RoleModule {
 			};
 		};
 
-		public func remove(rid : Text) : async Role {
+		public func delete(rid : Text) : async Role {
 			switch (Map.remove(_storage, thash, rid)) {
 				case (?role) return role;
 				case null throw Error.reject(ROLE_DOES_NOT_EXIST_ERROR);
