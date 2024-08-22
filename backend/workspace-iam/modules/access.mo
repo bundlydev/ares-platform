@@ -1,6 +1,7 @@
 // Base Modules
 import Iter "mo:base/Iter";
 import Error "mo:base/Error";
+import Array "mo:base/Array";
 
 // Mops Modules
 import Map "mo:map/Map";
@@ -42,7 +43,7 @@ module AccessModule {
 			return Map.get<Principal, Access>(_storage, phash, aid);
 		};
 
-		public func hasPermission(identity : Principal, action : Text) : Bool {
+		public func hasPermission(identity : Principal, permission : Text) : Bool {
 			let maybeAccess = getById(identity);
 
 			switch (maybeAccess) {
@@ -51,47 +52,43 @@ module AccessModule {
 
 					switch (maybeRole) {
 						case (?role) {
+							var isAllowed = false;
+
+							// Iterate over all policies associated with the role
 							for (policyId in role.policies.vals()) {
 								let maybePolicy = policyService.getById(policyId);
 
 								switch (maybePolicy) {
 									case (?policy) {
+										// Evaluate each statement in the policy
 										for (statement in policy.statements.vals()) {
 											switch (statement.action, statement.effect) {
-												case (#all, #allow) { return true };
-												case (#all, #denied) { return false };
-												case (#list(actions), #allow) {
-													for (a in actions.vals()) {
-														if (a == action) {
-															return true;
-														};
+												case (#all, #allow) { isAllowed := true };
+												case (#all, #deny) { return false };
+												case (#list(accessPermissions), #allow) {
+													if (Array.find<Text>(accessPermissions, func x = x == permission) != null) {
+														isAllowed := true;
 													};
-
-													return false;
 												};
-												case (#list(actions), #denied) {
-													for (a in actions.vals()) {
-														if (a == action) {
-															return false;
-														};
+												case (#list(accessPermissions), #deny) {
+													if (Array.find<Text>(accessPermissions, func x = x == permission) != null) {
+														return false;
 													};
-
-													return true;
 												};
 											};
 										};
 									};
-									case null { return false };
+									case null { /* Policy does not exist; continue to the next */ };
 								};
 							};
+
+							return isAllowed;
 						};
-						case null { return false };
+						case null { return false }; // Role does not exist
 					};
 				};
-				case null { return false };
+				case null { return false }; // Access does not exist
 			};
-
-			return false;
 		};
 
 		public func create(identity : Principal, roleId : Text, itype : AccessIdentityType) : async Access {
