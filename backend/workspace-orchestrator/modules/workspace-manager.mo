@@ -39,7 +39,6 @@ module WorkspaceManager {
 	public class WorkspaceManagerService(
 		_storage : WorkspaceOrchestratorModels.WorkspaceCollection,
 		cyclesLedgerService : CyclesLedgerModule.CyclesLedgerService,
-		accountManager : Principal,
 	) {
 		private let ic = actor ("aaaaa-aa") : IC.Service;
 
@@ -128,7 +127,7 @@ module WorkspaceManager {
 				ptype = #managed;
 				statements = [{
 					effect = #allow;
-					action = "*";
+					action = #all;
 				}];
 			};
 
@@ -153,7 +152,7 @@ module WorkspaceManager {
 			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
 			Cycles.add<system>(113_846_199_230);
 
-			let iam = await WorkspaceIam.IamActorClass(owner, accountManager);
+			let iam = await WorkspaceIam.IamActorClass(owner);
 
 			return iam;
 		};
