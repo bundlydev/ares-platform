@@ -59,15 +59,39 @@ actor WorkspaceOrchestrator {
 				return {
 					wip = workspace.wip;
 					name = workspace.name;
-					members = workspace.members;
-					canisters = {
-						iam = Principal.fromActor(workspace.canisters.iam);
-					};
 				};
 			},
 		);
 
 		return #ok(result);
+	};
+
+	public shared query ({ caller }) func get_workspace_info(wip : Principal) : async WorkspaceOrchestratorTypes.GetWorkspaceInfoResult {
+		if (Principal.isAnonymous(caller)) return #err(#unauthorized);
+
+		switch (workspaceManagerService.getById(wip)) {
+			case (?workspace) {
+				let member = Array.find<Principal>(
+					workspace.members,
+					func(member) = Principal.equal(member, caller),
+				);
+
+				if (member == null) return #err(#unauthorized);
+
+				let result = {
+					wip = workspace.wip;
+					name = workspace.name;
+					owner = workspace.owner;
+					members = workspace.members;
+					canisters = {
+						iam = Principal.fromActor(workspace.canisters.iam);
+					};
+				};
+
+				return #ok(result);
+			};
+			case (null) #err(#workspaceNotFound);
+		};
 	};
 
 	public shared ({ caller }) func create_workspace(data : WorkspaceOrchestratorTypes.CreateWorkspaceData) : async WorkspaceOrchestratorTypes.CreateWorkspaceResponse {
@@ -83,7 +107,8 @@ actor WorkspaceOrchestrator {
 		let result = {
 			wip = workspace.wip;
 			name = workspace.name;
-			members = [];
+			owner = workspace.owner;
+			members = workspace.members;
 			canisters = {
 				iam = Principal.fromActor(workspace.canisters.iam);
 			};

@@ -5,10 +5,6 @@ module {
 	public type GetMyWorkspacesResponseOkItem = {
 		wip : Principal;
 		name : Text;
-		members : [Principal];
-		canisters : {
-			iam : Principal;
-		};
 	};
 
 	public type GetMyWorkspacesResponseOk = [GetMyWorkspacesResponseOkItem];
@@ -20,6 +16,23 @@ module {
 
 	public type GetMyWorkspacesResponse = Result.Result<GetMyWorkspacesResponseOk, GetMyWorkspacesResponseErr>;
 
+	public type GetWorkspaceInfoResultOk = {
+		wip : Principal;
+		name : Text;
+		owner : Principal;
+		members : [Principal];
+		canisters : {
+			iam : Principal;
+		};
+	};
+
+	public type GetWorkspaceInfoResultErr = {
+		#unauthorized;
+		#workspaceNotFound;
+	};
+
+	public type GetWorkspaceInfoResult = Result.Result<GetWorkspaceInfoResultOk, GetWorkspaceInfoResultErr>;
+
 	public type CreateWorkspaceData = {
 		name : Text;
 	};
@@ -27,6 +40,8 @@ module {
 	public type CreateWorkspaceResponseOk = {
 		wip : Principal;
 		name : Text;
+		owner : Principal;
+		members : [Principal];
 		canisters : {
 			iam : Principal;
 		};
