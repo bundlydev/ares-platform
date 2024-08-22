@@ -93,7 +93,7 @@ const ModalApps: FC<ModalProps> = ({
     try {
       const number = "bd3sg-teaaa-aaaaa-qaaba-cai";
       const value = Principal.fromText(number);
-      const response = await workspaceIam.create_access(value, data.name, { app: null });
+      const response = await workspaceIam.create_access(value, { app: null });
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
 

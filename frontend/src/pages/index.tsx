@@ -14,7 +14,7 @@ type Profile = {
   lastName: string;
 };
 
-export default function IcConnectPage() {
+function IcConnectPage() {
   const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
   const identities = useIdentities();
   const [profile, setProfile] = useState<Profile | undefined>();
@@ -126,3 +126,8 @@ function CreateProfileForm({ onSubmit, loading }: ProfileFormProps) {
     </form>
   );
 }
+IcConnectPage.getLayout = function getLayout(page: React.ReactNode) {
+  return page;
+};
+
+export default IcConnectPage;

@@ -200,7 +200,7 @@ export default function Home() {
       </div>
     );
   }
-
+console.log(workspaceMembers,'workspaceMembers')
   return (
     <div className="flex flex-col w-full ">
       <div

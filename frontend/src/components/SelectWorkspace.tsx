@@ -48,7 +48,6 @@ const SelectWorkspace: React.FC = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
-
   return (
     <div className="relative inline-block text-left" ref={dropdownRef}>
       <div>

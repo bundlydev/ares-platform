@@ -28,7 +28,7 @@
     },
     "frontend": {
       "type": "assets",
-      "dependencies": ["backoffice-gateway", "internet-identity"],
+      "dependencies": ["account-manager", "workspace-orchestrator", "internet-identity"],
       "frontend": {
         "entrypoint": "frontend/build/index.html"
       },

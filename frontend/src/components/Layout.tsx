@@ -50,8 +50,20 @@ const Layout: FC<LayoutProps> = ({ children }) => {
               <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
             </div>
             {isOpen && identity.length > 0 && (
-              <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+              <div className="origin-top-right absolute right-0 mt-2 w-72 py-3 px-3 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                 <div role="menu" aria-orientation="vertical" aria-labelledby="options-menu">
+                  <div className="flex gap-3 items-center border-b border-gray-300 pb-3">
+                    {" "}
+                    <div
+                      className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center cursor-pointer"
+                      onClick={handleToggle}>
+                      <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-base text-black font-semibold">{profiles.username}</span>
+                      <span className="text-xs font-normal text-gray-500">{profiles.email}</span>
+                    </div>
+                  </div>
                   <LogoutButton
                     identity={identity[0].identity}
                     style={{
@@ -62,7 +74,7 @@ const Layout: FC<LayoutProps> = ({ children }) => {
                       fontSize: "18px",
                       alignItems: "center",
                       fontWeight: 500,
-                      padding: "10px 15px",
+                      padding: "10px 0 0 0",
                       gap: "15px",
                     }}>
                     <svg

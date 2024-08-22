@@ -94,6 +94,8 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           }
 
           if ("ok" in workspacesResponse) {
+						debugger
+						console.log(workspacesResponse,'workspacesResponse')
             const convertedWorkspacesResponse = workspacesResponse.ok
               ? workspacesResponse.ok.map((workspace) => ({
                   ...workspace,
