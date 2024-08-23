@@ -16,7 +16,7 @@ module PolicyModule {
 	public type PolicyStatement = {
 		effect : {
 			#allow;
-			#denied;
+			#deny;
 		};
 		action : PolicyStatementAction;
 		// TODO: Implement resource validation
