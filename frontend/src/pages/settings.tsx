@@ -52,7 +52,7 @@ export default function Settings() {
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
-        else console.log("Error fetching profile");
+        else console.log(response,"pagesettingsError fetching profile");
         return;
       }
       setShowModalDelete(false);

@@ -185,7 +185,6 @@ export default function Apps() {
       </div>
     );
   }
-
   return (
     <div className="flex flex-col w-full ">
       <div
@@ -197,13 +196,13 @@ export default function Apps() {
           New
         </button>
         <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
-          <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
+          <div className="grid grid-cols-2 bg-gray-200 p-4 text-gray-700 font-bold">
             <div>Name</div>
             <div>Action</div>
           </div>
           <div className="divide-y divide-gray-200">
             {workspaceMembers.map((item, index) => (
-              <div key={index} className="grid grid-cols-3 p-4">
+              <div key={index} className="grid grid-cols-2 p-4">
                 <div>{item.name}</div>
                 <div>
                   <button

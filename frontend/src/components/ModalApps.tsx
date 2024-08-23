@@ -13,6 +13,10 @@ interface NameData {
   id: string;
   username: string;
 }
+interface NameData {
+  label: string;
+  value: string;
+}
 
 type FormValues = {
   name: string;
@@ -39,6 +43,7 @@ const ModalApps: FC<ModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [inputValueId, setInputValueId] = useState<string>("");
   const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<NameData[]>([]);
 
   const {
     register,
@@ -76,7 +81,25 @@ const ModalApps: FC<ModalProps> = ({
   const filteredDataNameSearch = dataNameSearch.filter(
     (name) => !selectedNames.some((selected) => selected.id === name.id)
   );
+  const getRoles = async () => {
+    if (!workspaceIam) return;
 
+    const getRolesResult = await workspaceIam.get_roles();
+    if ("ok" in getRolesResult) {
+      const rolesOptions = getRolesResult.ok.map((role) => ({
+        label: role.displayName,
+        value: role.displayName,
+      }));
+      setSelectedRoles(rolesOptions);
+    } else {
+      let error = getRolesResult.err;
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    getRoles();
+  }, []);
   useEffect(() => {
     if (inputValue === "") {
       setSelectedNames([]);
@@ -91,9 +114,8 @@ const ModalApps: FC<ModalProps> = ({
     if (!workspaceIam) return;
     setLoading(true);
     try {
-      const number = "bd3sg-teaaa-aaaaa-qaaba-cai";
-      const value = Principal.fromText(number);
-      const response = await workspaceIam.create_access(value, { app: null });
+			const value = Principal.fromText(data.name);
+      const response = await workspaceIam.create_access(value, data.role, { app: null });
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
 
@@ -122,6 +144,24 @@ const ModalApps: FC<ModalProps> = ({
               className="h-10 w-11/12 rounded-lg border border-gray-300 px-2"
             />
             <span className="text-red-500 h-2">{errors.name && "Name is required"}</span>
+           <select
+          {...register("role", { required: "Role is required" })}
+          className="bg-white border w-11/12 border-gray-300 mt-6 text-cyan-950 h-[40px] px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-600"
+        >
+          <option value="">Select a role</option>
+          {selectedRoles.map((role, index) => (
+            <option
+              key={index}
+              value={role.value}
+              className="text-cyan-950 bg-white hover:bg-gray-100"
+            >
+              {role.label}
+            </option>
+          ))}
+        </select>
+        <span className="text-red-500 h-2">
+          {errors.role && "Role is required"}
+        </span>
           </div>
           <div className="flex justify-end">
             <button

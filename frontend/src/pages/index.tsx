@@ -46,7 +46,7 @@ function IcConnectPage() {
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
-        else console.log("Error fetching profile");
+        else console.log(response,"profilepageError fetching profile");
       }
 
       const profile = "ok" in response ? response.ok : undefined;

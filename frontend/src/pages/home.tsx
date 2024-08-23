@@ -30,7 +30,7 @@ export default function Home() {
   };
 
   const { currentIdentity } = useAuth();
-  const { workspaceId } = useContext(AuthContext);
+  const { workspaceId, ownerId } = useContext(AuthContext);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
   const [deleteItem, setDeleteItem] = useState<string>("");
@@ -200,7 +200,6 @@ export default function Home() {
       </div>
     );
   }
-console.log(workspaceMembers,'workspaceMembers')
   return (
     <div className="flex flex-col w-full ">
       <div
@@ -220,10 +219,13 @@ console.log(workspaceMembers,'workspaceMembers')
           <div className="divide-y divide-gray-200">
             {workspaceMembers.map((item, index) => (
               <div key={index} className="grid grid-cols-3 p-4">
-                <div>{item.name}</div>
+                <div>
+                  {item.name}
+									<span className="text-cyan-800 bg-gray-200 rounded-[5px] text-sm font-bold px-[5px] ml-[8px]">OWNER</span>
+                </div>
                 <div>{item.role}</div>
                 <div>
-                  {item.role !== "Owner" && (
+                  {item.id !== ownerId && (
                     <button
                       className="bg-red-500 text-white py-1 px-3 rounded-lg"
                       onClick={() => {

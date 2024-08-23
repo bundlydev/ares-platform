@@ -25,12 +25,6 @@ const Menu = () => {
         Apps
       </div>
 			<div
-        onClick={() => handleNavigation('/roles')}
-        className="cursor-pointer w-48 h-12 rounded-lg flex justify-center items-center bg-slate-100 text-cyan-950 text-2xl font-semibold"
-      >
-        Roles
-      </div>
-			<div
         onClick={() => handleNavigation('/users')}
         className="cursor-pointer w-48 h-12 rounded-lg flex justify-center items-center bg-slate-100 text-cyan-950 text-2xl font-semibold"
       >
