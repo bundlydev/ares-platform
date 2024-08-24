@@ -153,6 +153,12 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 		return #ok(roleService.getAll());
 	};
 
+	type CreateRoleData = {
+		name : Text;
+		description : Text;
+		policies : [Text];
+	};
+
 	type AddRoleResultOk = RoleModule.Role;
 
 	type AddRoleResultErr = {
@@ -162,11 +168,11 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 
 	type AddRoleResult = Result.Result<AddRoleResultOk, AddRoleResultErr>;
 
-	public shared ({ caller }) func create_role(displayName : Text, policies : [Text]) : async AddRoleResult {
+	public shared ({ caller }) func create_role(data : CreateRoleData) : async AddRoleResult {
 		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.CREATE_ROLE.id))) return #err(#unauthorized);
 
 		try {
-			let role = await roleService.create({ displayName; policies });
+			let role = await roleService.create(data);
 			return #ok(role);
 		} catch (_error) {
 			return #err(#roleAlreadyAdded);

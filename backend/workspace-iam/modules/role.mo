@@ -13,7 +13,8 @@ import PolicyModule "./policy";
 module RoleModule {
 	public type Role = {
 		rid : Text;
-		displayName : Text;
+		name : Text;
+		description : Text;
 		policies : [Text];
 	};
 
@@ -44,7 +45,13 @@ module RoleModule {
 			return id;
 		};
 
-		public func create(data : { displayName : Text; policies : [Text] }) : async Role {
+		type CreateRoleData = {
+			name : Text;
+			description : Text;
+			policies : [Text];
+		};
+
+		public func create(data : CreateRoleData) : async Role {
 			for (policyId in data.policies.vals()) {
 				let maybePolicy = policyService.getById(policyId);
 
@@ -53,7 +60,7 @@ module RoleModule {
 				};
 			};
 
-			let rid = setId(data.displayName);
+			let rid = setId(data.name);
 
 			let maybeExistingRole = getById(rid);
 
