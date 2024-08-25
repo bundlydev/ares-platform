@@ -96,7 +96,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 
 	type GetIamActionsResult = Result.Result<GetIamActionsResultOk, GetIamActionsResultErr>;
 
-	public shared query ({ caller }) func get_access_permission_list() : async GetIamActionsResult {
+	public shared query ({ caller }) func get_permission_list() : async GetIamActionsResult {
 		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.GET_ACCESS_PERMISSION_LIST.id))) return #err(#unauthorized);
 
 		return #ok(ACCESS_PERMISSION_LIST);
