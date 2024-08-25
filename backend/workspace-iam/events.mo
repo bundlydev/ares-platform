@@ -14,7 +14,9 @@ module WorkspaceIamEvents {
 	};
 
 	public type EventVariants = {
-		#workspaceAccessCreated : WorkspaceAccessCreated;
-		#workspaceAccessRemoved : WorkspaceAccessRemoved;
+		#WorkspaceIam : {
+			#AccessCreated : WorkspaceAccessCreated;
+			#AccessRemoved : WorkspaceAccessRemoved;
+		};
 	};
 };

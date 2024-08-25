@@ -133,11 +133,23 @@ module WorkspaceManager {
 
 			ignore await iam.create_policy(adminPolicy);
 
-			let addRoleResult = await iam.create_role("Administrator", [adminPolicy.pid]);
+			let adminRoleData = {
+				name = "Administrator";
+				description = "Grant full access to the workspace";
+				policies = [adminPolicy.pid];
+			};
+
+			let addRoleResult = await iam.create_role(adminRoleData);
 
 			switch (addRoleResult) {
 				case (#ok(role)) {
-					ignore await iam.create_access(creator, role.rid, #user);
+					let newAccess = {
+						identity = creator;
+						roleId = role.rid;
+						itype = #user;
+					};
+
+					ignore await iam.create_access(newAccess);
 
 					return workspace;
 				};

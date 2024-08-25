@@ -131,7 +131,7 @@ actor WorkspaceOrchestrator {
 		};
 	};
 
-	public shared ({ caller }) func event_listener(event : WorkspaceOrchestratorEvents.EventVariants) {
+	public shared ({ caller }) func webhook_receiver(event : WorkspaceOrchestratorEvents.EventVariants) {
 		if (Principal.isAnonymous(caller)) return;
 
 		let maybeWorkspace = Array.find<WorkspaceOrchestratorModels.Workspace>(
@@ -142,14 +142,18 @@ actor WorkspaceOrchestrator {
 		if (maybeWorkspace == null) return;
 
 		switch (event) {
-			case (#workspaceAccessCreated(data)) {
-				if (data.itype == #user) {
-					await workspaceManagerService.addMember(caller, data.identity);
-				};
-			};
-			case (#workspaceAccessRemoved(data)) {
-				if (data.itype == #user) {
-					await workspaceManagerService.removeMember(caller, data.identity);
+			case (#WorkspaceIam(event)) {
+				switch (event) {
+					case (#AccessCreated(data)) {
+						if (data.itype == #user) {
+							await workspaceManagerService.addMember(caller, data.identity);
+						};
+					};
+					case (#AccessRemoved(data)) {
+						if (data.itype == #user) {
+							await workspaceManagerService.removeMember(caller, data.identity);
+						};
+					};
 				};
 			};
 		};

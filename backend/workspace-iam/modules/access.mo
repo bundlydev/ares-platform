@@ -2,6 +2,7 @@
 import Iter "mo:base/Iter";
 import Error "mo:base/Error";
 import Array "mo:base/Array";
+import Principal "mo:base/Principal";
 
 // Mops Modules
 import Map "mo:map/Map";
@@ -10,6 +11,8 @@ import { phash } "mo:map/Map";
 // Cutom Modules
 import RoleModule "./role";
 import PolicyModule "./policy";
+
+import WorkspaceIamTypes "../types";
 
 module AccessModule {
 	public type AccessIdentityType = {
@@ -43,76 +46,86 @@ module AccessModule {
 			return Map.get<Principal, Access>(_storage, phash, aid);
 		};
 
-		public func hasPermission(identity : Principal, permission : Text) : Bool {
-			let maybeAccess = getById(identity);
+		public func hasPermission(context : WorkspaceIamTypes.ActorContext, identity : Principal, accessType : WorkspaceIamTypes.AccessType) : Bool {
+			if (Principal.equal(identity, context.creator)) return true;
+			if (Principal.equal(identity, context.owner)) return true;
 
-			switch (maybeAccess) {
-				case (?access) {
-					let maybeRole = roleService.getById(access.roleId);
+			switch (accessType) {
+				case (#anonymous) return true;
+				case (#permission(permission)) {
+					if (permission == "") return false;
 
-					switch (maybeRole) {
-						case (?role) {
-							var isAllowed = false;
+					let maybeAccess = getById(identity);
 
-							// Iterate over all policies associated with the role
-							for (policyId in role.policies.vals()) {
-								let maybePolicy = policyService.getById(policyId);
+					switch (maybeAccess) {
+						case (?access) {
+							let maybeRole = roleService.getById(access.roleId);
 
-								switch (maybePolicy) {
-									case (?policy) {
-										// Evaluate each statement in the policy
-										for (statement in policy.statements.vals()) {
-											switch (statement.action, statement.effect) {
-												case (#all, #allow) { isAllowed := true };
-												case (#all, #deny) { return false };
-												case (#list(accessPermissions), #allow) {
-													if (Array.find<Text>(accessPermissions, func x = x == permission) != null) {
-														isAllowed := true;
-													};
-												};
-												case (#list(accessPermissions), #deny) {
-													if (Array.find<Text>(accessPermissions, func x = x == permission) != null) {
-														return false;
+							switch (maybeRole) {
+								case (?role) {
+									var isAllowed = false;
+
+									// Iterate over all policies associated with the role
+									for (policyId in role.policies.vals()) {
+										let maybePolicy = policyService.getById(policyId);
+
+										switch (maybePolicy) {
+											case (?policy) {
+												// Evaluate each statement in the policy
+												for (statement in policy.statements.vals()) {
+													switch (statement.action, statement.effect) {
+														case (#all, #allow) { isAllowed := true };
+														case (#all, #deny) { return false };
+														case (#list(accessPermissions), #allow) {
+															if (Array.find<Text>(accessPermissions, func x = x == permission) != null) {
+																isAllowed := true;
+															};
+														};
+														case (#list(accessPermissions), #deny) {
+															if (Array.find<Text>(accessPermissions, func x = x == permission) != null) {
+																return false;
+															};
+														};
 													};
 												};
 											};
+											case null { /* Policy does not exist; continue to the next */ };
 										};
 									};
-									case null { /* Policy does not exist; continue to the next */ };
-								};
-							};
 
-							return isAllowed;
+									return isAllowed;
+								};
+								case null { return false }; // Role does not exist
+							};
 						};
-						case null { return false }; // Role does not exist
+						case null { return false }; // Access does not exist
 					};
 				};
-				case null { return false }; // Access does not exist
 			};
 		};
 
-		public func create(identity : Principal, roleId : Text, itype : AccessIdentityType) : async Access {
-			let maybeAccess = getById(identity);
+		type CreateAccessData = {
+			identity : Principal;
+			roleId : Text;
+			itype : AccessIdentityType;
+		};
+
+		public func create(data : CreateAccessData) : async Access {
+			let maybeAccess = getById(data.identity);
 
 			if (maybeAccess != null) {
 				throw Error.reject(ACCESS_ALREADY_EXISTS_ERROR);
 			};
 
-			let maybeRole = roleService.getById(roleId);
+			let maybeRole = roleService.getById(data.roleId);
 
 			if (maybeRole == null) {
 				throw Error.reject(RoleModule.ROLE_DOES_NOT_EXIST_ERROR);
 			};
 
-			let access : Access = {
-				identity;
-				roleId;
-				itype;
-			};
+			ignore Map.put(_storage, phash, data.identity, data);
 
-			ignore Map.put(_storage, phash, identity, access);
-
-			return access;
+			return data;
 		};
 
 		public func delete(identity : Principal) : async Access {

@@ -14,47 +14,44 @@ import AccessPermissionModule "./modules/access-permission";
 import PolicyModule "./modules/policy";
 import RoleModule "./modules/role";
 import AccessModule "./modules/access";
+import WebhookManager "modules/webhook-manager";
 
+import WorkspaceIamTypesModule "./types";
 import WorkspaceIamEventsModule "./events";
 
 shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Self {
 	let ACCESS_PERMISSION_LIST = AccessPermissionModule.ACCESS_PERMISSION_LIST;
 
-	private stable let _creator = actor (Principal.toText(creator)) : actor {
-		event_listener : (data : WorkspaceIamEventsModule.EventVariants) -> ();
-	};
-
+	private stable let _creator = creator;
 	private stable let _owner = owner;
 
 	// Storage
 	var _policies : PolicyModule.PolicyCollection = Map.new();
 	let _roles : RoleModule.RoleCollection = Map.new();
 	let _accessList : AccessModule.AccessCollection = Map.new();
+	// TODO: Change this to StableHashMap
+	private stable let _webhook_listeners : WebhookManager.WebhookListenerCollection = [{
+		ref = actor (Principal.toText(_creator)) : WebhookManager.WebhookListener;
+		// TODO: Find the best way to filter events
+		events = [];
+	}];
 
 	// Services
 	private let ic = actor ("aaaaa-aa") : IC.Service;
 	private let policyService = PolicyModule.PolicyService(_policies);
 	private let roleService = RoleModule.RoleService(_roles, policyService);
 	private let accessService = AccessModule.AccessService(_accessList, policyService, roleService);
+	private let webhookService = WebhookManager.WebhookService(_webhook_listeners);
 
-	type AccessType = {
-		// TODO: Implement public access
-		// #public;
-		#authenticated;
-		#permission : Text;
+	private func getActorContext() : WorkspaceIamTypesModule.ActorContext {
+		return {
+			creator = _creator;
+			owner = _owner;
+		};
 	};
 
-	private func identity_has_access(identity : Principal, access : AccessType) : Bool {
-		if (Principal.equal(identity, Principal.fromActor(_creator))) return true;
-
-		switch (access) {
-			// TODO: Implement public access
-			// case (#public) return true;
-			case (#authenticated) return not Principal.isAnonymous(identity);
-			case (#permission(permission)) {
-				return accessService.hasPermission(identity, permission);
-			};
-		};
+	private func identity_has_access(identity : Principal, access : WorkspaceIamTypesModule.AccessType) : Bool {
+		return accessService.hasPermission(getActorContext(), identity, access);
 	};
 
 	type DeleteResultOk = {
@@ -68,7 +65,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 	type DeleteResult = Result.Result<DeleteResultOk, DeleteResultErr>;
 
 	public shared ({ caller }) func prepare_deletion() : async DeleteResult {
-		if (not Principal.equal(caller, Principal.fromActor(_creator))) {
+		if (not Principal.equal(caller, _creator)) {
 			return #err(#unauthorized);
 		};
 
@@ -79,7 +76,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 
 		if (cycles > 0) {
 			Cycles.add<system>(cycles);
-			await ic.deposit_cycles({ canister_id = Principal.fromActor(_creator) });
+			await ic.deposit_cycles({ canister_id = _creator });
 
 			return #ok({
 				refundedCycles = cycles;
@@ -99,7 +96,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 
 	type GetIamActionsResult = Result.Result<GetIamActionsResultOk, GetIamActionsResultErr>;
 
-	public shared composite query ({ caller }) func get_access_permission_list() : async GetIamActionsResult {
+	public shared query ({ caller }) func get_access_permission_list() : async GetIamActionsResult {
 		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.GET_ACCESS_PERMISSION_LIST.id))) return #err(#unauthorized);
 
 		return #ok(ACCESS_PERMISSION_LIST);
@@ -119,20 +116,26 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 		return #ok(policyService.getAll());
 	};
 
-	type AddPermissionResultOk = ();
+	type CreatePolicyData = {
+		pid : Text;
+		ptype : PolicyModule.PolicyType;
+		statements : [PolicyModule.PolicyStatement];
+	};
 
-	type AddPermissionResultErr = {
+	type CreatePermissionResultOk = ();
+
+	type CreatePermissionResultErr = {
 		#unauthorized;
 		#permissionAlreadyAdded;
 	};
 
-	type AddPermissionResult = Result.Result<AddPermissionResultOk, AddPermissionResultErr>;
+	type CreatePermissionResult = Result.Result<CreatePermissionResultOk, CreatePermissionResultErr>;
 
-	public shared ({ caller }) func create_policy(newPolicy : PolicyModule.Policy) : async AddPermissionResult {
+	public shared ({ caller }) func create_policy(data : CreatePolicyData) : async CreatePermissionResult {
 		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.CREATE_POLICY.id))) return #err(#unauthorized);
 
 		try {
-			await policyService.create(newPolicy);
+			await policyService.create(data);
 			return #ok();
 		} catch (_error) {
 			return #err(#permissionAlreadyAdded);
@@ -289,23 +292,29 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 		return #ok(accessList);
 	};
 
-	type AddAccessResultOk = AccessModule.Access;
+	type CreateAccessData = {
+		identity : Principal;
+		roleId : Text;
+		itype : AccessModule.AccessIdentityType;
+	};
 
-	type AddAccessResultErr = {
+	type CreateAccessResultOk = AccessModule.Access;
+
+	type CreateAccessResultErr = {
 		#unauthorized;
 		#accessAlreadyExists;
 	};
 
-	type AddAccessResult = Result.Result<AddAccessResultOk, AddAccessResultErr>;
+	type CreateAccessResult = Result.Result<CreateAccessResultOk, CreateAccessResultErr>;
 
-	public shared ({ caller }) func create_access(identity : Principal, roleId : Text, itype : AccessModule.AccessIdentityType) : async AddAccessResult {
+	public shared ({ caller }) func create_access(data : CreateAccessData) : async CreateAccessResult {
 		if (not identity_has_access(caller, #permission(ACCESS_PERMISSION_LIST.CREATE_ACCESS.id))) return #err(#unauthorized);
 
 		try {
-			let access = await accessService.create(identity, roleId, itype);
-			let newEvent : WorkspaceIamEventsModule.EventVariants = #workspaceAccessCreated(access);
+			let access = await accessService.create(data);
+			let newEvent : WorkspaceIamEventsModule.EventVariants = #WorkspaceIam(#AccessCreated(access));
 
-			_creator.event_listener(newEvent);
+			await webhookService.emit(newEvent);
 			return #ok(access);
 		} catch (_error) {
 			// TODO: Catch other errors
@@ -328,9 +337,9 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 
 		try {
 			let access = await accessService.delete(identity);
-			let newEvent : WorkspaceIamEventsModule.EventVariants = #workspaceAccessRemoved(access);
+			let newEvent : WorkspaceIamEventsModule.EventVariants = #WorkspaceIam(#AccessRemoved(access));
 
-			_creator.event_listener(newEvent);
+			await webhookService.emit(newEvent);
 			#ok(access);
 		} catch (_error) {
 			return #err(#accessDoesNotExist);
@@ -359,7 +368,8 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 		};
 	};
 
-	public shared query func has_access(identity : Principal, access : AccessType) : async Bool {
+	// TODO: Allow consult only for known principals (creator, workspace canisters, etc)
+	public shared query func verify_access(identity : Principal, access : WorkspaceIamTypesModule.AccessType) : async Bool {
 		return identity_has_access(identity, access);
 	};
 };

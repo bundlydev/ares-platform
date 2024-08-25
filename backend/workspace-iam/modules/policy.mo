@@ -67,14 +67,20 @@ module PolicyModule {
 			return Map.get<Text, Policy>(_storage, thash, pid);
 		};
 
-		public func create(newPolicy : Policy) : async () {
+		type CreatePolicyData = {
+			pid : Text;
+			ptype : PolicyType;
+			statements : [PolicyStatement];
+		};
+
+		public func create(data : Policy) : async () {
 			// TODO: Validate policy pid format (no spaces, special characters, etc)
 
-			if (getById(newPolicy.pid) != null) {
+			if (getById(data.pid) != null) {
 				throw Error.reject(POLICY_ALREADY_EXISTS_ERROR);
 			};
 
-			ignore Map.put<Text, Policy>(_storage, thash, newPolicy.pid, newPolicy);
+			ignore Map.put<Text, Policy>(_storage, thash, data.pid, data);
 		};
 
 		public func delete(pid : Text) : async Policy {
