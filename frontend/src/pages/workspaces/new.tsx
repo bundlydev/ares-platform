@@ -4,6 +4,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters";
+import { useAuthGuard } from "@app/hooks/useGuard";
 import BlankLayout from "@app/layouts/BlankLayout";
 
 type FormValues = {
@@ -11,6 +12,7 @@ type FormValues = {
 };
 
 export default function CreateWorkspacePage(): JSX.Element {
+  useAuthGuard({ isPrivate: true });
   const [loading, setLoading] = useState(false);
   const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
   const {

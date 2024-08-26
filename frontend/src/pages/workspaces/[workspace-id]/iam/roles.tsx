@@ -6,7 +6,7 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters";
 import LoadingSpinner from "@app/components/LoadingSpinner";
-import ModalApps from "@app/components/ModalApps";
+import ModalRoles from "@app/components/ModalRoles";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
 
@@ -15,15 +15,16 @@ type Workspace = {
   name: string;
 };
 type WorkspaceData = {
-  id: string;
   name: string;
+  description: string;
+  policies: string[];
 };
 type UsernameData = {
   id: string;
   username: string;
 };
 
-export default function WorkspaceAppsPage(): JSX.Element {
+export default function WorkspaceRolesPage(): JSX.Element {
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
@@ -32,7 +33,7 @@ export default function WorkspaceAppsPage(): JSX.Element {
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
-  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceData[]>([]);
+  const [rolesList, setRolesList] = useState<WorkspaceData[]>([]);
 
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -49,19 +50,22 @@ export default function WorkspaceAppsPage(): JSX.Element {
   }) as CandidActors["workspaceIam"];
 
   useEffect(() => {
-    getApps();
+    getRoles();
   }, []);
 
-  const getApps = async () => {
-    const getMembersResult = await workspaceIam.get_access_list({ filters: { itype: { app: null } } });
-    if ("ok" in getMembersResult) {
-      const NameList = getMembersResult.ok.map((item) => ({
-        id: item.identity.toString(),
-        name: item.identity.toString(),
+  const getRoles = async () => {
+    if (!workspaceIam) return;
+
+    const getRolesResult = await workspaceIam.get_roles();
+    if ("ok" in getRolesResult) {
+      const rolesOptions = getRolesResult.ok.map((role) => ({
+        name: role.name,
+        description: role.description,
+        policies: role.policies,
       }));
-      setWorkspaceMembers(NameList);
+      setRolesList(rolesOptions);
     } else {
-      let error = getMembersResult.err;
+      let error = getRolesResult.err;
       console.error(error);
     }
   };
@@ -102,8 +106,6 @@ export default function WorkspaceAppsPage(): JSX.Element {
         else console.log("Error fetching profile");
         return;
       }
-
-      getApps();
     } catch (error) {
       console.error("error response", { error });
     } finally {
@@ -111,35 +113,6 @@ export default function WorkspaceAppsPage(): JSX.Element {
       window.location.reload();
     }
   };
-
-  const addMemberWorkspace = async (userId: string) => {
-    if (!workspaceIam) return;
-
-    setLoading(true);
-    try {
-      const memberId = Principal.fromText(userId);
-      const response = await workspaceIam.create_access({
-        identity: memberId,
-        itype: { user: null },
-        roleId: "Administrator",
-      });
-
-      if ("err" in response) {
-        if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
-        else console.log("Error fetching profile");
-        return;
-      }
-
-      getApps();
-    } catch (error) {
-      console.error("error response", { error });
-    } finally {
-      setLoading(false);
-      setShowModal(false);
-      window.location.reload();
-    }
-  };
-
   const handleToggle = () => {
     setIsOpen(!isOpen);
   };
@@ -175,19 +148,21 @@ export default function WorkspaceAppsPage(): JSX.Element {
             New
           </button>
           <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
-            <div className="grid grid-cols-2 bg-gray-200 p-4 text-gray-700 font-bold">
+            <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
               <div>Name</div>
+              <div>Description</div>
               <div>Action</div>
             </div>
             <div className="divide-y divide-gray-200">
-              {workspaceMembers.map((item, index) => (
-                <div key={index} className="grid grid-cols-2 p-4">
+              {rolesList.map((item, index) => (
+                <div key={index} className="grid grid-cols-3 p-4">
                   <div>{item.name}</div>
+                  <div>{item.description}</div>
                   <div>
                     <button
                       className="bg-red-500 text-white py-1 px-3 rounded-lg"
                       onClick={() => {
-                        deleteIdapp(item.id);
+                        deleteIdapp(item.name);
                       }}
                       disabled={loading}>
                       {loading ? <LoadingSpinner /> : "Delete"}
@@ -198,7 +173,7 @@ export default function WorkspaceAppsPage(): JSX.Element {
             </div>
           </div>
         </div>
-        <ModalApps
+        <ModalRoles
           showModal={showModal}
           setShowModal={setShowModal}
           getListFindName={getListFindName}

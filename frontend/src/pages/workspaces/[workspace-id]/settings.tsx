@@ -14,16 +14,14 @@ import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
 type WorkspaceSettingsPageProps = {};
 
 export default function WorkspaceSettingsPage(props: WorkspaceSettingsPageProps): JSX.Element {
-  const loadingAuth = useAuthGuard({ isPrivate: true });
   const router = useRouter();
   const { currentIdentity } = useAuth();
   const workspaces = useWorkspaces();
-
+  useAuthGuard({ isPrivate: true });
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
   const [deleteInProgress, setDeleteInProgress] = useState<boolean>(false);
 
   let workspaceId = router.query["workspace-id"] as string;
-
   const workspaceOrchestrator = useCandidActor<CandidActors>(
     "workspaceOrchestrator",
     currentIdentity
@@ -65,14 +63,6 @@ export default function WorkspaceSettingsPage(props: WorkspaceSettingsPageProps)
   const handleConfirmDelete = () => {
     deleteIdworkspace(workspaceId!);
   };
-
-  if (loadingAuth || workspaceId === undefined) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <LoadingSpinner />
-      </div>
-    );
-  }
 
   return (
     <WorkspaceLayout>

@@ -1,10 +1,12 @@
 import { InternetIdentityButton } from "@bundly/ares-react";
 
+import { useAuthGuard } from "@app/hooks/useGuard";
 import BlankLayout from "@app/layouts/BlankLayout";
 
-import iconICP from "../images/iconICP.png";
+import iconICP from "../../images/iconICP.png";
 
 export default function SiginPage() {
+  useAuthGuard({ isPrivate: true });
   return (
     <BlankLayout>
       <div className="mx-auto flex flex-col max-w-7xl items-center gap-10 p-60 lg:px-8" aria-label="Global">

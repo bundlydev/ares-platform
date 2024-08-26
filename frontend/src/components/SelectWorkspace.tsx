@@ -48,6 +48,13 @@ const SelectWorkspace: React.FC = () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    if (router.pathname === "/home" && workspaceId) {
+      router.push(`/workspaces/${workspaceId}/iam/users`);
+    }
+  }, [router.pathname, workspaceId]);
+
   return (
     <div className="relative inline-block text-left" ref={dropdownRef}>
       <div>

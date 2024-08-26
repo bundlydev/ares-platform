@@ -27,7 +27,9 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   const getLayout = (Component as any).getLayout || ((page: React.ReactNode) => <Layout>{page}</Layout>);
   return (
     <IcpConnectContextProvider client={client}>
-      <AuthContextProvider>{getLayout(<Component {...pageProps} />)}</AuthContextProvider>
+      <AuthContextProvider>
+        <Component {...pageProps} />)
+      </AuthContextProvider>
     </IcpConnectContextProvider>
   );
 }
