@@ -58,6 +58,7 @@ Generate did files:
 dfx generate account-manager
 dfx generate workspace-orchestrator
 dfx generate workspace-iam
+dfx generate workspace-user-management
 ```
 
 Deploy your canisters:
@@ -107,6 +108,12 @@ Go to the project directory
 
 ```bash
   cd ares-platform
+```
+
+Set NVM Version
+
+```bash
+nvm use
 ```
 
 Start a ICP local replica:
@@ -163,6 +170,7 @@ Generate did files:
 dfx generate account-manager
 dfx generate workspace-orchestrator
 dfx generate workspace-iam
+dfx generate workspace-user-management
 ```
 
 Deploy your canisters:

@@ -23,6 +23,7 @@ module {
 		members : [Principal];
 		canisters : {
 			iam : Principal;
+			user_management : Principal;
 		};
 	};
 
@@ -44,6 +45,7 @@ module {
 		members : [Principal];
 		canisters : {
 			iam : Principal;
+			user_management : Principal;
 		};
 	};
 
