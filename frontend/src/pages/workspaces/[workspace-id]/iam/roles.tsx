@@ -135,7 +135,7 @@ export default function WorkspaceRolesPage(): JSX.Element {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [menuRef, workspaceRef]);
-
+console.log(rolesList,'rolesList')
   return (
     <WorkspaceLayout>
       <div className="flex flex-col w-full ">

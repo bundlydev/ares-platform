@@ -48,9 +48,7 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
           router.pathname !== `/workspaces/[workspace-id]/iam/apps` &&
           router.pathname !== `/workspaces/[workspace-id]/iam/roles`
         ) {
-          if (workspaces.length > 0) {
-            redirect("/home");
-          } else {
+          if (workspaces.length < 1) {
             redirect("/workspaces/new");
           }
         }
