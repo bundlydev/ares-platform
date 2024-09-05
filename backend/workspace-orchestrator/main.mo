@@ -85,6 +85,7 @@ actor WorkspaceOrchestrator {
 					members = workspace.members;
 					canisters = {
 						iam = Principal.fromActor(workspace.canisters.iam);
+						user_management = Principal.fromActor(workspace.canisters.access_management);
 					};
 				};
 
@@ -105,12 +106,15 @@ actor WorkspaceOrchestrator {
 		let workspace = await workspaceManagerService.create(data.name, caller);
 
 		let result = {
+			// TODO: Change how the workspace id is generated
+			// TODO: Add created_at field
 			wip = workspace.wip;
 			name = workspace.name;
 			owner = workspace.owner;
 			members = workspace.members;
 			canisters = {
 				iam = Principal.fromActor(workspace.canisters.iam);
+				user_management = Principal.fromActor(workspace.canisters.access_management);
 			};
 		};
 

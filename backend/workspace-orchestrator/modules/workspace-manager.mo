@@ -18,6 +18,7 @@ import CyclesLedgerModule "./cycles-ledger";
 
 // Actor Classes
 import WorkspaceIam "../../workspace-iam/main";
+import WorkspaceUserManagement "../../workspace-user-management/main";
 
 import WorkspaceOrchestratorModels "../models";
 
@@ -105,6 +106,7 @@ module WorkspaceManager {
 
 		public func create(name : Text, creator : Principal) : async WorkspaceOrchestratorModels.Workspace {
 			let iam = await createIamCanister(creator);
+			let user_management = await createUserManagementCanister(creator, Principal.fromActor(iam));
 
 			// TODO: Generate a random principal
 			let wip = Principal.fromActor(iam);
@@ -116,6 +118,7 @@ module WorkspaceManager {
 				members = [];
 				canisters = {
 					iam = iam;
+					access_management = user_management;
 				};
 			};
 
@@ -169,6 +172,15 @@ module WorkspaceManager {
 			return iam;
 		};
 
+		public func createUserManagementCanister(owner : Principal, iam : Principal) : async WorkspaceUserManagement.WorkspaceUserManagementActorClass {
+			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
+			Cycles.add<system>(113_846_199_230);
+
+			let userManagement = await WorkspaceUserManagement.WorkspaceUserManagementActorClass(owner, iam);
+
+			return userManagement;
+		};
+
 		public func delete(workspaceId : Principal, requester : Principal) : async ({ refundedCycles : Nat }) {
 			let maybeWorkspace = getById(workspaceId);
 
@@ -181,12 +193,13 @@ module WorkspaceManager {
 					};
 
 					let deleteIamCanisterResult = await deleteIamCanister(workspace.canisters.iam);
+					let deleteUserManagementCanisterResult = await deleteUserManagementCanister(workspace.canisters.access_management);
 
-					switch (deleteIamCanisterResult) {
-						case (#ok(iamResult)) {
+					switch (deleteIamCanisterResult, deleteUserManagementCanisterResult) {
+						case (#ok(iamResult), #ok(userManagementResult)) {
 							ignore Map.remove<Principal, WorkspaceOrchestratorModels.Workspace>(_storage, phash, workspaceId);
 
-							let refundedCycles = iamResult.refundedCycles;
+							let refundedCycles = iamResult.refundedCycles + userManagementResult.refundedCycles;
 
 							let newCyclesEntry : CyclesLedgerModule.CycleTransaction = {
 								amount = refundedCycles;
@@ -224,6 +237,25 @@ module WorkspaceManager {
 
 			await ic.stop_canister({ canister_id = Principal.fromActor(iam) });
 			await ic.delete_canister({ canister_id = Principal.fromActor(iam) });
+
+			return deletionResult;
+		};
+
+		type DeleteUserManagementCanisterResultOk = {
+			refundedCycles : Nat;
+		};
+
+		type DeleteUserManagementCanisterResultErr = {
+			#unauthorized;
+		};
+
+		type DeleteUserManagementCanisterResult = Result.Result<DeleteUserManagementCanisterResultOk, DeleteUserManagementCanisterResultErr>;
+
+		public func deleteUserManagementCanister(userManagement : WorkspaceUserManagement.WorkspaceUserManagementActorClass) : async DeleteUserManagementCanisterResult {
+			let deletionResult = await userManagement.prepare_deletion();
+
+			await ic.stop_canister({ canister_id = Principal.fromActor(userManagement) });
+			await ic.delete_canister({ canister_id = Principal.fromActor(userManagement) });
 
 			return deletionResult;
 		};
