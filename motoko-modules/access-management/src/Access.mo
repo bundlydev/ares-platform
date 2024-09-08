@@ -12,8 +12,14 @@ import Roles "./Roles";
 import Permissions "./Permissions";
 
 module Access {
+	public type AccessStatus = {
+		#active;
+		#inactive;
+	};
+
 	public type Access = {
 		identity : Principal;
+		status : AccessStatus;
 		roles : [Text];
 		permissions : [Text];
 	};
@@ -118,6 +124,7 @@ module Access {
 
 			let newAccess = {
 				identity = identity;
+				status = #active;
 				roles = roles;
 				permissions = permissions;
 			};
@@ -131,6 +138,27 @@ module Access {
 			switch (Map.remove(repository, phash, id)) {
 				case (?_access) { return true };
 				case (null) { return false };
+			};
+		};
+
+		type ChangeStatusResultOk = ();
+
+		type ChangeStatusResultErr = {
+			#accessDoesNotExist;
+		};
+
+		type ChangeStatusResult = Result.Result<ChangeStatusResultOk, ChangeStatusResultErr>;
+
+		public func changeStatus(accessId : Principal, status : AccessStatus) : ChangeStatusResult {
+			switch (get(accessId)) {
+				case (?access) {
+					let accessUpdated = { access with status = status };
+
+					ignore Map.put(repository, phash, accessId, accessUpdated);
+
+					return #ok();
+				};
+				case (null) { return #err(#accessDoesNotExist) };
 			};
 		};
 

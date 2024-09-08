@@ -346,6 +346,21 @@ shared ({ caller = creator }) actor class WorkspaceUserManagementActorClass(owne
 		};
 	};
 
+	type GetAccessResultOk = ();
+
+	type GetAccessResultErr = {
+		#unauthorized;
+		#accessDoesNotExist;
+	};
+
+	type GetAccessResult = Result.Result<GetAccessResultOk, GetAccessResultErr>;
+
+	public shared ({ caller }) func get_access(accessId : Principal, status : Access.AccessStatus) : async GetAccessResult {
+		if (not (await _iam.verify_access(caller, #permission(ACCESS_PERMISSION_LIST.CHANGE_ACCESS_STATUS.id)))) return #err(#unauthorized);
+
+		return accessService.changeStatus(accessId, status);
+	};
+
 	type AddRoleToAccessResultOk = ();
 
 	type AddRoleToAccessResultErr = {
