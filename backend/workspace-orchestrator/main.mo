@@ -85,7 +85,7 @@ actor WorkspaceOrchestrator {
 					members = workspace.members;
 					canisters = {
 						iam = Principal.fromActor(workspace.canisters.iam);
-						user_management = Principal.fromActor(workspace.canisters.access_management);
+						user_management = Principal.fromActor(workspace.canisters.user_management);
 					};
 				};
 
@@ -114,7 +114,7 @@ actor WorkspaceOrchestrator {
 			members = workspace.members;
 			canisters = {
 				iam = Principal.fromActor(workspace.canisters.iam);
-				user_management = Principal.fromActor(workspace.canisters.access_management);
+				user_management = Principal.fromActor(workspace.canisters.user_management);
 			};
 		};
 

@@ -118,7 +118,7 @@ module WorkspaceManager {
 				members = [];
 				canisters = {
 					iam = iam;
-					access_management = user_management;
+					user_management = user_management;
 				};
 			};
 
@@ -193,7 +193,7 @@ module WorkspaceManager {
 					};
 
 					let deleteIamCanisterResult = await deleteIamCanister(workspace.canisters.iam);
-					let deleteUserManagementCanisterResult = await deleteUserManagementCanister(workspace.canisters.access_management);
+					let deleteUserManagementCanisterResult = await deleteUserManagementCanister(workspace.canisters.user_management);
 
 					switch (deleteIamCanisterResult, deleteUserManagementCanisterResult) {
 						case (#ok(iamResult), #ok(userManagementResult)) {
