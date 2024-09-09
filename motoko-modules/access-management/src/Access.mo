@@ -3,6 +3,7 @@ import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
+import Time "mo:base/Time";
 
 // Mops Modules
 import Map "mo:map/Map";
@@ -22,6 +23,8 @@ module Access {
 		status : AccessStatus;
 		roles : [Text];
 		permissions : [Text];
+		createdBy : Principal;
+		createdAt : Time.Time;
 	};
 
 	public type AccessRepository = Map.Map<Principal, Access>;
@@ -78,6 +81,13 @@ module Access {
 			return Map.get(repository, phash, accessId);
 		};
 
+		type CreateAccessData = {
+			identity : Principal;
+			roles : [Text];
+			permissions : [Text];
+			createdBy : Principal;
+		};
+
 		type CreateAccessResultOk = Access;
 
 		type CreateAccessResultErr = {
@@ -88,7 +98,9 @@ module Access {
 
 		type CreateAccessResult = Result.Result<CreateAccessResultOk, CreateAccessResultErr>;
 
-		public func create(identity : Principal, roles : [Text], permissions : [Text]) : CreateAccessResult {
+		public func create(data : CreateAccessData) : CreateAccessResult {
+			let { identity; roles; permissions; createdBy } = data;
+
 			switch (get(identity) == null) {
 				case (false) return #err(#accessAlreadyExists);
 				case (true) {};
@@ -122,11 +134,13 @@ module Access {
 				return #err(#permissionsDoNotExist(missingPermissions));
 			};
 
-			let newAccess = {
+			let newAccess : Access = {
 				identity = identity;
 				status = #active;
 				roles = roles;
 				permissions = permissions;
+				createdBy = createdBy;
+				createdAt = Time.now();
 			};
 
 			ignore Map.put(repository, phash, identity, newAccess);

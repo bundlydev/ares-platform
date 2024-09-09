@@ -2,6 +2,7 @@
 import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import Result "mo:base/Result";
+import Time "mo:base/Time";
 
 // Mops Modules
 import Map "mo:map/Map";
@@ -14,6 +15,8 @@ module {
 		name : Text;
 		description : Text;
 		permissions : [Text];
+		createdBy : Principal;
+		createdAt : Time.Time;
 	};
 
 	public type RolesRepository = Map.Map<Text, Role>;
@@ -41,6 +44,7 @@ module {
 			name : Text;
 			description : Text;
 			permissions : [Text];
+			createdBy : Principal;
 		};
 
 		type CreatePermissionResultOk = Role;
@@ -76,11 +80,7 @@ module {
 				return #err(#permissionsDoNotExist(missingPermissions));
 			};
 
-			let newRole = {
-				name = data.name;
-				description = data.description;
-				permissions = data.permissions;
-			};
+			let newRole : Role = { data with createdAt = Time.now() };
 
 			ignore Map.put(repository, thash, newRole.name, newRole);
 
