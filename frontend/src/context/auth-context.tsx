@@ -45,6 +45,8 @@ export type AuthContextType = {
   workspaces: AuthUserWorkspace[];
   workspaceId?: string;
   ownerId?: string;
+	iamId?:string;
+	userManagementId?:string;
   setProfile: (profile: AuthUserProfile) => void;
   setWorkspaceId: (id: string) => void;
   setOwnerId: (id: string) => void;
@@ -58,6 +60,8 @@ export const AuthContext = createContext<AuthContextType>({
   setProfile: () => {},
   setWorkspaceId: () => {},
   setOwnerId: () => {},
+	iamId: undefined,
+	userManagementId:undefined,
 });
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
@@ -75,6 +79,8 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<AuthUserProfile | undefined>();
   const [workspaces, setWorkspaces] = useState<AuthUserWorkspace[]>([]);
   const [workspaceId, setWorkspaceId] = useState<string | undefined>();
+	const [iamId, setIamId] = useState<string | undefined>();
+	const [userManagementId, setUserManagementId] = useState<string | undefined>();
   const [ownerId, setOwnerId] = useState<string | undefined>();
 
   useEffect(() => {
@@ -128,9 +134,10 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
               const responseOwner = await workspaceOrchestrator.get_workspace_info(
                 Principal.fromText(retrievedWorkspaces[0].id)
               );
-
               if (responseOwner && "ok" in responseOwner) {
                 setOwnerId(responseOwner.ok.owner.toString());
+								setIamId(responseOwner.ok.canisters.iam.toString());
+								setUserManagementId(responseOwner.ok.canisters.user_management.toString());
               }
             }
           } else {
@@ -165,6 +172,8 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           setWorkspaceId,
           setOwnerId,
           ownerId,
+					iamId,
+					userManagementId,
         }}>
         {children}
       </AuthContext.Provider>
