@@ -355,7 +355,7 @@ shared ({ caller = creator }) actor class WorkspaceUserManagementActorClass(owne
 
 	type GetAccessResult = Result.Result<GetAccessResultOk, GetAccessResultErr>;
 
-	public shared ({ caller }) func get_access(accessId : Principal, status : Access.AccessStatus) : async GetAccessResult {
+	public shared ({ caller }) func change_access_status(accessId : Principal, status : Access.AccessStatus) : async GetAccessResult {
 		if (not (await _iam.verify_access(caller, #permission(ACCESS_PERMISSION_LIST.CHANGE_ACCESS_STATUS.id)))) return #err(#unauthorized);
 
 		return accessService.changeStatus(accessId, status);
