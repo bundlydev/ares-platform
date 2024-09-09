@@ -33,6 +33,8 @@ module Access {
 		public func hasPermission(identity : Principal, permission : Text) : Bool {
 			switch (get(identity)) {
 				case (?access) {
+					if (access.status != #active) return false;
+
 					if (
 						Array.find<Text>(
 							access.permissions,
