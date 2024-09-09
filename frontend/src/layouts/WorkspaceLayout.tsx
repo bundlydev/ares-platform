@@ -103,6 +103,7 @@ const Header: FC = () => {
 const MainMenu = () => {
   const router = useRouter();
   const [isIamMenuOpen, setIsIamMenuOpen] = useState(false);
+	const [isManagementMenuOpen, setIsManagementMenuOpen] = useState(false);
   const workspaceId = router.query["workspace-id"] as string;
 
   const handleNavigation = (path: string) => {
@@ -111,6 +112,9 @@ const MainMenu = () => {
 
   const toggleIamMenu = () => {
     setIsIamMenuOpen(!isIamMenuOpen);
+  };
+	const toggleManagementMenu = () => {
+    setIsManagementMenuOpen(!isManagementMenuOpen);
   };
 
   useEffect(() => {
@@ -124,6 +128,10 @@ const MainMenu = () => {
   const handleSubmenuNavigation = (path: string) => {
     handleNavigation(path);
     setIsIamMenuOpen(true);
+  };
+	const handleSubmenuNavigationManage = (path: string) => {
+    handleNavigation(path);
+    setIsManagementMenuOpen(true);
   };
 
   return (
@@ -144,6 +152,7 @@ const MainMenu = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </div>
+				
         {isIamMenuOpen && (
           <div className="flex flex-col w-full">
             <div
@@ -175,7 +184,50 @@ const MainMenu = () => {
             </div>
           </div>
         )}
-
+				<div
+          onClick={toggleManagementMenu}
+          className="cursor-pointer w-full h-12 flex justify-between items-center text-lg font-semibold relative px-2 text-white">
+          <span>User management</span>
+          <svg
+            className={`transition-transform transform ${isManagementMenuOpen ? "rotate-180" : "rotate-90"} w-5 h-5`}
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </div>
+				{isManagementMenuOpen && (
+          <div className="flex flex-col w-full">
+            <div
+              onClick={() => handleSubmenuNavigationManage(`/management/${workspaceId}/users`)}
+              className="cursor-pointer w-full h-12 px-4 flex justify-start items-center text-sm font-semibold text-white"
+              style={{
+                borderLeft: router.pathname.includes("management") && router.pathname.includes("users") ? "4px solid #06b6d4" : "4px solid #083344",
+                background: router.pathname.includes("management") && router.pathname.includes("users") ? "rgba(15, 75, 100, 0.7)" : "#083344",
+              }}>
+              Users
+            </div>
+            <div
+              onClick={() => handleSubmenuNavigationManage(`/management/${workspaceId}/roles`)}
+              className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
+              style={{
+                borderLeft: router.pathname.includes("management") && router.pathname.includes("users") ? "4px solid #06b6d4" : "4px solid #083344",
+                background: router.pathname.includes("management") && router.pathname.includes("users")  ? "rgba(15, 75, 100, 0.7)" : "#083344",
+              }}>
+              Roles
+            </div>
+            <div
+              onClick={() => handleSubmenuNavigationManage(`/management/${workspaceId}/permissions`)}
+              className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
+              style={{
+                borderLeft: router.pathname.includes("permissions") ? "4px solid #06b6d4" : "4px solid #083344",
+                background: router.pathname.includes("permissions") ? "rgba(15, 75, 100, 0.7)" : "#083344",
+              }}>
+              Permissions
+            </div>
+          </div>
+        )}
         <div className="flex-grow"></div>
       </div>
       <div
