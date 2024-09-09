@@ -14,6 +14,7 @@ module AccessPermissionModule {
 		GET_ACCESS_LIST : WorkspaceAccessPermissionModule.AccessPermissionItem;
 		CREATE_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
 		DELETE_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
+		CHANGE_ACCESS_STATUS : WorkspaceAccessPermissionModule.AccessPermissionItem;
 		ADD_ROLE_TO_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
 		REMOVE_ROLE_FROM_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
 		ADD_PERMISSION_TO_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
@@ -68,6 +69,10 @@ module AccessPermissionModule {
 		DELETE_ACCESS = {
 			id = "workspace-user-management:DeleteAccess";
 			description = "Delete an access";
+		};
+		CHANGE_ACCESS_STATUS = {
+			id = "workspace-user-management:ChangeAccessStatus";
+			description = "Change the status of an access";
 		};
 		ADD_ROLE_TO_ACCESS = {
 			id = "workspace-user-management:AddRoleToAccess";

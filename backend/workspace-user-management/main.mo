@@ -114,7 +114,7 @@ shared ({ caller = creator }) actor class WorkspaceUserManagementActorClass(owne
 	public shared ({ caller }) func create_permission(permission : CreatePermissionData) : async CreatePermissionResult {
 		if (not (await _iam.verify_access(caller, #permission(ACCESS_PERMISSION_LIST.CREATE_PERMISSION.id)))) return #err(#unauthorized);
 
-		switch (permissionsService.create(permission)) {
+		switch (permissionsService.create({ permission with createdBy = caller })) {
 			case (#ok(permission)) {
 				// TODO: Emit event
 
@@ -195,7 +195,7 @@ shared ({ caller = creator }) actor class WorkspaceUserManagementActorClass(owne
 	public shared ({ caller }) func create_role(role : CreateRoleData) : async CreateRoleResult {
 		if (not (await _iam.verify_access(caller, #permission(ACCESS_PERMISSION_LIST.CREATE_ROLE.id)))) return #err(#unauthorized);
 
-		switch (rolesService.create(role)) {
+		switch (rolesService.create({ role with createdBy = caller })) {
 			case (#ok(role)) {
 				// TODO: Emit event
 
@@ -313,7 +313,7 @@ shared ({ caller = creator }) actor class WorkspaceUserManagementActorClass(owne
 	public shared ({ caller }) func create_access(data : CreateAccessData) : async CreateAccessResult {
 		if (not (await _iam.verify_access(caller, #permission(ACCESS_PERMISSION_LIST.CREATE_ACCESS.id)))) return #err(#unauthorized);
 
-		switch (accessService.create(data.identity, data.roles, data.permissions)) {
+		switch (accessService.create({ data with createdBy = caller })) {
 			case (#ok(access)) {
 				// TODO: Emit event
 
@@ -344,6 +344,21 @@ shared ({ caller = creator }) actor class WorkspaceUserManagementActorClass(owne
 			};
 			case (false) return #ok();
 		};
+	};
+
+	type GetAccessResultOk = ();
+
+	type GetAccessResultErr = {
+		#unauthorized;
+		#accessDoesNotExist;
+	};
+
+	type GetAccessResult = Result.Result<GetAccessResultOk, GetAccessResultErr>;
+
+	public shared ({ caller }) func get_access(accessId : Principal, status : Access.AccessStatus) : async GetAccessResult {
+		if (not (await _iam.verify_access(caller, #permission(ACCESS_PERMISSION_LIST.CHANGE_ACCESS_STATUS.id)))) return #err(#unauthorized);
+
+		return accessService.changeStatus(accessId, status);
 	};
 
 	type AddRoleToAccessResultOk = ();

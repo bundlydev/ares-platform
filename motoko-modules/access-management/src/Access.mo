@@ -3,6 +3,7 @@ import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
+import Time "mo:base/Time";
 
 // Mops Modules
 import Map "mo:map/Map";
@@ -12,10 +13,18 @@ import Roles "./Roles";
 import Permissions "./Permissions";
 
 module Access {
+	public type AccessStatus = {
+		#active;
+		#inactive;
+	};
+
 	public type Access = {
 		identity : Principal;
+		status : AccessStatus;
 		roles : [Text];
 		permissions : [Text];
+		createdBy : Principal;
+		createdAt : Time.Time;
 	};
 
 	public type AccessRepository = Map.Map<Principal, Access>;
@@ -72,6 +81,13 @@ module Access {
 			return Map.get(repository, phash, accessId);
 		};
 
+		type CreateAccessData = {
+			identity : Principal;
+			roles : [Text];
+			permissions : [Text];
+			createdBy : Principal;
+		};
+
 		type CreateAccessResultOk = Access;
 
 		type CreateAccessResultErr = {
@@ -82,7 +98,9 @@ module Access {
 
 		type CreateAccessResult = Result.Result<CreateAccessResultOk, CreateAccessResultErr>;
 
-		public func create(identity : Principal, roles : [Text], permissions : [Text]) : CreateAccessResult {
+		public func create(data : CreateAccessData) : CreateAccessResult {
+			let { identity; roles; permissions; createdBy } = data;
+
 			switch (get(identity) == null) {
 				case (false) return #err(#accessAlreadyExists);
 				case (true) {};
@@ -116,10 +134,13 @@ module Access {
 				return #err(#permissionsDoNotExist(missingPermissions));
 			};
 
-			let newAccess = {
+			let newAccess : Access = {
 				identity = identity;
+				status = #active;
 				roles = roles;
 				permissions = permissions;
+				createdBy = createdBy;
+				createdAt = Time.now();
 			};
 
 			ignore Map.put(repository, phash, identity, newAccess);
@@ -131,6 +152,27 @@ module Access {
 			switch (Map.remove(repository, phash, id)) {
 				case (?_access) { return true };
 				case (null) { return false };
+			};
+		};
+
+		type ChangeStatusResultOk = ();
+
+		type ChangeStatusResultErr = {
+			#accessDoesNotExist;
+		};
+
+		type ChangeStatusResult = Result.Result<ChangeStatusResultOk, ChangeStatusResultErr>;
+
+		public func changeStatus(accessId : Principal, status : AccessStatus) : ChangeStatusResult {
+			switch (get(accessId)) {
+				case (?access) {
+					let accessUpdated = { access with status = status };
+
+					ignore Map.put(repository, phash, accessId, accessUpdated);
+
+					return #ok();
+				};
+				case (null) { return #err(#accessDoesNotExist) };
 			};
 		};
 

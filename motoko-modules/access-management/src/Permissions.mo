@@ -2,6 +2,8 @@
 import Prim "mo:prim";
 import Iter "mo:base/Iter";
 import Result "mo:base/Result";
+import Time "mo:base/Time";
+import Principal "mo:base/Principal";
 
 // Mops Modules
 import Set "mo:map/Set";
@@ -10,6 +12,8 @@ module {
 	public type Permission = {
 		action : Text;
 		description : Text;
+		createdBy : Principal;
+		createdAt : Time.Time;
 	};
 
 	public func hashPermission(permission : Permission) : Nat32 {
@@ -23,11 +27,6 @@ module {
 
 	public type PermissionsRepository = Set.Set<Permission>;
 
-	public type CreatePermissionData = {
-		action : Text;
-		description : Text;
-	};
-
 	public class PermissionsService(repository : PermissionsRepository) {
 		public func getAll() : [Permission] {
 			let permissionIter = Set.keys(repository);
@@ -40,9 +39,17 @@ module {
 			let permission = {
 				action = action;
 				description = "";
+				createdBy = Principal.fromText("aaaaa-aa");
+				createdAt = 1;
 			};
 
 			return Set.has<Permission>(repository, phash, permission);
+		};
+
+		type CreatePermissionData = {
+			action : Text;
+			description : Text;
+			createdBy : Principal;
 		};
 
 		type CreatePermissionResultOk = Permission;
@@ -58,10 +65,7 @@ module {
 				return #err(#actionAlreadyRegistered);
 			};
 
-			let newPermission = {
-				action = data.action;
-				description = data.description;
-			};
+			let newPermission : Permission = { data with createdAt = Time.now() };
 
 			ignore Set.put<Permission>(repository, phash, newPermission);
 
@@ -72,6 +76,8 @@ module {
 			let permission = {
 				action = action;
 				description = "";
+				createdBy = Principal.fromText("aaaaa-aa");
+				createdAt = 1;
 			};
 
 			return Set.remove<Permission>(repository, phash, permission);
