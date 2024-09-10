@@ -26,7 +26,6 @@ type FormValues = {
   role: string;
 };
 
-// Define el esquema de validación de Zod
 const formSchema = z.object({
   name: z
     .string()
@@ -69,7 +68,7 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
     setError,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema), // Utiliza zodResolver con el esquema de Zod
+    resolver: zodResolver(formSchema), 
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +126,7 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
     if (!workspaceIam) return;
     setLoading(true);
     try {
-      const value = Principal.fromText(data.name); // Ya validado por Zod, no es necesario un try-catch aquí
+      const value = Principal.fromText(data.name); 
       const response = await workspaceIam.create_access({
         identity: value,
         roleId: data.role,

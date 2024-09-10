@@ -19,7 +19,7 @@ type Workspace = {
 type WorkspaceData = {
   name: string;
   description: string;
-  policies: string[];
+  permissions: string[];
 };
 type UsernameData = {
   id: string;

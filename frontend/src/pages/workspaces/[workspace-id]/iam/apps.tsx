@@ -32,6 +32,7 @@ export default function WorkspaceAppsPage(): JSX.Element {
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
+	
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceData[]>([]);
 
   const workspaceRef = useRef<HTMLDivElement>(null);

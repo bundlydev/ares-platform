@@ -189,7 +189,7 @@ const MainMenu = () => {
           className="cursor-pointer w-full h-12 flex justify-between items-center text-lg font-semibold relative px-2 text-white">
           <span>User management</span>
           <svg
-            className={`transition-transform transform ${isManagementMenuOpen ? "rotate-180" : "rotate-90"} w-5 h-5`}
+            className={`transition-transform transform ${isManagementMenuOpen ? "rotate-135" : "rotate-45"} w-5 h-5`}
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -212,8 +212,8 @@ const MainMenu = () => {
               onClick={() => handleSubmenuNavigationManage(`/management/${workspaceId}/roles`)}
               className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
               style={{
-                borderLeft: router.pathname.includes("management") && router.pathname.includes("users") ? "4px solid #06b6d4" : "4px solid #083344",
-                background: router.pathname.includes("management") && router.pathname.includes("users")  ? "rgba(15, 75, 100, 0.7)" : "#083344",
+                borderLeft: router.pathname.includes("management") && router.pathname.includes("roles") ? "4px solid #06b6d4" : "4px solid #083344",
+                background: router.pathname.includes("management") && router.pathname.includes("roles")  ? "rgba(15, 75, 100, 0.7)" : "#083344",
               }}>
               Roles
             </div>

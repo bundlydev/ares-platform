@@ -124,7 +124,6 @@ export default function ManagementPermissionsPage(): JSX.Element {
     };
   }, [menuRef, workspaceRef]);
 
-  // Configuración de React Hook Form sin Yup
   const {
     register,
     handleSubmit,
