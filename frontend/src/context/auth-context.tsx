@@ -45,8 +45,8 @@ export type AuthContextType = {
   workspaces: AuthUserWorkspace[];
   workspaceId?: string;
   ownerId?: string;
-	iamId?:string;
-	userManagementId?:string;
+  iamId?: string;
+  userManagementId?: string;
   setProfile: (profile: AuthUserProfile) => void;
   setWorkspaceId: (id: string) => void;
   setOwnerId: (id: string) => void;
@@ -60,8 +60,8 @@ export const AuthContext = createContext<AuthContextType>({
   setProfile: () => {},
   setWorkspaceId: () => {},
   setOwnerId: () => {},
-	iamId: undefined,
-	userManagementId:undefined,
+  iamId: undefined,
+  userManagementId: undefined,
 });
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
@@ -79,8 +79,8 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<AuthUserProfile | undefined>();
   const [workspaces, setWorkspaces] = useState<AuthUserWorkspace[]>([]);
   const [workspaceId, setWorkspaceId] = useState<string | undefined>();
-	const [iamId, setIamId] = useState<string | undefined>();
-	const [userManagementId, setUserManagementId] = useState<string | undefined>();
+  const [iamId, setIamId] = useState<string | undefined>();
+  const [userManagementId, setUserManagementId] = useState<string | undefined>();
   const [ownerId, setOwnerId] = useState<string | undefined>();
 
   useEffect(() => {
@@ -92,54 +92,51 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             workspaceOrchestrator.get_my_workspaces(),
           ]);
 
-          if (profileResponse == null || typeof profileResponse !== "object") {
+          if ("err" in profileResponse) {
             throw new Error("Invalid profile response");
           }
 
-          if (workspacesResponse == null || typeof workspacesResponse !== "object") {
+          if ("err" in workspacesResponse) {
             throw new Error("Invalid workspaces response");
           }
 
           const profileParse = ZResponseSchema.safeParse(profileResponse);
+
           if (!profileParse.success) {
             throw new Error(`Invalid profile response schema: ${profileParse.error}`);
           }
-debugger
-          if ("ok" in workspacesResponse) {
-            const convertedWorkspacesResponse = workspacesResponse.ok
-              ? workspacesResponse.ok.map((workspace) => ({
-                  ...workspace,
-                  id: workspace.wip.toString(),
-                  name: workspace.name.toString(),
-                }))
-              : [];
 
-            const workspacesParse = ZResponseWorksSchema.safeParse({
-              ...workspacesResponse,
-              ok: convertedWorkspacesResponse,
-            });
+          const convertedWorkspacesResponse = workspacesResponse.ok
+            ? workspacesResponse.ok.map((workspace) => ({
+                ...workspace,
+                id: workspace.wip.toString(),
+                name: workspace.name.toString(),
+              }))
+            : [];
 
-            if (!workspacesParse.success) {
-              throw new Error(`Invalid workspaces response schema: ${workspacesParse.error}`);
+          const workspacesParse = ZResponseWorksSchema.safeParse({
+            ...workspacesResponse,
+            ok: convertedWorkspacesResponse,
+          });
+
+          if (!workspacesParse.success) {
+            throw new Error(`Invalid workspaces response schema: ${workspacesParse.error}`);
+          }
+
+          let retrievedWorkspaces = workspacesParse.data.ok || [];
+
+          setProfile(profileParse.data.ok);
+          setWorkspaces(retrievedWorkspaces);
+
+          if (retrievedWorkspaces.length > 0) {
+            const responseOwner = await workspaceOrchestrator.get_workspace_info(
+              Principal.fromText(retrievedWorkspaces[0].id)
+            );
+            if (responseOwner && "ok" in responseOwner) {
+              setOwnerId(responseOwner.ok.owner.toString());
+              setIamId(responseOwner.ok.canisters.iam.toString());
+              setUserManagementId(responseOwner.ok.canisters.user_management.toString());
             }
-
-            let retrievedWorkspaces = workspacesParse.data.ok || [];
-debugger
-            setProfile(profileParse.data.ok);
-            setWorkspaces(retrievedWorkspaces);
-
-            if (retrievedWorkspaces.length > 0) {
-              const responseOwner = await workspaceOrchestrator.get_workspace_info(
-                Principal.fromText(retrievedWorkspaces[0].id)
-              );
-              if (responseOwner && "ok" in responseOwner) {
-                setOwnerId(responseOwner.ok.owner.toString());
-								setIamId(responseOwner.ok.canisters.iam.toString());
-								setUserManagementId(responseOwner.ok.canisters.user_management.toString());
-              }
-            }
-          } else {
-            throw new Error("Workspaces response does not contain 'ok' property");
           }
         } catch (error) {
           console.error("Error loading profile or workspaces:", error);
@@ -170,8 +167,8 @@ debugger
           setWorkspaceId,
           setOwnerId,
           ownerId,
-					iamId,
-					userManagementId,
+          iamId,
+          userManagementId,
         }}>
         {children}
       </AuthContext.Provider>

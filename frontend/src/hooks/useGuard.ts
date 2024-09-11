@@ -33,6 +33,10 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
         return;
       }
       if (profile) {
+        if (router.pathname === "/profile/new") {
+          redirect("/workspaces");
+        }
+
         if (router.pathname === `/workspaces/[workspace-id]/settings`) {
           if (workspaces.length > 0) {
             setLoading(false);
@@ -42,9 +46,9 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
             return;
           }
         }
+
         if (
           router.pathname !== `/workspaces/[workspace-id]/settings` &&
-          router.pathname !== "/addworkspace" &&
           router.pathname !== `/workspaces/[workspace-id]/iam/apps` &&
           router.pathname !== `/workspaces/[workspace-id]/iam/roles`
         ) {
@@ -58,7 +62,6 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
     } else {
       if (
         isAuthenticated &&
-        router.pathname !== "/addworkspace" &&
         router.pathname !== `/workspaces/[workspace-id]/settings` &&
         router.pathname !== `/workspaces/[workspace-id]/iam/apps` &&
         router.pathname !== `/workspaces/[workspace-id]/iam/roles`

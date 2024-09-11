@@ -1,6 +1,7 @@
 import { Principal } from "@dfinity/principal";
-import { useContext, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/router";
+import { FC, useContext, useEffect, useRef, useState } from "react";
+
 import { LogoutButton, useIdentities } from "@bundly/ares-react";
 
 import SelectWorkspace from "@app/components/SelectWorkspace";
@@ -10,11 +11,11 @@ import { useWorkspaces } from "@app/hooks/useWorkspaces";
 import BlankLayout from "@app/layouts/BlankLayout";
 
 const Header: FC = () => {
-  
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const identity = useIdentities();
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  const router = useRouter();
+  const identity = useIdentities();
   const profiles = useProfile();
 
   const getFirstLetter = (text: string): string => {
@@ -102,7 +103,7 @@ const Header: FC = () => {
   );
 };
 export default function DashboardPage(): JSX.Element {
-	const router = useRouter();
+  const router = useRouter();
   useAuthGuard({ isPrivate: true });
   const workspaces = useWorkspaces();
   return (
@@ -110,16 +111,16 @@ export default function DashboardPage(): JSX.Element {
       <Header />
       <div className="flex flex-col w-full p-8">
         <span className="text-3xl font-semibold">Home</span>
-				<div className="flex flex-wrap gap-7 py-5">
-				{workspaces.map((item, index) => (
-					<div
-					key={index}
-					className="w-1/6 h-32 bg-white border border-gray-300 shadow-lg shadow-slate-400 rounded-xl p-4 cursor-pointer"
-					onClick={() => router.push(`/workspaces/${item.id}/dashboard`)}
-				>
-					<span className="text-xl font-semibold">{item.name}</span>
-				</div>))}
-				</div>
+        <div className="flex flex-wrap gap-7 py-5">
+          {workspaces.map((item, index) => (
+            <div
+              key={index}
+              className="w-1/6 h-32 bg-white border border-gray-300 shadow-lg shadow-slate-400 rounded-xl p-4 cursor-pointer"
+              onClick={() => router.push(`/workspaces/${item.id}/dashboard`)}>
+              <span className="text-xl font-semibold">{item.name}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </BlankLayout>
   );

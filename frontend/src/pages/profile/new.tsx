@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import { useContext, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 
@@ -17,6 +18,8 @@ type ProfileInputs = {
 
 export default function NewProfilePage(): JSX.Element {
   useAuthGuard({ isPrivate: true });
+
+  const router = useRouter();
 
   const { setProfile } = useContext(AuthContext);
   const { currentIdentity } = useAuth();
@@ -46,7 +49,13 @@ export default function NewProfilePage(): JSX.Element {
           firstName: data.firstName,
           lastName: data.lastName,
         });
-        setSubmissionSuccess(true);
+        // setSubmissionSuccess(true);
+        router.push("/workspaces");
+      }
+
+      // TODO: Display error message to user
+      if ("err" in response) {
+        console.log(response.err);
       }
     } catch (error) {
       console.error("Error creating profile:", error);
@@ -55,11 +64,11 @@ export default function NewProfilePage(): JSX.Element {
     }
   };
 
-  useEffect(() => {
-    if (submissionSuccess) {
-      window.location.reload();
-    }
-  }, [submissionSuccess]);
+  // useEffect(() => {
+  //   if (submissionSuccess) {
+  //     window.location.reload();
+  //   }
+  // }, [submissionSuccess]);
 
   return (
     <BlankLayout>

@@ -103,7 +103,7 @@ const Header: FC = () => {
 const MainMenu = () => {
   const router = useRouter();
   const [isIamMenuOpen, setIsIamMenuOpen] = useState(false);
-	const [isManagementMenuOpen, setIsManagementMenuOpen] = useState(false);
+  const [isManagementMenuOpen, setIsManagementMenuOpen] = useState(false);
   const workspaceId = router.query["workspace-id"] as string;
 
   const handleNavigation = (path: string) => {
@@ -113,7 +113,7 @@ const MainMenu = () => {
   const toggleIamMenu = () => {
     setIsIamMenuOpen(!isIamMenuOpen);
   };
-	const toggleManagementMenu = () => {
+  const toggleManagementMenu = () => {
     setIsManagementMenuOpen(!isManagementMenuOpen);
   };
 
@@ -129,7 +129,7 @@ const MainMenu = () => {
     handleNavigation(path);
     setIsIamMenuOpen(true);
   };
-	const handleSubmenuNavigationManage = (path: string) => {
+  const handleSubmenuNavigationManage = (path: string) => {
     handleNavigation(path);
     setIsManagementMenuOpen(true);
   };
@@ -139,7 +139,7 @@ const MainMenu = () => {
       style={{ height: "calc(100vh - 64px)" }}
       className="flex flex-col justify-between items-center bg-cyan-950 w-56 py-3 text-white">
       <div className=" w-full">
-				<div
+        <div
           onClick={toggleIamMenu}
           className="cursor-pointer w-full h-12 flex justify-between items-center text-lg font-semibold relative px-2 text-white">
           <span>User management</span>
@@ -152,31 +152,47 @@ const MainMenu = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </div>
-				{isIamMenuOpen && (
+        {isIamMenuOpen && (
           <div className="flex flex-col w-full">
             <div
-              onClick={() => handleSubmenuNavigationManage(`/management/${workspaceId}/users`)}
+              onClick={() =>
+                handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/users`)
+              }
               className="cursor-pointer w-full h-12 px-4 flex justify-start items-center text-sm font-semibold text-white"
               style={{
-                borderLeft: router.pathname.includes("management") && router.pathname.includes("users") ? "4px solid #06b6d4" : "4px solid #083344",
-                background: router.pathname.includes("management") && router.pathname.includes("users") ? "rgba(15, 75, 100, 0.7)" : "#083344",
+                borderLeft: router.pathname.includes("/user-management/users")
+                  ? "4px solid #06b6d4"
+                  : "4px solid #083344",
+                background: router.pathname.includes("/user-management/users")
+                  ? "rgba(15, 75, 100, 0.7)"
+                  : "#083344",
               }}>
               Users
             </div>
             <div
-              onClick={() => handleSubmenuNavigationManage(`/management/${workspaceId}/roles`)}
+              onClick={() =>
+                handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/roles`)
+              }
               className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
               style={{
-                borderLeft: router.pathname.includes("management") && router.pathname.includes("roles") ? "4px solid #06b6d4" : "4px solid #083344",
-                background: router.pathname.includes("management") && router.pathname.includes("roles")  ? "rgba(15, 75, 100, 0.7)" : "#083344",
+                borderLeft: router.pathname.includes("/user-management/roles")
+                  ? "4px solid #06b6d4"
+                  : "4px solid #083344",
+                background: router.pathname.includes("/user-management/roles")
+                  ? "rgba(15, 75, 100, 0.7)"
+                  : "#083344",
               }}>
               Roles
             </div>
             <div
-              onClick={() => handleSubmenuNavigationManage(`/management/${workspaceId}/permissions`)}
+              onClick={() =>
+                handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/permissions`)
+              }
               className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
               style={{
-                borderLeft: router.pathname.includes("permissions") ? "4px solid #06b6d4" : "4px solid #083344",
+                borderLeft: router.pathname.includes("permissions")
+                  ? "4px solid #06b6d4"
+                  : "4px solid #083344",
                 background: router.pathname.includes("permissions") ? "rgba(15, 75, 100, 0.7)" : "#083344",
               }}>
               Permissions

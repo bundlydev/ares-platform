@@ -58,7 +58,7 @@ function Workspace() {
         throw new Error("Error creating profile");
       }
       if ("ok" in response) {
-        window.location.href = "/app/dashboard";
+        window.location.href = "/workspaces";
       }
     } catch (error) {
       console.error({ error });
