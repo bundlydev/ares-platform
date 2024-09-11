@@ -104,7 +104,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           if (!profileParse.success) {
             throw new Error(`Invalid profile response schema: ${profileParse.error}`);
           }
-
+debugger
           if ("ok" in workspacesResponse) {
             const convertedWorkspacesResponse = workspacesResponse.ok
               ? workspacesResponse.ok.map((workspace) => ({
@@ -124,13 +124,11 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             }
 
             let retrievedWorkspaces = workspacesParse.data.ok || [];
-
+debugger
             setProfile(profileParse.data.ok);
             setWorkspaces(retrievedWorkspaces);
 
             if (retrievedWorkspaces.length > 0) {
-              setWorkspaceId(retrievedWorkspaces[0].id);
-
               const responseOwner = await workspaceOrchestrator.get_workspace_info(
                 Principal.fromText(retrievedWorkspaces[0].id)
               );
