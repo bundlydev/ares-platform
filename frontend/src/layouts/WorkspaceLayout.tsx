@@ -23,7 +23,7 @@ const Header: FC = () => {
   };
 
   const handleLogout = () => {
-    router.push("/signin");
+    router.push("/auth/signin");
   };
 
   return (
