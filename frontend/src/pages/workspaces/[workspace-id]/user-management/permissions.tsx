@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { useContext, useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
+import useStore from '../../../../store/useStore';
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
@@ -32,6 +33,7 @@ type FormValues = {
 export default function ManagementPermissionsPage(): JSX.Element {
   const router = useRouter();
   const { currentIdentity } = useAuth();
+	const {userMid} = useStore();
   useAuthGuard({ isPrivate: true });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
@@ -42,20 +44,13 @@ export default function ManagementPermissionsPage(): JSX.Element {
   const { userManagementId } = useContext(AuthContext);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-
   let workspaceId = router.query["workspace-id"] as string;
-
-  const accountManager = useCandidActor<CandidActors>(
-    "accountManager",
-    currentIdentity
-  ) as CandidActors["accountManager"];
 
   const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
     canisterId: workspaceId,
   }) as CandidActors["workspaceIam"];
-
   const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
-    canisterId: userManagementId,
+    canisterId: userMid,
   }) as CandidActors["workspaceUser"];
   const formSchema = z.object({
     permission: z.string().min(1, "Permission is required"),
@@ -160,13 +155,9 @@ export default function ManagementPermissionsPage(): JSX.Element {
     <WorkspaceLayout>
       <div className="flex flex-col w-full">
         <span className="text-[34px] font-semibold">Permissions</span>
-        <span className="text-[12px] font-medium">
-          Create and manage Permissions for your applications.
-        </span>
-				<span className="text-[12px] font-medium">
-				Permissions can be assigned to Roles or Users.
-				</span>
-				<span className="text-[16px] font-medium mt-4 mb-2">Add a permission</span>
+        <span className="text-[12px] font-medium">Create and manage Permissions for your applications.</span>
+        <span className="text-[12px] font-medium">Permissions can be assigned to Roles or Users.</span>
+        <span className="text-[16px] font-medium mt-4 mb-2">Add a permission</span>
         <form onSubmit={handleSubmit(onSubmit)} className="w-full flex flex-col">
           <div className="flex items-center space-x-4">
             <div>

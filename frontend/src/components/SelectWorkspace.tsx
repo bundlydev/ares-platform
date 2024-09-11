@@ -12,23 +12,31 @@ interface Workspace {
 
 const SelectWorkspace: React.FC = () => {
   const router = useRouter();
+	const workspaceIdRoute = router.query["workspace-id"] as string;
   const { workspaceId, setWorkspaceId } = useContext(AuthContext);
   const workspaces = useWorkspaces();
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+	setWorkspaceId(workspaceIdRoute);
 
+
+ 
   const getSelectedOption = () => {
-    if (workspaceId) {
-      const selectedOption = workspaces.find((option) => option.id === workspaceId);
+    if (workspaceIdRoute) {
+      const selectedOption = workspaces.find((option) => option.id === workspaceIdRoute);
       if (selectedOption) {
         return selectedOption;
       }
     }
   };
-
+  useEffect(() => {
+   setWorkspaceId(workspaceIdRoute)
+  }, []);
   const handleOptionClick = (option: Workspace) => {
     setIsDropdownOpen(false);
     setWorkspaceId(option.id);
+		router.push(`/workspaces/${option.id}/dashboard`);
+
   };
 
   const handleAddClick = () => {
@@ -51,7 +59,7 @@ const SelectWorkspace: React.FC = () => {
 
   useEffect(() => {
     if (router.pathname === "/home" && workspaceId) {
-      router.push(`/app/${workspaceId}/dashboard`);
+      router.push(`/workspaces/${workspaceId}/dashboard`);
     }
   }, [router.pathname, workspaceId]);
 
