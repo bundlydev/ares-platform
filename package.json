@@ -18,6 +18,7 @@
     "typescript"
   ],
   "scripts": {
+    "dev": "turbo run dev",
     "build": "turbo run build",
     "clean:icp": "rm -rf .dfx && rm -rf .mops && rm -rf src/declarations",
     "preclean": "dfx stop && turbo run clean",
