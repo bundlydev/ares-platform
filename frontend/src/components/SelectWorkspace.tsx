@@ -51,7 +51,7 @@ const SelectWorkspace: React.FC = () => {
 
   useEffect(() => {
     if (router.pathname === "/home" && workspaceId) {
-      router.push(`/workspaces/${workspaceId}/iam/users`);
+      router.push(`/app/${workspaceId}/dashboard`);
     }
   }, [router.pathname, workspaceId]);
 
