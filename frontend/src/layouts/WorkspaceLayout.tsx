@@ -30,7 +30,7 @@ const Header: FC = () => {
     <header className="flex h-16 bg-cyan-950 items-center justify-between px-2">
       <div ref={workspaceRef} className="flex w-1/4 justify-around">
         {profiles && (
-          <div className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center">
+          <div className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center cursor-pointer" onClick={() => router.push("/workspaces")}>
             <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
           </div>
         )}

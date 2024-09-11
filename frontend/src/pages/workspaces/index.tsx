@@ -5,6 +5,7 @@ import { FC, useContext, useEffect, useRef, useState } from "react";
 import { LogoutButton, useIdentities } from "@bundly/ares-react";
 
 import SelectWorkspace from "@app/components/SelectWorkspace";
+import { AuthContext } from "@app/context/auth-context";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import { useProfile } from "@app/hooks/useProfile";
 import { useWorkspaces } from "@app/hooks/useWorkspaces";
@@ -34,7 +35,9 @@ const Header: FC = () => {
     <header className="flex h-16 bg-cyan-950 items-center justify-between px-8">
       <div ref={workspaceRef} className="flex w-1/4 justify-between">
         {profiles && (
-          <div className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center">
+          <div
+            className="flex bg-cyan-600 rounded-full h-9 w-9 items-center justify-center cursor-pointer"
+            onClick={() => router.push("/workspaces")}>
             <span className="text-white">{getFirstLetter(profiles?.firstName)}</span>
           </div>
         )}
@@ -103,6 +106,7 @@ const Header: FC = () => {
   );
 };
 export default function DashboardPage(): JSX.Element {
+  const { setWorkspaceId } = useContext(AuthContext);
   const router = useRouter();
   useAuthGuard({ isPrivate: true });
   const workspaces = useWorkspaces();
@@ -110,13 +114,23 @@ export default function DashboardPage(): JSX.Element {
     <BlankLayout>
       <Header />
       <div className="flex flex-col w-full p-8">
-        <span className="text-3xl font-semibold">Home</span>
+        <div className="flex justify-between">
+          <span className="text-3xl font-semibold">Home</span>
+          <button
+            className="bg-green-400 text-white px-1 py-2 rounded-xl mb-4 w-36 cursor-pointer"
+            onClick={() => router.push("/workspaces/new")}>
+            New workspace
+          </button>
+        </div>
         <div className="flex flex-wrap gap-7 py-5">
           {workspaces.map((item, index) => (
             <div
               key={index}
               className="w-1/6 h-32 bg-white border border-gray-300 shadow-lg shadow-slate-400 rounded-xl p-4 cursor-pointer"
-              onClick={() => router.push(`/workspaces/${item.id}/dashboard`)}>
+              onClick={() => {
+                router.push(`/workspaces/${item.id}/dashboard`);
+                setWorkspaceId(item.id);
+              }}>
               <span className="text-xl font-semibold">{item.name}</span>
             </div>
           ))}

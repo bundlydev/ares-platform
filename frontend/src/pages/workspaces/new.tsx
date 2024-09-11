@@ -36,7 +36,7 @@ export default function CreateWorkspacePage(): JSX.Element {
         throw new Error("Error creating profile");
       }
       if ("ok" in response) {
-        window.location.href = "/home";
+        window.location.href = "/workspaces";
       }
     } catch (error) {
       console.error({ error });

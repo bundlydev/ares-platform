@@ -13,6 +13,7 @@ import { useAuthGuard } from "@app/hooks/useGuard";
 import { useProfile } from "@app/hooks/useProfile";
 import { useWorkspaces } from "@app/hooks/useWorkspaces";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
+import { useRouter } from "next/router";
 
 export default function WorkspaceUsersPage() {
   type Workspace = {
@@ -30,7 +31,8 @@ export default function WorkspaceUsersPage() {
   };
 
   const { currentIdentity } = useAuth();
-  const { workspaceId, ownerId } = useContext(AuthContext);
+	const router = useRouter();
+  const { ownerId } = useContext(AuthContext);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
   const [deleteItem, setDeleteItem] = useState<string>("");
@@ -46,17 +48,15 @@ export default function WorkspaceUsersPage() {
 
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-
+	let workspaceId = router.query["workspace-id"] as string;
   const accountManager = useCandidActor<CandidActors>(
     "accountManager",
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = workspaceId
-    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-        canisterId: workspaceId,
-      }) as CandidActors["workspaceIam"])
-    : null;
+	const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
+    canisterId: workspaceId,
+  }) as CandidActors["workspaceIam"];
 
   useEffect(() => {
     getWorkspaceMembers();
