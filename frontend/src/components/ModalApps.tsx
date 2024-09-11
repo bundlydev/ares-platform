@@ -51,9 +51,10 @@ interface ModalProps {
   setShowModal: (show: boolean) => void;
   getListFindName: (nameText: string) => void;
   dataNameSearch: NameData[];
+	getData: any
 }
 
-const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, dataNameSearch }) => {
+const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, dataNameSearch, getData }) => {
   const { currentIdentity } = useAuth();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
@@ -139,7 +140,8 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
         throw new Error("Error creating profile");
       }
       if ("ok" in response) {
-        window.location.reload();
+				setShowModal(false);
+				getData();
       }
     } catch (error) {
       console.error({ error });

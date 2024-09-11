@@ -4,16 +4,15 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
-import { useAuthGuard } from "@app/hooks/useGuard";
-import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
-
 import LoadingSpinner from "@app/components/LoadingSpinner";
 import Menu from "@app/components/Menu";
 import Modal from "@app/components/Modal";
 import SelectWorkspace from "@app/components/SelectWorkspace";
 import { AuthContext } from "@app/context/auth-context";
+import { useAuthGuard } from "@app/hooks/useGuard";
 import { useProfile } from "@app/hooks/useProfile";
 import { useWorkspaces } from "@app/hooks/useWorkspaces";
+import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
 
 export default function WorkspaceUsersPage() {
   type Workspace = {
@@ -206,58 +205,54 @@ export default function WorkspaceUsersPage() {
     );
   }
   return (
-    <WorkspaceLayout>
-      <div className="flex flex-col w-full ">
-        <div
-          style={{ height: "calc(100vh - 64px)" }}
-          className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
-          <button
-            className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
-            onClick={() => setShowModal(true)}>
-            New
-          </button>
-          <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
-            <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
-              <div>Name</div>
-              <div>Role</div>
-              <div>Action</div>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {workspaceMembers.map((item, index) => (
-                <div key={index} className="grid grid-cols-3 p-4">
-                  <div>
-                    {item.name}
-                    <span className="text-cyan-800 bg-gray-200 rounded-[5px] text-sm font-bold px-[5px] ml-[8px]">
-                      OWNER
-                    </span>
-                  </div>
-                  <div>{item.role}</div>
-                  <div>
-                    {item.id !== ownerId && (
-                      <button
-                        className="bg-red-500 text-white py-1 px-3 rounded-lg"
-                        onClick={() => {
-                          deleteIdmember(item.id);
-                        }}
-                        disabled={loading}>
-                        {loading ? <LoadingSpinner /> : "Delete"}
-                      </button>
-                    )}
-                  </div>
+    <div className="flex flex-col w-full mt-4">
+      <div className="container w-full flex flex-col justify-start items-end  bg-slate-100 p-6 rounded-lg">
+        <button
+          className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
+          onClick={() => setShowModal(true)}>
+          New
+        </button>
+        <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
+          <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
+            <div>Name</div>
+            <div>Role</div>
+            <div>Action</div>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {workspaceMembers.map((item, index) => (
+              <div key={index} className="grid grid-cols-3 p-4">
+                <div>
+                  {item.name}
+                  <span className="text-cyan-800 bg-gray-200 rounded-[5px] text-sm font-bold px-[5px] ml-[8px]">
+                    OWNER
+                  </span>
                 </div>
-              ))}
-            </div>
+                <div>{item.role}</div>
+                <div>
+                  {item.id !== ownerId && (
+                    <button
+                      className="bg-red-500 text-white py-1 px-3 rounded-lg"
+                      onClick={() => {
+                        deleteIdmember(item.id);
+                      }}
+                      disabled={loading}>
+                      {loading ? <LoadingSpinner /> : "Delete"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <Modal
-          showModal={showModal}
-          setShowModal={setShowModal}
-          addMemberWorkspace={addMemberWorkspace}
-          getListFindName={getListFindName}
-          dataNameSearch={dataNameSearch}
-          loading={loading}
-        />
       </div>
-    </WorkspaceLayout>
+      <Modal
+        showModal={showModal}
+        setShowModal={setShowModal}
+        addMemberWorkspace={addMemberWorkspace}
+        getListFindName={getListFindName}
+        dataNameSearch={dataNameSearch}
+        loading={loading}
+      />
+    </div>
   );
 }

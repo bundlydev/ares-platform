@@ -32,7 +32,7 @@ export default function WorkspaceAppsPage(): JSX.Element {
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
-	
+
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceData[]>([]);
 
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -165,47 +165,46 @@ export default function WorkspaceAppsPage(): JSX.Element {
   }, [menuRef, workspaceRef]);
 
   return (
-    <WorkspaceLayout>
-      <div className="flex flex-col w-full ">
-        <div
-          style={{ height: "calc(100vh - 64px)" }}
-          className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
-          <button
-            className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
-            onClick={() => setShowModal(true)}>
-            New
-          </button>
-          <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
-            <div className="grid grid-cols-2 bg-gray-200 p-4 text-gray-700 font-bold">
-              <div>Name</div>
-              <div>Action</div>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {workspaceMembers.map((item, index) => (
-                <div key={index} className="grid grid-cols-2 p-4">
-                  <div>{item.name}</div>
-                  <div>
-                    <button
-                      className="bg-red-500 text-white py-1 px-3 rounded-lg"
-                      onClick={() => {
-                        deleteIdapp(item.id);
-                      }}
-                      disabled={loading}>
-                      {loading ? <LoadingSpinner /> : "Delete"}
-                    </button>
-                  </div>
+    <div className="flex flex-col w-full mt-4">
+      <div
+        style={{ height: "calc(100vh - 64px)" }}
+        className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
+        <button
+          className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
+          onClick={() => setShowModal(true)}>
+          New
+        </button>
+        <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
+          <div className="grid grid-cols-2 bg-gray-200 p-4 text-gray-700 font-bold">
+            <div>Name</div>
+            <div>Action</div>
+          </div>
+          <div className="divide-y divide-gray-200">
+            {workspaceMembers.map((item, index) => (
+              <div key={index} className="grid grid-cols-2 p-4">
+                <div>{item.name}</div>
+                <div>
+                  <button
+                    className="bg-red-500 text-white py-1 px-3 rounded-lg"
+                    onClick={() => {
+                      deleteIdapp(item.id);
+                    }}
+                    disabled={loading}>
+                    {loading ? <LoadingSpinner /> : "Delete"}
+                  </button>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
-        <ModalApps
-          showModal={showModal}
-          setShowModal={setShowModal}
-          getListFindName={getListFindName}
-          dataNameSearch={dataNameSearch}
-        />
       </div>
-    </WorkspaceLayout>
+      <ModalApps
+        getData={getApps}
+        showModal={showModal}
+        setShowModal={setShowModal}
+        getListFindName={getListFindName}
+        dataNameSearch={dataNameSearch}
+      />
+    </div>
   );
 }

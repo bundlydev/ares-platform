@@ -7,9 +7,13 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 import { CandidActors } from "@app/canisters";
 import LoadingSpinner from "@app/components/LoadingSpinner";
 import ModalDelete from "@app/components/ModalDelete";
+import WorkspaceAppsPage from "@app/components/apps";
+import WorkspaceRolesPage from "@app/components/roles";
+import WorkspaceUsersPage from "@app/components/users";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import { useWorkspaces } from "@app/hooks/useWorkspaces";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@app/ui/tabs";
 
 type WorkspaceSettingsPageProps = {};
 
@@ -67,18 +71,54 @@ export default function WorkspaceSettingsPage(props: WorkspaceSettingsPageProps)
   return (
     <WorkspaceLayout>
       <div className="flex flex-col w-full">
-        <div
-          style={{ height: "calc(100vh - 64px)" }}
-          className="container w-full flex flex-col justify-start items-start bg-slate-100 h-full p-6 rounded-lg">
-          <span className="font-bold text-4xl">Settings workspace</span>
-          <div className="flex items-end h-11 gap-4">
-            <span className="font-medium text-xl">My workspace: </span>
-            {findWorkspaceName()}
-            <button onClick={handleDelete} className="bg-red-500 text-white py-2 px-6 rounded-lg">
-              Delete
-            </button>
-          </div>
-        </div>
+        <Tabs defaultValue="settings" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 bg-gray-100 p-2 rounded-lg">
+            <TabsTrigger
+              value="settings"
+              className="px-4 py-2 text-gray-700 font-semibold hover:bg-gray-200 focus:ring-2 focus:ring-blue-500 rounded data-[state=active]:ring-blue-500 data-[state=active]:text-blue-700">
+              Settings
+            </TabsTrigger>
+            <TabsTrigger
+              value="users"
+              className="px-4 py-2 text-gray-700 font-semibold hover:bg-gray-200 focus:ring-2 focus:ring-blue-500 rounded data-[state=active]:ring-blue-500 data-[state=active]:text-blue-700">
+              Users
+            </TabsTrigger>
+            <TabsTrigger
+              value="apps"
+              className="px-4 py-2 text-gray-700 font-semibold hover:bg-gray-200 focus:ring-2 focus:ring-blue-500 rounded data-[state=active]:ring-blue-500 data-[state=active]:text-blue-700">
+              Apps
+            </TabsTrigger>
+            <TabsTrigger
+              value="roles"
+              className="px-4 py-2 text-gray-700 font-semibold hover:bg-gray-200 focus:ring-2 focus:ring-blue-500 rounded data-[state=active]:ring-blue-500 data-[state=active]:text-blue-700">
+              Roles
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="settings" className="p-6 bg-white shadow rounded-lg">
+            <div
+              style={{ height: "calc(100vh - 64px)" }}
+              className="container w-full flex flex-col justify-start items-start bg-slate-100 h-full p-6 rounded-lg">
+              <span className="font-bold text-4xl">Settings workspace</span>
+              <div className="flex items-end h-11 gap-4">
+                <span className="font-medium text-xl">My workspace: </span>
+                {findWorkspaceName()}
+                <button onClick={handleDelete} className="bg-red-500 text-white py-2 px-6 rounded-lg">
+                  Delete
+                </button>
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="users">
+            <WorkspaceUsersPage />
+          </TabsContent>
+          <TabsContent value="apps">
+            <WorkspaceAppsPage />
+          </TabsContent>
+          <TabsContent value="roles">
+            <WorkspaceRolesPage />
+          </TabsContent>
+        </Tabs>
+
         <ModalDelete
           showModalDelete={showModalDelete}
           setShowModalDelete={setShowModalDelete}

@@ -139,57 +139,12 @@ const MainMenu = () => {
       style={{ height: "calc(100vh - 64px)" }}
       className="flex flex-col justify-between items-center bg-cyan-950 w-56 py-3 text-white">
       <div className=" w-full">
-        <div
-          onClick={toggleIamMenu}
-          className="cursor-pointer w-full h-12 flex justify-between items-center text-lg font-semibold relative px-2 text-white">
-          <span>IAM</span>
-          <svg
-            className={`transition-transform transform ${isIamMenuOpen ? "rotate-180" : "rotate-90"} w-5 h-5`}
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-          </svg>
-        </div>
-				
-        {isIamMenuOpen && (
-          <div className="flex flex-col w-full">
-            <div
-              onClick={() => handleSubmenuNavigation(`/workspaces/${workspaceId}/iam/users`)}
-              className="cursor-pointer w-full h-12 px-4 flex justify-start items-center text-sm font-semibold text-white"
-              style={{
-                borderLeft: router.pathname.includes("users") ? "4px solid #06b6d4" : "4px solid #083344",
-                background: router.pathname.includes("users") ? "rgba(15, 75, 100, 0.7)" : "#083344",
-              }}>
-              Users
-            </div>
-            <div
-              onClick={() => handleSubmenuNavigation(`/workspaces/${workspaceId}/iam/apps`)}
-              className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
-              style={{
-                borderLeft: router.pathname.includes("apps") ? "4px solid #06b6d4" : "4px solid #083344",
-                background: router.pathname.includes("apps") ? "rgba(15, 75, 100, 0.7)" : "#083344",
-              }}>
-              Apps
-            </div>
-            <div
-              onClick={() => handleSubmenuNavigation(`/workspaces/${workspaceId}/iam/roles`)}
-              className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
-              style={{
-                borderLeft: router.pathname.includes("roles") ? "4px solid #06b6d4" : "4px solid #083344",
-                background: router.pathname.includes("roles") ? "rgba(15, 75, 100, 0.7)" : "#083344",
-              }}>
-              Roles
-            </div>
-          </div>
-        )}
 				<div
-          onClick={toggleManagementMenu}
+          onClick={toggleIamMenu}
           className="cursor-pointer w-full h-12 flex justify-between items-center text-lg font-semibold relative px-2 text-white">
           <span>User management</span>
           <svg
-            className={`transition-transform transform ${isManagementMenuOpen ? "rotate-135" : "rotate-45"} w-5 h-5`}
+            className={`transition-transform transform ${isIamMenuOpen ? "rotate-135" : "rotate-45"} w-5 h-5`}
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -197,7 +152,7 @@ const MainMenu = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </div>
-				{isManagementMenuOpen && (
+				{isIamMenuOpen && (
           <div className="flex flex-col w-full">
             <div
               onClick={() => handleSubmenuNavigationManage(`/management/${workspaceId}/users`)}
