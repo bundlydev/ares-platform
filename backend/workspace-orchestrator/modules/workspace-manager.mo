@@ -7,6 +7,8 @@ import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Cycles "mo:base/ExperimentalCycles";
 import Iter "mo:base/Iter";
+import Random "mo:base/Random";
+import Blob "mo:base/Blob";
 
 // Mops Modules
 import Map "mo:map/Map";
@@ -42,6 +44,15 @@ module WorkspaceManager {
 		cyclesLedgerService : CyclesLedgerModule.CyclesLedgerService,
 	) {
 		private let ic = actor ("aaaaa-aa") : IC.Service;
+
+		private func generatePrincipal() : async Principal {
+			let randomBlob = await Random.blob();
+			var array = Blob.toArray(randomBlob);
+			array := Array.subArray<Nat8>(array, 0, 28);
+			let newBlob = Blob.fromArray(array);
+
+			return Principal.fromBlob(newBlob);
+		};
 
 		public func getAll() : [WorkspaceOrchestratorModels.Workspace] {
 			let workspaceIter = Map.vals<Principal, WorkspaceOrchestratorModels.Workspace>(_storage);
@@ -108,8 +119,7 @@ module WorkspaceManager {
 			let iam = await createIamCanister(creator);
 			let user_management = await createUserManagementCanister(creator, Principal.fromActor(iam));
 
-			// TODO: Generate a random principal
-			let wip = Principal.fromActor(iam);
+			let wip = await generatePrincipal();
 
 			let workspace : WorkspaceOrchestratorModels.Workspace = {
 				wip;
