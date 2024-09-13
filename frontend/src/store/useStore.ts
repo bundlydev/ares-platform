@@ -6,6 +6,8 @@ const useStore = create(
     (set: (arg0: (state: any) => { userMid: any; }) => any) => ({
       userMid: "",
       setUserMid: (value: number) => set((state) => ({ userMid: value })),
+			userIAMid: "",
+      setUserIAMid: (value: number) => set((state) => ({ userIAMid: value })),
     }),
     {
       name: 'count-storage', 

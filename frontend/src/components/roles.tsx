@@ -9,6 +9,7 @@ import LoadingSpinner from "@app/components/LoadingSpinner";
 import ModalRoles from "@app/components/ModalRoles";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
+import useStore from "@app/store/useStore";
 
 type Workspace = {
   id: string;
@@ -25,6 +26,7 @@ type UsernameData = {
 };
 
 export default function WorkspaceRolesPage(): JSX.Element {
+	const { userIAMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
@@ -46,7 +48,7 @@ export default function WorkspaceRolesPage(): JSX.Element {
   ) as CandidActors["accountManager"];
 
   const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: workspaceId,
+    canisterId: userIAMid,
   }) as CandidActors["workspaceIam"];
 
   useEffect(() => {

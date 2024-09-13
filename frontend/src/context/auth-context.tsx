@@ -66,7 +66,7 @@ export const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
-	const { setUserMid } = useStore();
+	const { setUserMid, setUserIAMid } = useStore();
   const { isAuthenticated, currentIdentity } = useAuth();
   const accountManager = useCandidActor<CandidActors>(
     "accountManager",
@@ -138,6 +138,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
               setIamId(responseOwner.ok.canisters.iam.toString());
               setUserManagementId(responseOwner.ok.canisters.user_management.toString());
 							setUserMid(responseOwner.ok.canisters.user_management.toString())
+							setUserIAMid(responseOwner.ok.canisters.iam.toString())
             }
           }
         } catch (error) {

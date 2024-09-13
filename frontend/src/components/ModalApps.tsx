@@ -10,6 +10,7 @@ import { CandidActors } from "@app/canisters/index";
 
 import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
+import useStore from "@app/store/useStore";
 
 interface NameData {
   id: string;
@@ -56,6 +57,7 @@ interface ModalProps {
 
 const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, dataNameSearch, getData }) => {
   const { currentIdentity } = useAuth();
+	const { userIAMid } = useStore();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
@@ -83,11 +85,9 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
     }
   };
 
-  const workspaceIam = workspaceId
-    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-        canisterId: workspaceId,
-      }) as CandidActors["workspaceIam"])
-    : null;
+  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
+    canisterId: userIAMid,
+  }) as CandidActors["workspaceIam"];
 
   const filteredDataNameSearch = dataNameSearch.filter(
     (name) => !selectedNames.some((selected) => selected.id === name.id)

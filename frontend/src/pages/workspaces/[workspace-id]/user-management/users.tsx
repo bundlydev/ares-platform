@@ -11,6 +11,7 @@ import ModalUsersManagement from "@app/components/ModalUsersManagement";
 import { AuthContext } from "@app/context/auth-context";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
+import useStore from "@app/store/useStore";
 
 type Workspace = {
   id: string;
@@ -21,8 +22,8 @@ type WorkspaceData = {
   identity: string;
   createdAt: Date;
   status: boolean | null;
-	roles: string[];
-	permission: string[];
+  roles: string[];
+  permission: string[];
 };
 
 type UsernameData = {
@@ -31,6 +32,8 @@ type UsernameData = {
 };
 
 export default function ManagementUsersPage(): JSX.Element {
+	const { userIAMid } = useStore();
+  const { userMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
@@ -43,9 +46,9 @@ export default function ManagementUsersPage(): JSX.Element {
   const { userManagementId } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-	const [assignPrincipal, setAssignPrincipal] = useState<string>("");
-	const [rolesAssing, setRolesAssign] = useState<string[]>([]);
-	const [permissionAssing, setPermissionAssign] = useState<string[]>([]);
+  const [assignPrincipal, setAssignPrincipal] = useState<string>("");
+  const [rolesAssing, setRolesAssign] = useState<string[]>([]);
+  const [permissionAssing, setPermissionAssign] = useState<string[]>([]);
   let workspaceId = router.query["workspace-id"] as string;
 
   const accountManager = useCandidActor<CandidActors>(
@@ -54,11 +57,11 @@ export default function ManagementUsersPage(): JSX.Element {
   ) as CandidActors["accountManager"];
 
   const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: workspaceId,
+    canisterId: userIAMid,
   }) as CandidActors["workspaceIam"];
 
   const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
-    canisterId: userManagementId,
+    canisterId: userMid,
   }) as CandidActors["workspaceUser"];
 
   useEffect(() => {
@@ -72,27 +75,26 @@ export default function ManagementUsersPage(): JSX.Element {
     return date.toLocaleDateString("en-US", options);
   }
 
-	const getPermissions = async () => {
-		if (!workspaceUser) return;
-	
-		const getRolesResult = await workspaceUser.get_access_list();
-	
-		if ("ok" in getRolesResult) {
-			const rolesOptions = getRolesResult.ok.map((role) => ({
-				createdAt: new Date(Number(role.createdAt / BigInt(1000000))), 
-				identity: role.identity.toString(),
-				roles: role.roles,
-				permission:role.permissions,
-				status: "active" in role.status ? true : "inactive" in role.status ? false : null,
-			}));
-	
-			setRolesList(rolesOptions);
-		} else {
-			let error = getRolesResult.err;
-			console.error(error);
-		}
-	};
-	
+  const getPermissions = async () => {
+    if (!workspaceUser) return;
+
+    const getRolesResult = await workspaceUser.get_access_list();
+
+    if ("ok" in getRolesResult) {
+      const rolesOptions = getRolesResult.ok.map((role) => ({
+        createdAt: new Date(Number(role.createdAt / BigInt(1000000))),
+        identity: role.identity.toString(),
+        roles: role.roles,
+        permission: role.permissions,
+        status: "active" in role.status ? true : "inactive" in role.status ? false : null,
+      }));
+
+      setRolesList(rolesOptions);
+    } else {
+      let error = getRolesResult.err;
+      console.error(error);
+    }
+  };
 
   const inactiveStatus = async (id: string) => {
     if (!workspaceUser) return;
@@ -194,7 +196,13 @@ export default function ManagementUsersPage(): JSX.Element {
               {rolesList.map((item, index) => (
                 <div key={index} className="grid grid-cols-4 p-4 relative">
                   <div>{item.identity}</div>
-                  <div>{item.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+                  <div>
+                    {item.createdAt.toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </div>
                   <div>
                     <div
                       className={`w-16 h-8 rounded-full flex items-center justify-center ${
@@ -205,7 +213,14 @@ export default function ManagementUsersPage(): JSX.Element {
                   </div>
                   <div className="relative">
                     {/* Botón de tres puntos */}
-                    <button className="text-gray-500" onClick={() => {toggleMenu(item.identity);setRolesAssign(item.roles); setPermissionAssign(item.permission); setAssignPrincipal(item.identity)}}>
+                    <button
+                      className="text-gray-500"
+                      onClick={() => {
+                        toggleMenu(item.identity);
+                        setRolesAssign(item.roles);
+                        setPermissionAssign(item.permission);
+                        setAssignPrincipal(item.identity);
+                      }}>
                       &#x2026; {/* Tres puntos */}
                     </button>
 
@@ -258,22 +273,24 @@ export default function ManagementUsersPage(): JSX.Element {
           setShowModal={setShowModal}
           dataNameSearch={dataNameSearch}
         />
-				{showModalRole &&
-        <ModalAssignRoleUser
-				  assignRoles={rolesAssing}
-				  assignPrincipal={assignPrincipal}
-          showModal={showModalRole}
-          setShowModal={setShowModalRole}
-          dataNameSearch={dataNameSearch}
-        />}
-				{showModalPermission &&
-        <ModalAssignPermissionUser
-          showModal={showModalPermission}
-          setShowModal={setShowModalPermission}
-          dataNameSearch={dataNameSearch}
-					assignRoles={permissionAssing}
-				  assignPrincipal={assignPrincipal}
-        />}
+        {showModalRole && (
+          <ModalAssignRoleUser
+            assignRoles={rolesAssing}
+            assignPrincipal={assignPrincipal}
+            showModal={showModalRole}
+            setShowModal={setShowModalRole}
+            dataNameSearch={dataNameSearch}
+          />
+        )}
+        {showModalPermission && (
+          <ModalAssignPermissionUser
+            showModal={showModalPermission}
+            setShowModal={setShowModalPermission}
+            dataNameSearch={dataNameSearch}
+            assignRoles={permissionAssing}
+            assignPrincipal={assignPrincipal}
+          />
+        )}
       </div>
     </WorkspaceLayout>
   );

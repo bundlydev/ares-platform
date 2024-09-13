@@ -1,4 +1,5 @@
 import { Principal } from "@dfinity/principal";
+import { useRouter } from "next/router";
 import React, { useContext, useEffect, useRef, useState } from "react";
 
 import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
@@ -13,7 +14,7 @@ import { useAuthGuard } from "@app/hooks/useGuard";
 import { useProfile } from "@app/hooks/useProfile";
 import { useWorkspaces } from "@app/hooks/useWorkspaces";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
-import { useRouter } from "next/router";
+import useStore from "@app/store/useStore";
 
 export default function WorkspaceUsersPage() {
   type Workspace = {
@@ -29,9 +30,9 @@ export default function WorkspaceUsersPage() {
     id: string;
     username: string;
   };
-
+	const { userIAMid } = useStore();
   const { currentIdentity } = useAuth();
-	const router = useRouter();
+  const router = useRouter();
   const { ownerId } = useContext(AuthContext);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
@@ -48,14 +49,14 @@ export default function WorkspaceUsersPage() {
 
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-	let workspaceId = router.query["workspace-id"] as string;
+  let workspaceId = router.query["workspace-id"] as string;
   const accountManager = useCandidActor<CandidActors>(
     "accountManager",
     currentIdentity
   ) as CandidActors["accountManager"];
 
-	const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: workspaceId,
+  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
+    canisterId: userIAMid,
   }) as CandidActors["workspaceIam"];
 
   useEffect(() => {

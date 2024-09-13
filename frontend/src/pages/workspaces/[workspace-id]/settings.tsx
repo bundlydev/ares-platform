@@ -14,10 +14,12 @@ import { useAuthGuard } from "@app/hooks/useGuard";
 import { useWorkspaces } from "@app/hooks/useWorkspaces";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@app/ui/tabs";
+import useStore from "@app/store/useStore";
 
 type WorkspaceSettingsPageProps = {};
 
 export default function WorkspaceSettingsPage(props: WorkspaceSettingsPageProps): JSX.Element {
+	const { userIAMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   const workspaces = useWorkspaces();
@@ -32,7 +34,7 @@ export default function WorkspaceSettingsPage(props: WorkspaceSettingsPageProps)
   ) as CandidActors["workspaceOrchestrator"];
 
   const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: workspaceId,
+    canisterId: userIAMid,
   }) as CandidActors["workspaceIam"];
 
   const findWorkspaceName = () => {

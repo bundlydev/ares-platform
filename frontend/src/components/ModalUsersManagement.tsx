@@ -8,6 +8,7 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 import { CandidActors } from "@app/canisters/index";
 import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
+import useStore from "@app/store/useStore";
 
 interface NameData {
   id: string;
@@ -38,7 +39,8 @@ interface ModalProps {
 }
 
 const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNameSearch }) => {
-  const { currentIdentity } = useAuth();
+  const {userMid} = useStore();
+	const { currentIdentity } = useAuth();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
@@ -69,7 +71,7 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
     : null;
 
   const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
-    canisterId: userManagementId,
+    canisterId: userMid,
   }) as CandidActors["workspaceUser"];
 
   const getPermissions = async () => {

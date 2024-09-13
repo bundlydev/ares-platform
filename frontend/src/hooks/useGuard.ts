@@ -42,7 +42,7 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
             setLoading(false);
             return;
           } else {
-            redirect("/workspaces/new");
+            redirect("/workspaces");
             return;
           }
         }
@@ -50,10 +50,11 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
         if (
           router.pathname !== `/workspaces/[workspace-id]/settings` &&
           router.pathname !== `/workspaces/[workspace-id]/iam/apps` &&
-          router.pathname !== `/workspaces/[workspace-id]/iam/roles`
+          router.pathname !== `/workspaces/[workspace-id]/iam/roles`  &&
+          router.pathname !== `/workspaces/new`
         ) {
           if (workspaces.length < 1) {
-            redirect("/workspaces/new");
+            redirect("/workspaces");
           }
         }
       } else {

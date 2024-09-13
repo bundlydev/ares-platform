@@ -4,7 +4,6 @@ import { useRouter } from "next/router";
 import { useContext, useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
-import useStore from '../../../../store/useStore';
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
@@ -13,6 +12,8 @@ import LoadingSpinner from "@app/components/LoadingSpinner";
 import { AuthContext } from "@app/context/auth-context";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
+
+import useStore from "../../../../store/useStore";
 
 type Workspace = {
   id: string;
@@ -33,7 +34,8 @@ type FormValues = {
 export default function ManagementPermissionsPage(): JSX.Element {
   const router = useRouter();
   const { currentIdentity } = useAuth();
-	const {userMid} = useStore();
+	const { userIAMid } = useStore();
+  const { userMid } = useStore();
   useAuthGuard({ isPrivate: true });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
@@ -47,7 +49,7 @@ export default function ManagementPermissionsPage(): JSX.Element {
   let workspaceId = router.query["workspace-id"] as string;
 
   const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: workspaceId,
+    canisterId: userIAMid,
   }) as CandidActors["workspaceIam"];
   const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
     canisterId: userMid,
@@ -139,7 +141,7 @@ export default function ManagementPermissionsPage(): JSX.Element {
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
 
-        throw new Error("Error creating profile");
+        throw new Error("Error creating permissions");
       }
       if ("ok" in response) {
         window.location.reload();

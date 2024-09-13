@@ -7,10 +7,11 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 import { CandidActors } from "@app/canisters";
 import LoadingSpinner from "@app/components/LoadingSpinner";
 import ModalRoles from "@app/components/ModalRoles";
-import { useAuthGuard } from "@app/hooks/useGuard";
-import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
 import ModalRolesManagement from "@app/components/ModalRolesManagement";
 import { AuthContext } from "@app/context/auth-context";
+import { useAuthGuard } from "@app/hooks/useGuard";
+import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
+import useStore from "@app/store/useStore";
 
 type Workspace = {
   id: string;
@@ -27,6 +28,8 @@ type UsernameData = {
 };
 
 export default function ManagementRolesPage(): JSX.Element {
+	const { userIAMid } = useStore();
+  const { userMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
@@ -36,7 +39,7 @@ export default function ManagementRolesPage(): JSX.Element {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
   const [rolesList, setRolesList] = useState<WorkspaceData[]>([]);
-	const { userManagementId } = useContext(AuthContext);
+  const { userManagementId } = useContext(AuthContext);
 
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -49,11 +52,11 @@ export default function ManagementRolesPage(): JSX.Element {
   ) as CandidActors["accountManager"];
 
   const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: workspaceId,
+    canisterId: userIAMid,
   }) as CandidActors["workspaceIam"];
-	
-	const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
-    canisterId: userManagementId,
+
+  const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
+    canisterId: userMid,
   }) as CandidActors["workspaceUser"];
 
   useEffect(() => {
@@ -66,10 +69,9 @@ export default function ManagementRolesPage(): JSX.Element {
     const getRolesResult = await workspaceUser.get_roles();
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
-				permissions: role.permissions,
+        permissions: role.permissions,
         name: role.name,
         description: role.description,
-
       }));
       setRolesList(rolesOptions);
     } else {
@@ -149,14 +151,14 @@ export default function ManagementRolesPage(): JSX.Element {
         <div
           style={{ height: "calc(100vh - 64px)" }}
           className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
-						<div className="flex justify-between w-full">
-<span className="text-[34px] font-semibold">Roles</span>
-          <button
-            className="bg-green-400 text-white px-4 py-2 rounded-lg mb-4 w-36"
-            onClick={() => setShowModal(true)}>
-           + Create Role
-          </button>
-					</div>
+          <div className="flex justify-between w-full">
+            <span className="text-[34px] font-semibold">Roles</span>
+            <button
+              className="bg-green-400 text-white px-4 py-2 rounded-lg mb-4 w-36"
+              onClick={() => setShowModal(true)}>
+              + Create Role
+            </button>
+          </div>
           <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
             <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
               <div>Name</div>
