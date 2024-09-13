@@ -46,12 +46,11 @@ module WorkspaceManager {
 		private let ic = actor ("aaaaa-aa") : IC.Service;
 
 		private func generatePrincipal() : async Principal {
-			let randomBlob = await Random.blob();
-			var array = Blob.toArray(randomBlob);
+			var b = await Random.blob();
+			var array = Blob.toArray(b);
 			array := Array.subArray<Nat8>(array, 0, 28);
-			let newBlob = Blob.fromArray(array);
-
-			return Principal.fromBlob(newBlob);
+			b := Blob.fromArray(array);
+			Principal.fromBlob(b);
 		};
 
 		public func getAll() : [WorkspaceOrchestratorModels.Workspace] {
@@ -76,6 +75,9 @@ module WorkspaceManager {
 			};
 
 			let workspaceArray = List.toArray(workspaceList);
+
+			// let workspaceIter = Map.vals<Principal, WorkspaceOrchestratorModels.Workspace>(_storage);
+			// let workspaceArray = Iter.toArray(workspaceIter);
 
 			return workspaceArray;
 		};

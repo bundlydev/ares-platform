@@ -140,26 +140,29 @@ actor WorkspaceOrchestrator {
 
 		let maybeWorkspace = Array.find<WorkspaceOrchestratorModels.Workspace>(
 			workspaceManagerService.getAll(),
-			func workspace = Principal.equal(workspace.wip, caller),
+			func workspace = Principal.equal(Principal.fromActor(workspace.canisters.iam), caller) or Principal.equal(Principal.fromActor(workspace.canisters.user_management), caller),
 		);
 
-		if (maybeWorkspace == null) return;
-
-		switch (event) {
-			case (#WorkspaceIam(event)) {
+		switch (maybeWorkspace) {
+			case (?workspace) {
 				switch (event) {
-					case (#AccessCreated(data)) {
-						if (data.itype == #user) {
-							await workspaceManagerService.addMember(caller, data.identity);
-						};
-					};
-					case (#AccessRemoved(data)) {
-						if (data.itype == #user) {
-							await workspaceManagerService.removeMember(caller, data.identity);
+					case (#WorkspaceIam(event)) {
+						switch (event) {
+							case (#AccessCreated(data)) {
+								if (data.itype == #user) {
+									await workspaceManagerService.addMember(workspace.wip, data.identity);
+								};
+							};
+							case (#AccessRemoved(data)) {
+								if (data.itype == #user) {
+									await workspaceManagerService.removeMember(workspace.wip, data.identity);
+								};
+							};
 						};
 					};
 				};
 			};
+			case (null) return;
 		};
 	};
 };

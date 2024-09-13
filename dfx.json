@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "dfx": "0.20.1",
+  "dfx": "0.22.0",
   "canisters": {
     "account-manager": {
       "type": "motoko",
@@ -44,8 +44,8 @@
     },
     "internet-identity": {
       "type": "custom",
-      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2024-07-12/internet_identity.did",
-      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2024-07-12/internet_identity_dev.wasm.gz",
+      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2024-09-06/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2024-09-06/internet_identity_dev.wasm.gz",
       "frontend": {},
       "remote": {
         "id": {
