@@ -103,7 +103,6 @@ const Header: FC = () => {
 const MainMenu = () => {
   const router = useRouter();
   const [isIamMenuOpen, setIsIamMenuOpen] = useState(false);
-  const [isManagementMenuOpen, setIsManagementMenuOpen] = useState(false);
   const workspaceId = router.query["workspace-id"] as string;
 
   const handleNavigation = (path: string) => {
@@ -111,34 +110,27 @@ const MainMenu = () => {
   };
 
   const toggleIamMenu = () => {
-    setIsIamMenuOpen(!isIamMenuOpen);
-  };
-  const toggleManagementMenu = () => {
-    setIsManagementMenuOpen(!isManagementMenuOpen);
+    const newState = !isIamMenuOpen;
+    setIsIamMenuOpen(newState);
+    localStorage.setItem("isIamMenuOpen", JSON.stringify(newState));
   };
 
   useEffect(() => {
-    if (router.pathname.includes("/iam/")) {
-      setIsIamMenuOpen(true);
-    } else {
-      setIsIamMenuOpen(false);
+    const savedState = localStorage.getItem("isIamMenuOpen");
+    if (savedState !== null) {
+      setIsIamMenuOpen(JSON.parse(savedState));
     }
-  }, [router.pathname]);
+  }, []);
 
-  const handleSubmenuNavigation = (path: string) => {
-    handleNavigation(path);
-    setIsIamMenuOpen(true);
-  };
   const handleSubmenuNavigationManage = (path: string) => {
     handleNavigation(path);
-    setIsManagementMenuOpen(true);
   };
 
   return (
     <div
       style={{ height: "calc(100vh - 64px)" }}
       className="flex flex-col justify-between items-center bg-cyan-950 w-56 py-3 text-white">
-      <div className=" w-full">
+      <div className="w-full">
         <div
           onClick={toggleIamMenu}
           className="cursor-pointer w-full h-12 flex justify-between items-center text-lg font-semibold relative px-2 text-white">
@@ -155,9 +147,7 @@ const MainMenu = () => {
         {isIamMenuOpen && (
           <div className="flex flex-col w-full">
             <div
-              onClick={() =>
-                handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/users`)
-              }
+              onClick={() => handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/users`)}
               className="cursor-pointer w-full h-12 px-4 flex justify-start items-center text-sm font-semibold text-white"
               style={{
                 borderLeft: router.pathname.includes("/user-management/users")
@@ -170,9 +160,7 @@ const MainMenu = () => {
               Users
             </div>
             <div
-              onClick={() =>
-                handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/roles`)
-              }
+              onClick={() => handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/roles`)}
               className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
               style={{
                 borderLeft: router.pathname.includes("/user-management/roles")
@@ -185,9 +173,7 @@ const MainMenu = () => {
               Roles
             </div>
             <div
-              onClick={() =>
-                handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/permissions`)
-              }
+              onClick={() => handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/permissions`)}
               className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
               style={{
                 borderLeft: router.pathname.includes("permissions")
@@ -202,7 +188,7 @@ const MainMenu = () => {
         <div className="flex-grow"></div>
       </div>
       <div
-        onClick={() => handleSubmenuNavigation(`/workspaces/${workspaceId}/settings`)}
+        onClick={() => handleSubmenuNavigationManage(`/workspaces/${workspaceId}/settings`)}
         className="cursor-pointer w-full h-12 flex justify-start px-2 gap-4 items-center text-lg font-semibold text-white"
         style={{
           borderLeft: router.pathname.includes("settings") ? "4px solid #0891b2" : "4px solid #083344",
@@ -219,8 +205,7 @@ const MainMenu = () => {
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
-            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"
-          />
+            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
         </svg>
 
