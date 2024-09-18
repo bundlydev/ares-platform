@@ -1,0 +1,9 @@
+[package]
+name = "access-management"
+version = "0.1.0"
+description = "Access management library"
+keywords = [ "access management" ]
+license = "MIT"
+
+[dependencies]
+map = "9.0.1"

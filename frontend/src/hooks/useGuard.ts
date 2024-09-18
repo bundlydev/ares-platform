@@ -17,6 +17,8 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
   const workspaces = useWorkspaces();
   const [loading, setLoading] = useState(true);
 
+  const workspaceId = router.query["workspace-id"] as string;
+
   useEffect(() => {
     const redirect = (path: string) => {
       if (router.pathname !== path) {
@@ -26,38 +28,50 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
 
     if (isPrivate) {
       if (!isAuthenticated) {
-        redirect("/signin");
+        redirect("/auth/signin");
         setLoading(false);
         return;
       }
-
       if (profile) {
-        if (router.pathname === "/settings") {
+        if (router.pathname === "/profile/new") {
+          redirect("/workspaces");
+        }
+
+        if (router.pathname === `/workspaces/[workspace-id]/settings`) {
           if (workspaces.length > 0) {
             setLoading(false);
             return;
           } else {
-            redirect("/workspace");
+            redirect("/workspaces");
             return;
           }
         }
-        if (router.pathname !== "/settings" && router.pathname !== "/addworkspace") {
-          if (workspaces.length > 0) {
-            redirect("/home");
-          } else {
-            redirect("/workspace");
+
+        if (
+          router.pathname !== `/workspaces/[workspace-id]/settings` &&
+          router.pathname !== `/workspaces/[workspace-id]/iam/apps` &&
+          router.pathname !== `/workspaces/[workspace-id]/iam/roles`  &&
+          router.pathname !== `/workspaces/new`
+        ) {
+          if (workspaces.length < 1) {
+            redirect("/workspaces");
           }
         }
       } else {
-        redirect("/profile");
+        redirect("/profile/new");
       }
     } else {
-      if (isAuthenticated && router.pathname !== "/addworkspace" && router.pathname !== "/settings") {
+      if (
+        isAuthenticated &&
+        router.pathname !== `/workspaces/[workspace-id]/settings` &&
+        router.pathname !== `/workspaces/[workspace-id]/iam/apps` &&
+        router.pathname !== `/workspaces/[workspace-id]/iam/roles`
+      ) {
         redirect("/home");
       }
     }
     setLoading(false);
-  }, [isAuthenticated, profile, workspaces, router, isPrivate]);
+  }, [isAuthenticated, profile, workspaces, router, isPrivate, workspaceId]);
 
   return loading;
 }

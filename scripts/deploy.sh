@@ -50,14 +50,17 @@ fi
 # Generate declaration files
 echo "Generating declaration files..."
 
-dfx generate backoffice-gateway
-dfx generate workspace
+dfx generate account-manager
+dfx generate workspace-orchestrator
+dfx generate workspace-iam
+dfx generate workspace-user-management
 
 # Add specific code for each mode here
 if [ "$mode" = "dev" ]; then
   echo "Deploying in development environment..."
   dfx deploy internet-identity --network local
-  dfx deploy backoffice-gateway --network local
+  dfx deploy account-manager --network local
+	dfx deploy workspace-orchestrator --network local
   if [ "$deploy_frontend" = true ]; then
     if [ "$force_frontend" = true ]; then
       echo "Building frontend..."
@@ -70,7 +73,8 @@ if [ "$mode" = "dev" ]; then
 else
   echo "Deploying in production environment..."
 	# TODO: Implement production deployment
-  # dfx deploy backoffice-gateway --network ic
+  # dfx deploy account-manager --network ic
+	# dfx deploy workspace-orchestrator --network ic
   # if [ "$force_frontend" = true ]; then
   #   echo "Building frontend..."
   #   cd frontend

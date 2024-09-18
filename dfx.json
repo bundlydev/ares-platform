@@ -1,27 +1,42 @@
 {
   "version": 1,
-  "dfx": "0.20.1",
+  "dfx": "0.22.0",
   "canisters": {
-    "backoffice-gateway": {
+    "account-manager": {
       "type": "motoko",
-      "main": "backend/backoffice-gateway/main.mo",
-      "dependencies": ["internet-identity"],
+      "main": "backend/account-manager/main.mo",
       "declarations": {
         "node_compatibility": true,
-        "output": "frontend/src/declarations/backoffice-gateway"
+        "output": "frontend/src/declarations/account-manager"
       }
     },
-    "workspace": {
+    "workspace-orchestrator": {
       "type": "motoko",
-      "main": "backend/workspace/main.mo",
+      "main": "backend/workspace-orchestrator/main.mo",
       "declarations": {
         "node_compatibility": true,
-        "output": "frontend/src/declarations/workspace"
+        "output": "frontend/src/declarations/workspace-orchestrator"
+      }
+    },
+    "workspace-iam": {
+      "type": "motoko",
+      "main": "backend/workspace-iam/main.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/workspace-iam"
+      }
+    },
+    "workspace-user-management": {
+      "type": "motoko",
+      "main": "backend/workspace-user-management/main.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/workspace-user-management"
       }
     },
     "frontend": {
       "type": "assets",
-      "dependencies": ["backoffice-gateway", "internet-identity"],
+      "dependencies": ["account-manager", "workspace-orchestrator", "internet-identity"],
       "frontend": {
         "entrypoint": "frontend/build/index.html"
       },
@@ -29,8 +44,8 @@
     },
     "internet-identity": {
       "type": "custom",
-      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2024-07-12/internet_identity.did",
-      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2024-07-12/internet_identity_dev.wasm.gz",
+      "candid": "https://github.com/dfinity/internet-identity/releases/download/release-2024-09-06/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/download/release-2024-09-06/internet_identity_dev.wasm.gz",
       "frontend": {},
       "remote": {
         "id": {

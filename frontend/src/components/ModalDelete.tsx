@@ -7,7 +7,12 @@ interface ModalProps {
   onConfirmDelete: () => void;
 }
 
-const ModalDelete: FC<ModalProps> = ({ showModalDelete, setShowModalDelete, deleteItem, onConfirmDelete }) => {
+const ModalDelete: FC<ModalProps> = ({
+  showModalDelete,
+  setShowModalDelete,
+  deleteItem,
+  onConfirmDelete,
+}) => {
   const [inputValue, setInputValue] = useState<string>("");
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,7 +37,7 @@ const ModalDelete: FC<ModalProps> = ({ showModalDelete, setShowModalDelete, dele
       <div className="bg-white p-6 rounded-lg shadow-lg w-1/4">
         <h2 className="text-xl mb-4">¿Are you sure you want to delete this workspace?</h2>
         <p className="mb-4">To confirm, type the name of the workspace:</p>
-        <span className="font-bold mb-4">"{deleteItem}"</span>
+        <span className="font-bold mb-4">&quot;{deleteItem}&quot;</span>
         <input
           type="text"
           value={inputValue}
@@ -43,14 +48,10 @@ const ModalDelete: FC<ModalProps> = ({ showModalDelete, setShowModalDelete, dele
         <div className="flex justify-end pt-10">
           <button
             className="bg-white w-1/2 text-gray-700 px-4 py-2 border-gray-400"
-            onClick={() => setShowModalDelete(false)}
-          >
+            onClick={() => setShowModalDelete(false)}>
             Cancelar
           </button>
-          <button
-            className="bg-red-400 w-1/2 text-white px-8 py-2 rounded-lg ml-2"
-            onClick={handleDelete}
-          >
+          <button className="bg-red-400 w-1/2 text-white px-8 py-2 rounded-lg ml-2" onClick={handleDelete}>
             Eliminar
           </button>
         </div>

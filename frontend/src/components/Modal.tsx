@@ -1,5 +1,6 @@
-import React, { ChangeEvent, FC, useState, useEffect } from "react";
-import LoadingSpinner from './LoadingSpinner';
+import React, { ChangeEvent, FC, useEffect, useState } from "react";
+
+import LoadingSpinner from "./LoadingSpinner";
 
 interface NameData {
   id: string;
@@ -11,7 +12,7 @@ interface ModalProps {
   addMemberWorkspace: (userId: string) => void;
   getListFindName: (nameText: string) => void;
   dataNameSearch: NameData[];
-  loading: boolean; 
+  loading: boolean;
 }
 
 const Modal: FC<ModalProps> = ({
@@ -40,10 +41,7 @@ const Modal: FC<ModalProps> = ({
   const handleSelect = (id: string, username: string) => {
     setInputValue(username);
     setInputValueId(id);
-    setSelectedNames((prevSelectedNames) => [
-      ...prevSelectedNames,
-      { id, username },
-    ]);
+    setSelectedNames((prevSelectedNames) => [...prevSelectedNames, { id, username }]);
   };
 
   const handleAdd = () => {
@@ -93,7 +91,10 @@ const Modal: FC<ModalProps> = ({
           <button className="bg-white text-gray px-4 py-2 " onClick={() => setShowModal(false)}>
             Cancel
           </button>
-          <button className="bg-green-400 text-white px-8 py-2 rounded-lg mr-2" onClick={handleAdd} disabled={loading}>
+          <button
+            className="bg-green-400 text-white px-8 py-2 rounded-lg mr-2"
+            onClick={handleAdd}
+            disabled={loading}>
             {loading ? <LoadingSpinner /> : "Add"}
           </button>
         </div>
