@@ -7,10 +7,10 @@ import { z } from "zod";
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
+import useStore from "@app/store/useStore";
 
 import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
-import useStore from "@app/store/useStore";
 
 interface NameData {
   id: string;
@@ -25,13 +25,13 @@ interface PoliciesData {
 type FormValues = {
   name: string;
   description: string;
-  policie: string[]; 
+  policie: string[];
 };
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"), 
+  name: z.string().min(1, "Name is required"),
   description: z.string().min(1, "Description is required"),
-  policie: z.array(z.string()).min(1, "At least one policy is required"), 
+  policie: z.array(z.string()).min(1, "At least one policy is required"),
 });
 
 interface ModalProps {
@@ -39,12 +39,18 @@ interface ModalProps {
   setShowModal: (show: boolean) => void;
   getListFindName: (nameText: string) => void;
   dataNameSearch: NameData[];
-	getData: any;
+  getData: any;
 }
 
-const ModalRoles: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, dataNameSearch, getData }) => {
+const ModalRoles: FC<ModalProps> = ({
+  showModal,
+  setShowModal,
+  getListFindName,
+  dataNameSearch,
+  getData,
+}) => {
   const { currentIdentity } = useAuth();
-	const { userIAMid } = useStore();
+  const { userIAMid } = useStore();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
@@ -52,7 +58,7 @@ const ModalRoles: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, 
   const [selectedPolicies, setSelectedPolicies] = useState<PoliciesData[]>([]);
   const [selectedPolicyValues, setSelectedPolicyValues] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const dropdownRef = useRef<HTMLDivElement>(null); 
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -60,7 +66,7 @@ const ModalRoles: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, 
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema), 
+    resolver: zodResolver(formSchema),
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -111,7 +117,7 @@ const ModalRoles: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, 
   }, [inputValue]);
 
   useEffect(() => {
-    setValue("policie", selectedPolicyValues); 
+    setValue("policie", selectedPolicyValues);
   }, [selectedPolicyValues, setValue]);
 
   const togglePolicySelection = (policyValue: string) => {
@@ -124,14 +130,14 @@ const ModalRoles: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, 
 
   const toggleSelectAllPolicies = () => {
     if (selectedPolicyValues.length === selectedPolicies.length) {
-      setSelectedPolicyValues([]); 
+      setSelectedPolicyValues([]);
     } else {
-      setSelectedPolicyValues(selectedPolicies.map((policy) => policy.value)); 
+      setSelectedPolicyValues(selectedPolicies.map((policy) => policy.value));
     }
   };
 
   const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen); 
+    setIsDropdownOpen(!isDropdownOpen);
   };
 
   useEffect(() => {
@@ -176,8 +182,9 @@ const ModalRoles: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, 
         throw new Error("Error creating profile");
       }
       if ("ok" in response) {
-				setShowModal(false)     
-				getData() }
+        setShowModal(false);
+        getData();
+      }
     } catch (error) {
       console.error({ error });
     } finally {

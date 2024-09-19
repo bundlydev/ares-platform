@@ -32,7 +32,7 @@ type UsernameData = {
 };
 
 export default function ManagementUsersPage(): JSX.Element {
-	const { userIAMid } = useStore();
+  const { userIAMid } = useStore();
   const { userMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
@@ -174,9 +174,7 @@ export default function ManagementUsersPage(): JSX.Element {
   return (
     <WorkspaceLayout>
       <div className="flex flex-col w-full">
-        <div
-          style={{ height: "calc(100vh - 64px)" }}
-          className="container w-full flex flex-col justify-start items-end bg-slate-100 h-full p-6 rounded-lg">
+        <div className="container w-full flex flex-col justify-start items-end bg-slate-100 h-full p-6 rounded-lg">
           <div className="flex justify-between w-full">
             <span className="text-[34px] font-semibold">Users</span>
             <button
