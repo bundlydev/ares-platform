@@ -13,13 +13,13 @@ import WorkspaceUsersPage from "@app/components/users";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import { useWorkspaces } from "@app/hooks/useWorkspaces";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@app/ui/tabs";
 import useStore from "@app/store/useStore";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@app/ui/components/tabs";
 
 type WorkspaceSettingsPageProps = {};
 
 export default function WorkspaceSettingsPage(props: WorkspaceSettingsPageProps): JSX.Element {
-	const { userIAMid } = useStore();
+  const { userIAMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   const workspaces = useWorkspaces();
@@ -96,10 +96,8 @@ export default function WorkspaceSettingsPage(props: WorkspaceSettingsPageProps)
               Roles
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="settings" className="p-6 bg-white shadow rounded-lg">
-            <div
-              style={{ height: "calc(100vh - 64px)" }}
-              className="container w-full flex flex-col justify-start items-start bg-slate-100 h-full p-6 rounded-lg">
+          <TabsContent value="settings" className="p-6 rounded-lg">
+            <div className="container w-full flex flex-col justify-start items-start h-full p-6 rounded-lg">
               <span className="font-bold text-4xl">Settings workspace</span>
               <div className="flex items-end h-11 gap-4">
                 <span className="font-medium text-xl">My workspace: </span>

@@ -5,10 +5,12 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters/index";
+import useStore from "@app/store/useStore";
+
 import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
-import useStore from "@app/store/useStore";
 
 interface NameData {
   id: string;
@@ -34,13 +36,19 @@ interface ModalProps {
   showModal: boolean;
   setShowModal: (show: boolean) => void;
   dataNameSearch: NameData[];
-	assignPrincipal: string;
-	assignRoles:string[];
+  assignPrincipal: string;
+  assignRoles: string[];
 }
 
-const ModalAssignRoleUser: FC<ModalProps> = ({ showModal, setShowModal, dataNameSearch,assignPrincipal,assignRoles }) => {
-  const {userMid} = useStore();
-	const { currentIdentity } = useAuth();
+const ModalAssignRoleUser: FC<ModalProps> = ({
+  showModal,
+  setShowModal,
+  dataNameSearch,
+  assignPrincipal,
+  assignRoles,
+}) => {
+  const { userMid } = useStore();
+  const { currentIdentity } = useAuth();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
@@ -75,25 +83,24 @@ const ModalAssignRoleUser: FC<ModalProps> = ({ showModal, setShowModal, dataName
   }) as CandidActors["workspaceUser"];
 
   const getRoles = async () => {
-		if (!workspaceIam) return;
-		const getRolesResult = await workspaceUser.get_roles();
-		
-		if ("ok" in getRolesResult) {
-			const filteredRoles = getRolesResult.ok.filter((role) => {
-				return !assignRoles.includes(role.name);
-			});
-			const rolesOptions = filteredRoles.map((role) => ({
-				label: role.name,
-				value: role.name,
-			}));
-	
-			setSelectedRoles(rolesOptions);
-		} else {
-			let error = getRolesResult.err;
-			console.error(error);
-		}
-	};
-	
+    if (!workspaceIam) return;
+    const getRolesResult = await workspaceUser.get_roles();
+
+    if ("ok" in getRolesResult) {
+      const filteredRoles = getRolesResult.ok.filter((role) => {
+        return !assignRoles.includes(role.name);
+      });
+      const rolesOptions = filteredRoles.map((role) => ({
+        label: role.name,
+        value: role.name,
+      }));
+
+      setSelectedRoles(rolesOptions);
+    } else {
+      let error = getRolesResult.err;
+      console.error(error);
+    }
+  };
 
   useEffect(() => {
     getRoles();
@@ -101,7 +108,7 @@ const ModalAssignRoleUser: FC<ModalProps> = ({ showModal, setShowModal, dataName
 
   useEffect(() => {
     setValue("roles", selectedRoleValues);
-  }, [ selectedRoleValues, setValue]);
+  }, [selectedRoleValues, setValue]);
 
   const toggleRoleSelection = (roleValue: string) => {
     if (selectedRoleValues.includes(roleValue)) {
@@ -131,37 +138,35 @@ const ModalAssignRoleUser: FC<ModalProps> = ({ showModal, setShowModal, dataName
     return null;
   }
 
-	const onSubmit: SubmitHandler<FormValues> = async (data) => {
-		if (!workspaceUser) return;
-		setLoading(true);
-		
-		try {
-			for (const role of data.roles) {
-				const response = await workspaceUser.add_role_to_access(Principal.fromText(assignPrincipal), role);
-				if ("err" in response) {
-					if ("userNotAuthenticated" in response.err) alert("User not authenticated");
-	
-					throw new Error("Error creating profile");
-				}
-				if ("ok" in response) {
-					setShowModal(false)
-				}
-			}
-				window.location.reload();
-			
-		} catch (error) {
-			console.error({ error });
-		} finally {
-			setLoading(false);
-		}
-	};
-	
+  const onSubmit: SubmitHandler<FormValues> = async (data) => {
+    if (!workspaceUser) return;
+    setLoading(true);
+
+    try {
+      for (const role of data.roles) {
+        const response = await workspaceUser.add_role_to_access(Principal.fromText(assignPrincipal), role);
+        if ("err" in response) {
+          if ("userNotAuthenticated" in response.err) alert("User not authenticated");
+
+          throw new Error("Error creating profile");
+        }
+        if ("ok" in response) {
+          setShowModal(false);
+        }
+      }
+      window.location.reload();
+    } catch (error) {
+      console.error({ error });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
       <div className="bg-white p-6 rounded shadow-lg w-1/3">
         <form className="flex flex-col gap-y-6" onSubmit={handleSubmit(onSubmit)}>
           <h2 className="text-xl mb-4">Assign Roles</h2>
-          
 
           <div className="flex flex-col" ref={rolesDropdownRef}>
             <label htmlFor="roles" className="text-gray-700 font-semibold">

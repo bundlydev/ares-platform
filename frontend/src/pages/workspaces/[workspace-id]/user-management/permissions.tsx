@@ -34,7 +34,7 @@ type FormValues = {
 export default function ManagementPermissionsPage(): JSX.Element {
   const router = useRouter();
   const { currentIdentity } = useAuth();
-	const { userIAMid } = useStore();
+  const { userIAMid } = useStore();
   const { userMid } = useStore();
   useAuthGuard({ isPrivate: true });
   const [showModal, setShowModal] = useState<boolean>(false);

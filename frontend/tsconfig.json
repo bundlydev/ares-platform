@@ -24,7 +24,7 @@
       "@app/declarations/*": ["./src/declarations/*"],
       "@app/hooks/*": ["./src/hooks/*"],
       "@app/lib/*": ["./src/lib/*"],
-			"@app/ui/*": ["./@/components/ui/*"],
+      "@app/ui/*": ["./src/ui/@/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "build/types/**/*.ts"],
