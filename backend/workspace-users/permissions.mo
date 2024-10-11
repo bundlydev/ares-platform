@@ -1,27 +1,29 @@
-import WorkspaceAccessPermissionModule "../../workspace-iam/modules/access-permission"
+import IamPermissionModule "../workspace-iam/modules/permission"
 
-module AccessPermissionModule {
-	public type AccessPermissionList = {
-		VERIFY_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		GET_PERMISSIONS : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		CREATE_PERMISSION : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		DELETE_PERMISSION : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		GET_ROLES : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		CREATE_ROLE : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		DELETE_ROLE : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		ADD_PERMISSION_TO_ROLE : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		REMOVE_PERMISSION_FROM_ROLE : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		GET_ACCESS_LIST : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		CREATE_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		DELETE_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		CHANGE_ACCESS_STATUS : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		ADD_ROLE_TO_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		REMOVE_ROLE_FROM_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		ADD_PERMISSION_TO_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
-		REMOVE_PERMISSION_FROM_ACCESS : WorkspaceAccessPermissionModule.AccessPermissionItem;
+module PermissionModule {
+	private type Permission = IamPermissionModule.Permission;
+
+	public type PermissionList = {
+		VERIFY_ACCESS : Permission;
+		GET_PERMISSIONS : Permission;
+		CREATE_PERMISSION : Permission;
+		DELETE_PERMISSION : Permission;
+		GET_ROLES : Permission;
+		CREATE_ROLE : Permission;
+		DELETE_ROLE : Permission;
+		ADD_PERMISSION_TO_ROLE : Permission;
+		REMOVE_PERMISSION_FROM_ROLE : Permission;
+		GET_ACCESS_LIST : Permission;
+		CREATE_ACCESS : Permission;
+		DELETE_ACCESS : Permission;
+		CHANGE_ACCESS_STATUS : Permission;
+		ADD_ROLE_TO_ACCESS : Permission;
+		REMOVE_ROLE_FROM_ACCESS : Permission;
+		ADD_PERMISSION_TO_ACCESS : Permission;
+		REMOVE_PERMISSION_FROM_ACCESS : Permission;
 	};
 
-	public let ACCESS_PERMISSION_LIST : AccessPermissionList = {
+	public let PERMISSION_LIST : PermissionList = {
 		VERIFY_ACCESS = {
 			id = "workspace-user-management:VerifyAccess";
 			description = "Verify if a user has access to a resource";

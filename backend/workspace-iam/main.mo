@@ -10,47 +10,39 @@ import IC "mo:ic";
 import Map "mo:map/Map";
 
 // Custom Modules
-import AccessPermissionModule "./modules/access-permission";
+import PermissionModule "./modules/permission";
 import PolicyModule "./modules/policy";
 import RoleModule "./modules/role";
 import AccessModule "./modules/access";
-import WebhookManager "modules/webhook-manager";
 
-import WorkspaceIamTypesModule "./types";
-import WorkspaceIamEventsModule "./events";
+import Types "./types";
 
 shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Self {
-	let ACCESS_PERMISSION_LIST = AccessPermissionModule.ACCESS_PERMISSION_LIST;
+	// Actors
+	private let ic = actor ("aaaaa-aa") : IC.Service;
 
+	let ACCESS_PERMISSION_LIST = PermissionModule.ACCESS_PERMISSION_LIST;
+
+	// State
 	private stable let _creator = creator;
 	private stable let _owner = owner;
-
-	// Storage
 	var _policies : PolicyModule.PolicyCollection = Map.new();
 	let _roles : RoleModule.RoleCollection = Map.new();
 	let _accessList : AccessModule.AccessCollection = Map.new();
-	// TODO: Change this to StableHashMap
-	private stable let _webhook_listeners : WebhookManager.WebhookListenerCollection = [{
-		ref = actor (Principal.toText(_creator)) : WebhookManager.WebhookListener;
-		// TODO: Find the best way to filter events
-		events = [];
-	}];
 
 	// Services
-	private let ic = actor ("aaaaa-aa") : IC.Service;
 	private let policyService = PolicyModule.PolicyService(_policies);
 	private let roleService = RoleModule.RoleService(_roles, policyService);
 	private let accessService = AccessModule.AccessService(_accessList, policyService, roleService);
-	private let webhookService = WebhookManager.WebhookService(_webhook_listeners);
 
-	private func getActorContext() : WorkspaceIamTypesModule.ActorContext {
+	private func getActorContext() : Types.ActorContext {
 		return {
 			creator = _creator;
 			owner = _owner;
 		};
 	};
 
-	private func identity_has_access(identity : Principal, access : WorkspaceIamTypesModule.AccessType) : Bool {
+	private func identity_has_access(identity : Principal, access : Types.AccessType) : Bool {
 		return accessService.hasPermission(getActorContext(), identity, access);
 	};
 
@@ -88,7 +80,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 		});
 	};
 
-	type GetIamActionsResultOk = AccessPermissionModule.AccessPermissionList;
+	type GetIamActionsResultOk = PermissionModule.AccessPermissionList;
 
 	type GetIamActionsResultErr = {
 		#unauthorized;
@@ -312,9 +304,12 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 
 		try {
 			let access = await accessService.create(data);
-			let newEvent : WorkspaceIamEventsModule.EventVariants = #WorkspaceIam(#AccessCreated(access));
+			let orchestrator = actor (Principal.toText(_creator)) : actor {
+				add_workspace_member : shared Principal -> async ();
+			};
 
-			await webhookService.emit(newEvent);
+			await orchestrator.add_workspace_member(data.identity);
+
 			return #ok(access);
 		} catch (_error) {
 			// TODO: Catch other errors
@@ -337,9 +332,13 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 
 		try {
 			let access = await accessService.delete(identity);
-			let newEvent : WorkspaceIamEventsModule.EventVariants = #WorkspaceIam(#AccessRemoved(access));
 
-			await webhookService.emit(newEvent);
+			let orchestrator = actor (Principal.toText(_creator)) : actor {
+				remove_workspace_member : shared Principal -> async ();
+			};
+
+			await orchestrator.remove_workspace_member(identity);
+
 			#ok(access);
 		} catch (_error) {
 			return #err(#accessDoesNotExist);
@@ -369,7 +368,7 @@ shared ({ caller = creator }) actor class IamActorClass(owner : Principal) = Sel
 	};
 
 	// TODO: Allow consult only for known principals (creator, workspace canisters, etc)
-	public shared query func verify_access(identity : Principal, access : WorkspaceIamTypesModule.AccessType) : async Bool {
+	public shared query func verify_access(identity : Principal, access : Types.AccessType) : async Bool {
 		return identity_has_access(identity, access);
 	};
 };

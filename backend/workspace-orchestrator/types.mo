@@ -1,7 +1,7 @@
 // Base Modules
 import Result "mo:base/Result";
 
-module {
+module WorkspaceOrchestratorTypes {
 	public type GetMyWorkspacesResponseOkItem = {
 		wip : Principal;
 		name : Text;
@@ -23,7 +23,8 @@ module {
 		members : [Principal];
 		canisters : {
 			iam : Principal;
-			user_management : Principal;
+			users : Principal;
+			webhooks : Principal;
 		};
 	};
 
@@ -33,6 +34,16 @@ module {
 	};
 
 	public type GetWorkspaceInfoResult = Result.Result<GetWorkspaceInfoResultOk, GetWorkspaceInfoResultErr>;
+
+	public type PrepareCanisterDeletionOk = {
+		refundedCycles : Nat;
+	};
+
+	public type PrepareDeletionCanisterErr = {
+		#unauthorized;
+	};
+
+	public type PrepareCanisterDeletionResult = Result.Result<PrepareCanisterDeletionOk, PrepareDeletionCanisterErr>;
 
 	public type CreateWorkspaceData = {
 		name : Text;
@@ -45,7 +56,8 @@ module {
 		members : [Principal];
 		canisters : {
 			iam : Principal;
-			user_management : Principal;
+			users : Principal;
+			webhooks : Principal;
 		};
 	};
 
@@ -79,13 +91,4 @@ module {
 	};
 
 	public type GetMyBalanceResponse = Result.Result<GetMyBalanceResponseOk, GetMyBalanceResponseErr>;
-
-	public type WebhookHandlerResultOk = ();
-
-	public type WebhookHandlerResultErr = {
-		#unauthorized;
-		// TODO: Add error with reason
-	};
-
-	public type WebhookHandlerResult = Result.Result<WebhookHandlerResultOk, WebhookHandlerResultErr>;
 };

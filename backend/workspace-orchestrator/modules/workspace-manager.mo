@@ -20,7 +20,8 @@ import CyclesLedgerModule "./cycles-ledger";
 
 // Actor Classes
 import WorkspaceIam "../../workspace-iam/main";
-import WorkspaceUserManagement "../../workspace-user-management/main";
+import WorkspaceUsers "../../workspace-users/main";
+import WorkspaceWebhooks "../../workspace-webhooks/main";
 
 import WorkspaceOrchestratorModels "../models";
 
@@ -36,6 +37,7 @@ module WorkspaceManager {
 		canisters : {
 			main : Principal;
 			iam : Principal;
+			webhooks : Principal;
 		};
 	};
 
@@ -48,7 +50,7 @@ module WorkspaceManager {
 		private func generatePrincipal() : async Principal {
 			var b = await Random.blob();
 			var array = Blob.toArray(b);
-			array := Array.subArray<Nat8>(array, 0, 28);
+			array := Array.subArray<Nat8>(array, 0, 10);
 			b := Blob.fromArray(array);
 			Principal.fromBlob(b);
 		};
@@ -76,10 +78,16 @@ module WorkspaceManager {
 
 			let workspaceArray = List.toArray(workspaceList);
 
-			// let workspaceIter = Map.vals<Principal, WorkspaceOrchestratorModels.Workspace>(_storage);
-			// let workspaceArray = Iter.toArray(workspaceIter);
-
 			return workspaceArray;
+		};
+
+		public func getWorkspaceByChild(principal : Principal) : ?WorkspaceOrchestratorModels.Workspace {
+			return Array.find<WorkspaceOrchestratorModels.Workspace>(
+				getAll(),
+				func workspace = Principal.equal(Principal.fromActor(workspace.canisters.iam), principal) or
+				Principal.equal(Principal.fromActor(workspace.canisters.users), principal) or
+				Principal.equal(Principal.fromActor(workspace.canisters.webhooks), principal),
+			);
 		};
 
 		public func addMember(workspaceId : Principal, memberId : Principal) : async () {
@@ -119,7 +127,13 @@ module WorkspaceManager {
 
 		public func create(name : Text, creator : Principal) : async WorkspaceOrchestratorModels.Workspace {
 			let iam = await createIamCanister(creator);
-			let user_management = await createUserManagementCanister(creator, Principal.fromActor(iam));
+			let users = await createUsersCanister(creator, Principal.fromActor(iam));
+			let webhooks = await createWebhooksCanister(creator, Principal.fromActor(iam));
+
+			let webhookEmmiters = [Principal.fromActor(iam), Principal.fromActor(users)];
+			await webhooks.register_emitters(webhookEmmiters);
+
+			// Register Webhooks Canister in Workspace Canisters
 
 			let wip = await generatePrincipal();
 
@@ -129,8 +143,9 @@ module WorkspaceManager {
 				owner = creator;
 				members = [];
 				canisters = {
-					iam = iam;
-					user_management = user_management;
+					iam;
+					users;
+					webhooks;
 				};
 			};
 
@@ -175,7 +190,7 @@ module WorkspaceManager {
 			};
 		};
 
-		public func createIamCanister(owner : Principal) : async WorkspaceIam.IamActorClass {
+		private func createIamCanister(owner : Principal) : async WorkspaceIam.IamActorClass {
 			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
 			Cycles.add<system>(113_846_199_230);
 
@@ -184,13 +199,22 @@ module WorkspaceManager {
 			return iam;
 		};
 
-		public func createUserManagementCanister(owner : Principal, iam : Principal) : async WorkspaceUserManagement.WorkspaceUserManagementActorClass {
+		private func createUsersCanister(owner : Principal, iam : Principal) : async WorkspaceUsers.WorkspaceUsersActorClass {
 			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
 			Cycles.add<system>(113_846_199_230);
 
-			let userManagement = await WorkspaceUserManagement.WorkspaceUserManagementActorClass(owner, iam);
+			let users = await WorkspaceUsers.WorkspaceUsersActorClass(owner, iam);
 
-			return userManagement;
+			return users;
+		};
+
+		private func createWebhooksCanister(owner : Principal, iam : Principal) : async WorkspaceWebhooks.WorkspaceWebhooksActorClass {
+			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
+			Cycles.add<system>(113_846_199_230);
+
+			let webhooks = await WorkspaceWebhooks.WorkspaceWebhooksActorClass(owner, iam);
+
+			return webhooks;
 		};
 
 		public func delete(workspaceId : Principal, requester : Principal) : async ({ refundedCycles : Nat }) {
@@ -204,14 +228,15 @@ module WorkspaceManager {
 						throw Error.reject(UNAUTHORIZED);
 					};
 
-					let deleteIamCanisterResult = await deleteIamCanister(workspace.canisters.iam);
-					let deleteUserManagementCanisterResult = await deleteUserManagementCanister(workspace.canisters.user_management);
+					let deleteIamCanisterResult = await deleteCanister(workspace.canisters.iam);
+					let deleteUsersCanisterResult = await deleteCanister(workspace.canisters.users);
+					let deleteWebhooksCanisterResult = await deleteCanister(workspace.canisters.webhooks);
 
-					switch (deleteIamCanisterResult, deleteUserManagementCanisterResult) {
-						case (#ok(iamResult), #ok(userManagementResult)) {
+					switch (deleteIamCanisterResult, deleteUsersCanisterResult, deleteWebhooksCanisterResult) {
+						case (#ok(iamResult), #ok(usersResult), #ok(webhooksResult)) {
 							ignore Map.remove<Principal, WorkspaceOrchestratorModels.Workspace>(_storage, phash, workspaceId);
 
-							let refundedCycles = iamResult.refundedCycles + userManagementResult.refundedCycles;
+							let refundedCycles = iamResult.refundedCycles + usersResult.refundedCycles + webhooksResult.refundedCycles;
 
 							let newCyclesEntry : CyclesLedgerModule.CycleTransaction = {
 								amount = refundedCycles;
@@ -234,40 +259,25 @@ module WorkspaceManager {
 			};
 		};
 
-		type DeleteIamCanisterResultOk = {
+		type DeleteCanisterRef = actor {
+			prepare_deletion : shared () -> async DeleteCanisterResult;
+		};
+
+		type DeleteCanisterOk = {
 			refundedCycles : Nat;
 		};
 
-		type DeleteIamCanisterResultErr = {
+		type DeleteCanisterErr = {
 			#unauthorized;
 		};
 
-		type DeleteIamCanisterResult = Result.Result<DeleteIamCanisterResultOk, DeleteIamCanisterResultErr>;
+		type DeleteCanisterResult = Result.Result<DeleteCanisterOk, DeleteCanisterErr>;
 
-		public func deleteIamCanister(iam : WorkspaceIam.IamActorClass) : async DeleteIamCanisterResult {
-			let deletionResult = await iam.prepare_deletion();
+		private func deleteCanister(canister : DeleteCanisterRef) : async DeleteCanisterResult {
+			let deletionResult = await canister.prepare_deletion();
 
-			await ic.stop_canister({ canister_id = Principal.fromActor(iam) });
-			await ic.delete_canister({ canister_id = Principal.fromActor(iam) });
-
-			return deletionResult;
-		};
-
-		type DeleteUserManagementCanisterResultOk = {
-			refundedCycles : Nat;
-		};
-
-		type DeleteUserManagementCanisterResultErr = {
-			#unauthorized;
-		};
-
-		type DeleteUserManagementCanisterResult = Result.Result<DeleteUserManagementCanisterResultOk, DeleteUserManagementCanisterResultErr>;
-
-		public func deleteUserManagementCanister(userManagement : WorkspaceUserManagement.WorkspaceUserManagementActorClass) : async DeleteUserManagementCanisterResult {
-			let deletionResult = await userManagement.prepare_deletion();
-
-			await ic.stop_canister({ canister_id = Principal.fromActor(userManagement) });
-			await ic.delete_canister({ canister_id = Principal.fromActor(userManagement) });
+			await ic.stop_canister({ canister_id = Principal.fromActor(canister) });
+			await ic.delete_canister({ canister_id = Principal.fromActor(canister) });
 
 			return deletionResult;
 		};

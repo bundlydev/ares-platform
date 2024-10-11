@@ -26,21 +26,27 @@
         "output": "frontend/src/declarations/workspace-iam"
       }
     },
-    "workspace-user-management": {
+    "workspace-users": {
       "type": "motoko",
-      "main": "backend/workspace-user-management/main.mo",
+      "main": "backend/workspace-users/main.mo",
       "declarations": {
         "node_compatibility": true,
-        "output": "frontend/src/declarations/workspace-user-management"
+        "output": "frontend/src/declarations/workspace-users"
+      }
+    },
+    "workspace-webhooks": {
+      "type": "motoko",
+      "main": "backend/workspace-webhooks/main.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/workspace-webhooks"
       }
     },
     "frontend": {
       "type": "assets",
       "dependencies": ["account-manager", "workspace-orchestrator", "internet-identity"],
-      "frontend": {
-        "entrypoint": "frontend/build/index.html"
-      },
-      "source": ["frontend/build"]
+      "source": ["frontend/build"],
+      "workspace": "frontend"
     },
     "internet-identity": {
       "type": "custom",

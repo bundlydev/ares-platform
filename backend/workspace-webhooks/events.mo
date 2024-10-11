@@ -1,13 +1,5 @@
 import WorkspaceWebhooksModels "../workspace-webhooks/models";
 
-module IamEvents {
+module WebhooksEvents {
 	type WebhookEvent<T> = WorkspaceWebhooksModels.WebhookEvent<T>;
-
-	// Permission Events
-
-	// Policy Events
-
-	// Role Events
-
-	// Access Events
 };

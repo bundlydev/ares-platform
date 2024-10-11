@@ -3,12 +3,14 @@ import Map "mo:map/Map";
 
 // Actor Classes
 import WorkspaceIam "../workspace-iam/main";
-import WorkspaceUserManagement "../workspace-user-management/main";
+import WorkspaceUsers "../workspace-users/main";
+import WorkspaceWebhooks "../workspace-webhooks/main";
 
 module WorkspaceOrchestratorModels {
 	public type WorkspaceCanisters = {
 		iam : WorkspaceIam.IamActorClass;
-		user_management : WorkspaceUserManagement.WorkspaceUserManagementActorClass;
+		users : WorkspaceUsers.WorkspaceUsersActorClass;
+		webhooks : WorkspaceWebhooks.WorkspaceWebhooksActorClass;
 	};
 
 	public type Workspace = {

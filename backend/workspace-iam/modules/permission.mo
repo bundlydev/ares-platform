@@ -1,22 +1,22 @@
 module AccessPermissionModule {
-	public type AccessPermissionItem = {
+	public type Permission = {
 		id : Text;
 		description : Text;
 	};
 
 	public type AccessPermissionList = {
-		GET_ACCESS_PERMISSION_LIST : AccessPermissionItem;
-		GET_POLICIES : AccessPermissionItem;
-		CREATE_POLICY : AccessPermissionItem;
-		GET_ROLES : AccessPermissionItem;
-		CREATE_ROLE : AccessPermissionItem;
-		DELETE_ROLE : AccessPermissionItem;
-		ADD_POLICY_TO_ROLE : AccessPermissionItem;
-		REMOVE_POLICY_FROM_ROLE : AccessPermissionItem;
-		GET_ACCESS_LIST : AccessPermissionItem;
-		CREATE_ACCESS : AccessPermissionItem;
-		DELETE_ACCESS : AccessPermissionItem;
-		CHANGE_ACCESS_ROLE : AccessPermissionItem;
+		GET_ACCESS_PERMISSION_LIST : Permission;
+		GET_POLICIES : Permission;
+		CREATE_POLICY : Permission;
+		GET_ROLES : Permission;
+		CREATE_ROLE : Permission;
+		DELETE_ROLE : Permission;
+		ADD_POLICY_TO_ROLE : Permission;
+		REMOVE_POLICY_FROM_ROLE : Permission;
+		GET_ACCESS_LIST : Permission;
+		CREATE_ACCESS : Permission;
+		DELETE_ACCESS : Permission;
+		CHANGE_ACCESS_ROLE : Permission;
 	};
 
 	public let ACCESS_PERMISSION_LIST : AccessPermissionList = {
