@@ -50,7 +50,7 @@ export function useAuthGuard({ isPrivate }: AuthGuardOptions) {
         if (
           router.pathname !== `/workspaces/[workspace-id]/settings` &&
           router.pathname !== `/workspaces/[workspace-id]/iam/apps` &&
-          router.pathname !== `/workspaces/[workspace-id]/iam/roles`  &&
+          router.pathname !== `/workspaces/[workspace-id]/iam/roles` &&
           router.pathname !== `/workspaces/new`
         ) {
           if (workspaces.length < 1) {

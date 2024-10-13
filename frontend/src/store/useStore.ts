@@ -1,5 +1,5 @@
-import create from 'zustand';
-import { persist, PersistOptions } from 'zustand/middleware';
+import create from "zustand";
+import { PersistOptions, persist } from "zustand/middleware";
 
 // Definimos los tipos para el estado y las acciones
 interface StoreState {
@@ -18,13 +18,13 @@ type MyPersist = (
 const useStore = create<StoreState>(
   (persist as MyPersist)(
     (set) => ({
-      userMid: '', // Estado inicial de userMid como string
-      userIAMid: '', // Estado inicial de userIAMid como string
+      userMid: "", // Estado inicial de userMid como string
+      userIAMid: "", // Estado inicial de userIAMid como string
       setUserMid: (value: string) => set((state: StoreState) => ({ ...state, userMid: value })), // Mantiene el estado existente
       setUserIAMid: (value: string) => set((state: StoreState) => ({ ...state, userIAMid: value })), // Mantiene el estado existente
     }),
     {
-      name: 'count-storage', // Nombre en el localStorage
+      name: "count-storage", // Nombre en el localStorage
       getStorage: () => localStorage, // Configuración para obtener localStorage
     }
   )

@@ -9,12 +9,12 @@ export type CandidActors = {
   accountManager: AccountManagerActor;
   workspaceOrchestrator: WorkspaceOrchestratorActor;
   workspaceIam: WorkspaceIamActor;
-	workspaceUser: WorkspaceUserActor
+  workspaceUser: WorkspaceUserActor;
 };
 
 export let candidCanisters: Record<keyof CandidActors, CandidCanister> = {
   accountManager,
   workspaceOrchestrator,
   workspaceIam,
-	workspaceUser,
+  workspaceUser,
 };

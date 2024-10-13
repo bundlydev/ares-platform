@@ -30,7 +30,7 @@ export default function WorkspaceUsersPage() {
     id: string;
     username: string;
   };
-	const { userIAMid } = useStore();
+  const { userIAMid } = useStore();
   const { currentIdentity } = useAuth();
   const router = useRouter();
   const { ownerId } = useContext(AuthContext);
@@ -224,9 +224,11 @@ export default function WorkspaceUsersPage() {
               <div key={index} className="grid grid-cols-3 p-4">
                 <div>
                   {item.name}
-                  <span className="text-cyan-800 bg-gray-200 rounded-[5px] text-sm font-bold px-[5px] ml-[8px]">
-                    OWNER
-                  </span>
+                  {item.id === ownerId && (
+                    <span className="text-cyan-800 bg-gray-200 rounded-[5px] text-sm font-bold px-[5px] ml-[8px]">
+                      OWNER
+                    </span>
+                  )}
                 </div>
                 <div>{item.role}</div>
                 <div>

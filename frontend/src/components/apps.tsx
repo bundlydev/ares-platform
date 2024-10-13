@@ -25,7 +25,7 @@ type UsernameData = {
 };
 
 export default function WorkspaceAppsPage(): JSX.Element {
-	const { userIAMid } = useStore();
+  const { userIAMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
@@ -168,9 +168,7 @@ export default function WorkspaceAppsPage(): JSX.Element {
 
   return (
     <div className="flex flex-col w-full mt-4">
-      <div
-        style={{ height: "calc(100vh - 64px)" }}
-        className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
+      <div className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
         <button
           className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
           onClick={() => setShowModal(true)}>

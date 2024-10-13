@@ -7,10 +7,10 @@ import { z } from "zod";
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
+import useStore from "@app/store/useStore";
 
 import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
-import useStore from "@app/store/useStore";
 
 interface NameData {
   id: string;
@@ -52,12 +52,12 @@ interface ModalProps {
   setShowModal: (show: boolean) => void;
   getListFindName: (nameText: string) => void;
   dataNameSearch: NameData[];
-	getData: any
+  getData: any;
 }
 
 const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, dataNameSearch, getData }) => {
   const { currentIdentity } = useAuth();
-	const { userIAMid } = useStore();
+  const { userIAMid } = useStore();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
@@ -71,7 +71,7 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
     setError,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema), 
+    resolver: zodResolver(formSchema),
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +127,7 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
     if (!workspaceIam) return;
     setLoading(true);
     try {
-      const value = Principal.fromText(data.name); 
+      const value = Principal.fromText(data.name);
       const response = await workspaceIam.create_access({
         identity: value,
         roleId: data.role,
@@ -140,8 +140,8 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
         throw new Error("Error creating profile");
       }
       if ("ok" in response) {
-				setShowModal(false);
-				getData();
+        setShowModal(false);
+        getData();
       }
     } catch (error) {
       console.error({ error });

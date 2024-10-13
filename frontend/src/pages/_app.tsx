@@ -28,7 +28,7 @@ export default function MyApp({ Component, pageProps }: AppProps) {
   return (
     <IcpConnectContextProvider client={client}>
       <AuthContextProvider>
-        <Component {...pageProps} />)
+        <Component {...pageProps} />
       </AuthContextProvider>
     </IcpConnectContextProvider>
   );

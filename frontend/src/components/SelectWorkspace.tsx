@@ -12,15 +12,13 @@ interface Workspace {
 
 const SelectWorkspace: React.FC = () => {
   const router = useRouter();
-	const workspaceIdRoute = router.query["workspace-id"] as string;
+  const workspaceIdRoute = router.query["workspace-id"] as string;
   const { workspaceId, setWorkspaceId } = useContext(AuthContext);
   const workspaces = useWorkspaces();
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-	setWorkspaceId(workspaceIdRoute);
+  setWorkspaceId(workspaceIdRoute);
 
-
- 
   const getSelectedOption = () => {
     if (workspaceIdRoute) {
       const selectedOption = workspaces.find((option) => option.id === workspaceIdRoute);
@@ -30,13 +28,12 @@ const SelectWorkspace: React.FC = () => {
     }
   };
   useEffect(() => {
-   setWorkspaceId(workspaceIdRoute)
+    setWorkspaceId(workspaceIdRoute);
   }, []);
   const handleOptionClick = (option: Workspace) => {
     setIsDropdownOpen(false);
     setWorkspaceId(option.id);
-		router.push(`/workspaces/${option.id}/dashboard`);
-
+    router.push(`/workspaces/${option.id}/dashboard`);
   };
 
   const handleAddClick = () => {
