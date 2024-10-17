@@ -3,6 +3,7 @@ import Principal "mo:base/Principal";
 import List "mo:base/List";
 import Array "mo:base/Array";
 import Error "mo:base/Error";
+// TODO: Should I remove Result and use throw?
 import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Cycles "mo:base/ExperimentalCycles";
@@ -19,6 +20,7 @@ import IC "mo:ic";
 import CyclesLedgerModule "./cycles-ledger";
 
 // Actor Classes
+import WorkspaceActor "../../workspace/main";
 import WorkspaceIam "../../workspace-iam/main";
 import WorkspaceUsers "../../workspace-users/main";
 import WorkspaceWebhooks "../../workspace-webhooks/main";
@@ -126,19 +128,18 @@ module WorkspaceManager {
 		};
 
 		public func create(name : Text, creator : Principal) : async WorkspaceOrchestratorModels.Workspace {
+			let workspaceRef = await createWorkspaceCanister(creator);
 			let iam = await createIamCanister(creator);
 			let users = await createUsersCanister(creator, Principal.fromActor(iam));
 			let webhooks = await createWebhooksCanister(creator, Principal.fromActor(iam));
 
-			let webhookEmmiters = [Principal.fromActor(iam), Principal.fromActor(users)];
-			await webhooks.register_emitters(webhookEmmiters);
-
-			// Register Webhooks Canister in Workspace Canisters
+			await workspaceRef.init();
 
 			let wip = await generatePrincipal();
 
 			let workspace : WorkspaceOrchestratorModels.Workspace = {
 				wip;
+				ref = workspaceRef;
 				name;
 				owner = creator;
 				members = [];
@@ -188,6 +189,15 @@ module WorkspaceManager {
 					throw Error.reject("Error");
 				};
 			};
+		};
+
+		private func createWorkspaceCanister(owner : Principal) : async WorkspaceActor.WorkspaceClass {
+			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
+			Cycles.add<system>(113_846_199_230);
+
+			let workpace = await WorkspaceActor.WorkspaceClass(owner);
+
+			return workpace;
 		};
 
 		private func createIamCanister(owner : Principal) : async WorkspaceIam.IamActorClass {
