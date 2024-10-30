@@ -14,7 +14,7 @@ import PermissionsManagement "mo:access-management/Permissions";
 import RolesManagement "mo:access-management/Roles";
 import AccessManagement "mo:access-management/Access";
 
-import WorkspaceOrchestratorTypes "../workspace-orchestrator/types";
+import WOResults "../workspace-orchestrator/results";
 
 // IAM Imports
 import IamTypes "./modules/iam/types";
@@ -100,7 +100,7 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 		return ();
 	};
 
-	public shared ({ caller }) func prepare_deletion() : async WorkspaceOrchestratorTypes.PrepareCanisterDeletionResult {
+	public shared ({ caller }) func prepare_deletion() : async WOResults.DeleteCanisterResult {
 		if (not Principal.equal(caller, _creator)) {
 			return #err(#unauthorized);
 		};
@@ -300,6 +300,7 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
    * Users Methods
    */
 
+	// TODO: Should I remove this?
 	public shared query ({ caller }) func users_has_access(identity : Principal, permission : Text) : async UsersResults.HasAccessResult {
 		if (not iam_identity_has_access(caller, #permission(UserPermission.PERMISSION_LIST.VERIFY_ACCESS.id))) return #err(#unauthorized);
 

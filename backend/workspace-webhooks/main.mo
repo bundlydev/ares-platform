@@ -11,7 +11,7 @@ import Array "mo:base/Array";
 import Debug "mo:base/Debug";
 import IC "mo:ic";
 
-import WorkspaceOrchestratorTypes "../workspace-orchestrator/types";
+import WOResults "../workspace-orchestrator/results";
 
 // Workspace Iam Modules
 import WorkspaceIam "../workspace-iam/main";
@@ -31,7 +31,7 @@ shared ({ caller = creator }) actor class WorkspaceWebhooksActorClass(owner : Pr
 	private stable var _emitters : [Principal] = [];
 	private stable var webhooks : Models.WebhookRepository = Map.new();
 
-	public shared ({ caller }) func prepare_deletion() : async WorkspaceOrchestratorTypes.PrepareCanisterDeletionResult {
+	public shared ({ caller }) func prepare_deletion() : async WOResults.DeleteCanisterResult {
 		if (not Principal.equal(caller, _creator)) {
 			return #err(#unauthorized);
 		};
