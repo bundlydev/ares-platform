@@ -2,22 +2,23 @@
 import Result "mo:base/Result";
 
 module WorkspaceOrchestratorTypes {
-	public type GetMyWorkspacesResponseOkItem = {
+	public type GetMyWorkspacesResultOkItem = {
 		wip : Principal;
 		name : Text;
 	};
 
-	public type GetMyWorkspacesResponseOk = [GetMyWorkspacesResponseOkItem];
+	public type GetMyWorkspacesResultOk = [GetMyWorkspacesResultOkItem];
 
-	public type GetMyWorkspacesResponseErr = {
+	public type GetMyWorkspacesResultErr = {
 		#unauthorized;
 		#profileNotFound;
 	};
 
-	public type GetMyWorkspacesResponse = Result.Result<GetMyWorkspacesResponseOk, GetMyWorkspacesResponseErr>;
+	public type GetMyWorkspacesResult = Result.Result<GetMyWorkspacesResultOk, GetMyWorkspacesResultErr>;
 
 	public type GetWorkspaceInfoResultOk = {
 		wip : Principal;
+		ref : Principal;
 		name : Text;
 		owner : Principal;
 		members : [Principal];
@@ -49,8 +50,9 @@ module WorkspaceOrchestratorTypes {
 		name : Text;
 	};
 
-	public type CreateWorkspaceResponseOk = {
+	public type CreateWorkspaceResultOk = {
 		wip : Principal;
+		ref : Principal;
 		name : Text;
 		owner : Principal;
 		members : [Principal];
@@ -61,34 +63,34 @@ module WorkspaceOrchestratorTypes {
 		};
 	};
 
-	public type CreateWorkspaceResponseErr = {
+	public type CreateWorkspaceResultErr = {
 		#unauthorized;
 		#profileNotFound;
 		#requiredField : Text;
 	};
 
-	public type CreateWorkspaceResponse = Result.Result<CreateWorkspaceResponseOk, CreateWorkspaceResponseErr>;
+	public type CreateWorkspaceResult = Result.Result<CreateWorkspaceResultOk, CreateWorkspaceResultErr>;
 
-	public type DeleteWorkspaceResponseOk = {
+	public type DeleteWorkspaceResultOk = {
 		refundedCycles : Nat;
 	};
 
-	public type DeleteWorkspaceResponseErr = {
+	public type DeleteWorkspaceResultErr = {
 		#unauthorized;
 		#profileNotFound;
 		#workspaceNotFound;
 	};
 
-	public type DeleteWorkspaceResponse = Result.Result<DeleteWorkspaceResponseOk, DeleteWorkspaceResponseErr>;
+	public type DeleteWorkspaceResult = Result.Result<DeleteWorkspaceResultOk, DeleteWorkspaceResultErr>;
 
-	public type GetMyBalanceResponseOk = {
+	public type GetMyBalanceResultOk = {
 		balance : Nat;
 	};
 
-	public type GetMyBalanceResponseErr = {
+	public type GetMyBalanceResultErr = {
 		#unauthorized;
 		#profileNotFound;
 	};
 
-	public type GetMyBalanceResponse = Result.Result<GetMyBalanceResponseOk, GetMyBalanceResponseErr>;
+	public type GetMyBalanceResult = Result.Result<GetMyBalanceResultOk, GetMyBalanceResultErr>;
 };

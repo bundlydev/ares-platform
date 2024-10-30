@@ -52,6 +52,7 @@ echo "Generating declaration files..."
 
 dfx generate account-manager
 dfx generate workspace-orchestrator
+dfx generate workspace
 dfx generate workspace-iam
 dfx generate workspace-users
 dfx generate workspace-webhooks
