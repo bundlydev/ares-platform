@@ -18,6 +18,14 @@
         "output": "frontend/src/declarations/workspace-orchestrator"
       }
     },
+    "workspace": {
+      "type": "motoko",
+      "main": "backend/workspace/main.mo",
+      "declarations": {
+        "node_compatibility": true,
+        "output": "frontend/src/declarations/workspace"
+      }
+    },
     "workspace-iam": {
       "type": "motoko",
       "main": "backend/workspace-iam/main.mo",

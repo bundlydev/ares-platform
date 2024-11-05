@@ -14,7 +14,7 @@ import Permissions "mo:access-management/Permissions";
 import Roles "mo:access-management/Roles";
 import Access "mo:access-management/Access";
 
-import WorkspaceOrchestratorTypes "../workspace-orchestrator/types";
+import WOResults "../workspace-orchestrator/results";
 
 import Types "./types";
 import { PERMISSION_LIST } "./permissions";
@@ -36,7 +36,7 @@ shared ({ caller = creator }) actor class WorkspaceUsersActorClass(owner : Princ
 	private let rolesService = Roles.RolesService(_roles, permissionsService);
 	private let accessService = Access.AccessService(_accessList, rolesService, permissionsService);
 
-	public shared ({ caller }) func prepare_deletion() : async WorkspaceOrchestratorTypes.PrepareCanisterDeletionResult {
+	public shared ({ caller }) func prepare_deletion() : async WOResults.DeleteCanisterResult {
 		if (not Principal.equal(caller, _creator)) {
 			return #err(#unauthorized);
 		};

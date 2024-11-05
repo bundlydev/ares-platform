@@ -36,16 +36,6 @@ module WorkspaceOrchestratorTypes {
 
 	public type GetWorkspaceInfoResult = Result.Result<GetWorkspaceInfoResultOk, GetWorkspaceInfoResultErr>;
 
-	public type PrepareCanisterDeletionOk = {
-		refundedCycles : Nat;
-	};
-
-	public type PrepareDeletionCanisterErr = {
-		#unauthorized;
-	};
-
-	public type PrepareCanisterDeletionResult = Result.Result<PrepareCanisterDeletionOk, PrepareDeletionCanisterErr>;
-
 	public type CreateWorkspaceData = {
 		name : Text;
 	};
@@ -93,4 +83,14 @@ module WorkspaceOrchestratorTypes {
 	};
 
 	public type GetMyBalanceResult = Result.Result<GetMyBalanceResultOk, GetMyBalanceResultErr>;
+
+	public type DeleteCanisterOk = {
+		refundedCycles : Nat;
+	};
+
+	public type DeleteCanisterErr = {
+		#unauthorized;
+	};
+
+	public type DeleteCanisterResult = Result.Result<DeleteCanisterOk, DeleteCanisterErr>;
 };
