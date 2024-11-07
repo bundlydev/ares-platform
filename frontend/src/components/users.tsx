@@ -30,7 +30,7 @@ export default function WorkspaceUsersPage() {
     id: string;
     username: string;
   };
-  const { userIAMid } = useStore();
+  const { userIAMid, workspaceRefId } = useStore();
   const { currentIdentity } = useAuth();
   const router = useRouter();
   const { ownerId } = useContext(AuthContext);
@@ -55,9 +55,9 @@ export default function WorkspaceUsersPage() {
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: userIAMid,
-  }) as CandidActors["workspaceIam"];
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
   useEffect(() => {
     getWorkspaceMembers();
@@ -66,11 +66,11 @@ export default function WorkspaceUsersPage() {
   const getWorkspaceMembers = async () => {
     if (!workspaceIam) return;
 
-    let getMembersResult = await workspaceIam.get_access_list({ filters: { itype: { user: null } } });
+    let getMembersResult = await workspaceIam.iam_get_access_list({ filters: { itype: { user: null } } });
 
     if ("ok" in getMembersResult) {
       let members = getMembersResult.ok;
-      let getRolesResult = await workspaceIam.get_roles();
+      let getRolesResult = await workspaceIam.iam_get_roles();
       let roles = "ok" in getRolesResult ? getRolesResult.ok : [];
 
       let results = [];
@@ -128,7 +128,7 @@ export default function WorkspaceUsersPage() {
 
     try {
       const memberId = Principal.fromText(idMember);
-      const response = await workspaceIam.delete_access(memberId);
+      const response = await workspaceIam.iam_delete_access(memberId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -151,7 +151,7 @@ export default function WorkspaceUsersPage() {
     setLoading(true);
     try {
       const memberId = Principal.fromText(userId);
-      const response = await workspaceIam.create_access({
+      const response = await workspaceIam.iam_create_access({
         identity: memberId,
         roleId: "Administrator",
         itype: { user: null },

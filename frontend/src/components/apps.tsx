@@ -25,7 +25,7 @@ type UsernameData = {
 };
 
 export default function WorkspaceAppsPage(): JSX.Element {
-  const { userIAMid } = useStore();
+  const { workspaceRefId } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
@@ -47,16 +47,16 @@ export default function WorkspaceAppsPage(): JSX.Element {
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: userIAMid,
-  }) as CandidActors["workspaceIam"];
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
   useEffect(() => {
     getApps();
   }, []);
 
   const getApps = async () => {
-    const getMembersResult = await workspaceIam.get_access_list({ filters: { itype: { app: null } } });
+    const getMembersResult = await workspaceIam.iam_get_access_list({ filters: { itype: { app: null } } });
     if ("ok" in getMembersResult) {
       const NameList = getMembersResult.ok.map((item) => ({
         id: item.identity.toString(),
@@ -98,7 +98,7 @@ export default function WorkspaceAppsPage(): JSX.Element {
 
     try {
       const appId = Principal.fromText(idApp);
-      const response = await workspaceIam.delete_access(appId);
+      const response = await workspaceIam.iam_delete_access(appId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -121,7 +121,7 @@ export default function WorkspaceAppsPage(): JSX.Element {
     setLoading(true);
     try {
       const memberId = Principal.fromText(userId);
-      const response = await workspaceIam.create_access({
+      const response = await workspaceIam.iam_create_access({
         identity: memberId,
         itype: { user: null },
         roleId: "Administrator",

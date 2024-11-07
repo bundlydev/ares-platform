@@ -32,7 +32,7 @@ type UsernameData = {
 };
 
 export default function ManagementUsersPage(): JSX.Element {
-  const { userIAMid } = useStore();
+  const { userIAMid, workspaceRefId } = useStore();
   const { userMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
@@ -56,13 +56,13 @@ export default function ManagementUsersPage(): JSX.Element {
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: userIAMid,
-  }) as CandidActors["workspaceIam"];
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
-  const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
-    canisterId: userMid,
-  }) as CandidActors["workspaceUser"];
+  const workspaceUser = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
   useEffect(() => {
     getPermissions();
@@ -78,7 +78,7 @@ export default function ManagementUsersPage(): JSX.Element {
   const getPermissions = async () => {
     if (!workspaceUser) return;
 
-    const getRolesResult = await workspaceUser.get_access_list();
+    const getRolesResult = await workspaceUser.users_get_access_list();
 
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
@@ -99,7 +99,7 @@ export default function ManagementUsersPage(): JSX.Element {
   const inactiveStatus = async (id: string) => {
     if (!workspaceUser) return;
 
-    const getChangeResult = await workspaceUser.change_access_status(Principal.fromText(id), {
+    const getChangeResult = await workspaceUser.users_change_access_status(Principal.fromText(id), {
       inactive: null,
     });
     if ("ok" in getChangeResult) {
@@ -112,7 +112,7 @@ export default function ManagementUsersPage(): JSX.Element {
   const activeStatus = async (id: string) => {
     if (!workspaceUser) return;
 
-    const getChangeResult = await workspaceUser.change_access_status(Principal.fromText(id), {
+    const getChangeResult = await workspaceUser.users_change_access_status(Principal.fromText(id), {
       active: null,
     });
     if ("ok" in getChangeResult) {
@@ -147,7 +147,7 @@ export default function ManagementUsersPage(): JSX.Element {
       default:
         break;
     }
-    setMenuOpen(null); // Cierra el menú después de la acción
+    setMenuOpen(null);
   };
 
   const deleteIdUser = async (idUser: string) => {
@@ -157,7 +157,7 @@ export default function ManagementUsersPage(): JSX.Element {
 
     try {
       const userId = Principal.fromText(idUser);
-      const response = await workspaceUser.delete_access(userId);
+      const response = await workspaceUser.users_delete_access(userId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");

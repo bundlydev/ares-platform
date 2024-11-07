@@ -50,7 +50,7 @@ const ModalRoles: FC<ModalProps> = ({
   getData,
 }) => {
   const { currentIdentity } = useAuth();
-  const { userIAMid } = useStore();
+  const { userIAMid, workspaceRefId } = useStore();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
@@ -80,11 +80,9 @@ const ModalRoles: FC<ModalProps> = ({
     }
   };
 
-  const workspaceIam = workspaceId
-    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-        canisterId: userIAMid,
-      }) as CandidActors["workspaceIam"])
-    : null;
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
   const filteredDataNameSearch = dataNameSearch.filter(
     (name) => !selectedNames.some((selected) => selected.id === name.id)
@@ -93,7 +91,7 @@ const ModalRoles: FC<ModalProps> = ({
   const getPolicies = async () => {
     if (!workspaceIam) return;
 
-    const getRolesResult = await workspaceIam.get_policies();
+    const getRolesResult = await workspaceIam.iam_get_policies();
     if ("ok" in getRolesResult) {
       const policiesOptions = getRolesResult.ok.map((policies) => ({
         label: policies.pid,
@@ -170,7 +168,7 @@ const ModalRoles: FC<ModalProps> = ({
     if (!workspaceIam) return;
     setLoading(true);
     try {
-      const response = await workspaceIam.create_role({
+      const response = await workspaceIam.iam_create_role({
         name: data.name,
         description: data.description,
         policies: data.policie,

@@ -26,7 +26,7 @@ type UsernameData = {
 };
 
 export default function WorkspaceRolesPage(): JSX.Element {
-  const { userIAMid } = useStore();
+  const { userIAMid, workspaceRefId } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
@@ -47,9 +47,9 @@ export default function WorkspaceRolesPage(): JSX.Element {
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: userIAMid,
-  }) as CandidActors["workspaceIam"];
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
   useEffect(() => {
     getRoles();
@@ -58,7 +58,7 @@ export default function WorkspaceRolesPage(): JSX.Element {
   const getRoles = async () => {
     if (!workspaceIam) return;
 
-    const getRolesResult = await workspaceIam.get_roles();
+    const getRolesResult = await workspaceIam.iam_get_roles();
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
         name: role.name,
@@ -101,7 +101,7 @@ export default function WorkspaceRolesPage(): JSX.Element {
 
     try {
       const appId = Principal.fromText(idApp);
-      const response = await workspaceIam.delete_access(appId);
+      const response = await workspaceIam.iam_delete_access(appId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");

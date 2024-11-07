@@ -52,6 +52,7 @@ export type AuthContextType = {
   setProfile: (profile: AuthUserProfile) => void;
   setWorkspaceId: (id: string) => void;
   setOwnerId: (id: string) => void;
+	
 };
 
 export const AuthContext = createContext<AuthContextType>({
@@ -67,7 +68,7 @@ export const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
-  const { setUserMid, setUserIAMid } = useStore();
+  const { setUserMid, setUserIAMid, setWorkspaceRefId } = useStore();
   const { isAuthenticated, currentIdentity } = useAuth();
   const accountManager = useCandidActor<CandidActors>(
     "accountManager",
@@ -94,7 +95,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             accountManager.get_my_info(),
             workspaceOrchestrator.get_my_workspaces(),
           ]);
-
           if ("err" in profileResponse) {
             throw new Error("Invalid profile response");
           }
@@ -137,9 +137,10 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             if (responseOwner && "ok" in responseOwner) {
               setOwnerId(responseOwner.ok.owner.toString());
               setIamId(responseOwner.ok.canisters.iam.toString());
-              setUserManagementId(responseOwner.ok.canisters.user_management.toString());
-              setUserMid(responseOwner.ok.canisters.user_management.toString());
+              setUserManagementId(responseOwner.ok.canisters.users.toString());
+              setUserMid(responseOwner.ok.canisters.users.toString());
               setUserIAMid(responseOwner.ok.canisters.iam.toString());
+							setWorkspaceRefId(responseOwner.ok.ref.toString())
             }
           }
         } catch (error) {

@@ -47,7 +47,7 @@ const ModalRolesManagement: FC<ModalProps> = ({
   getListFindName,
   dataNameSearch,
 }) => {
-  const { userMid } = useStore();
+  const { userMid, workspaceRefId } = useStore();
   const { currentIdentity } = useAuth();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
@@ -79,14 +79,13 @@ const ModalRolesManagement: FC<ModalProps> = ({
     }
   };
 
-  const workspaceIam = workspaceId
-    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-        canisterId: workspaceId,
-      }) as CandidActors["workspaceIam"])
-    : null;
-  const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
-    canisterId: userMid,
-  }) as CandidActors["workspaceUser"];
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
+
+  const workspaceUser = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
   const filteredDataNameSearch = dataNameSearch.filter(
     (name) => !selectedNames.some((selected) => selected.id === name.id)
   );
@@ -94,7 +93,7 @@ const ModalRolesManagement: FC<ModalProps> = ({
   const getPermissionss = async () => {
     if (!workspaceIam) return;
 
-    const getRolesResult = await workspaceUser.get_permissions();
+    const getRolesResult = await workspaceUser.users_get_permissions();
     if ("ok" in getRolesResult) {
       const permissionsOptions = getRolesResult.ok.map((permission) => ({
         label: permission.action,

@@ -20,18 +20,20 @@ type Workspace = {
   name: string;
 };
 type WorkspaceData = {
-  action: string;
-  description: string;
+  ref: string;
+  name: string;
+	createdBy: string;
+	createdAt: Date;
 };
 type UsernameData = {
   id: string;
   username: string;
 };
 type FormValues = {
-  permission: string;
-  description: string;
+  webhook: string;
+  name: string;
 };
-export default function ManagementPermissionsPage(): JSX.Element {
+export default function WebhooksPage(): JSX.Element {
   const router = useRouter();
   const { currentIdentity } = useAuth();
   const { userIAMid, workspaceRefId } = useStore();
@@ -42,7 +44,7 @@ export default function ManagementPermissionsPage(): JSX.Element {
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
-  const [permissionsList, setPermissionsList] = useState<WorkspaceData[]>([]);
+  const [webhooksList, setWebhooksList] = useState<WorkspaceData[]>([]);
   const { userManagementId } = useContext(AuthContext);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -55,36 +57,27 @@ export default function ManagementPermissionsPage(): JSX.Element {
     canisterId: workspaceRefId,
   }) as CandidActors["workspace"];
   const formSchema = z.object({
-    permission: z.string().min(1, "Permission is required"),
-    description: z.string().min(1, "Description is required"),
+    webhook: z.string().min(1, "Webhook is required"),
+    name: z.string().min(1, "Name is required"),
   });
   useEffect(() => {
-    getPermissions();
+    getWebhooks();
   }, []);
 
-  const getPermissions = async () => {
+  const getWebhooks = async () => {
     if (!workspaceUser) return;
-
-    const getPermissionsResult = await workspaceUser.users_get_permissions();
-    if ("ok" in getPermissionsResult) {
-      const rolesOptions = getPermissionsResult.ok.map((permission: { action: any; description: any }) => ({
-        action: permission.action,
-        description: permission.description,
-      }));
-      setPermissionsList(rolesOptions);
-    } else {
-      let error = getPermissionsResult.err;
-      console.error(error);
-    }
+		
+    const getWebhooksResult = await workspaceUser.webhooks_get_webhook_list();
+    if ("ok" in getWebhooksResult) {
+      
+      setWebhooksList(getWebhooksResult.ok);
+    } 
   };
 
   const deleteIdapp = async (idApp: string) => {
-    if (!workspaceUser) return;
-
     setLoading(true);
-
     try {
-      const response = await workspaceUser.users_delete_permission(idApp);
+      const response = await workspaceUser.webhooks_remove_webhook(idApp);
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
@@ -130,14 +123,14 @@ export default function ManagementPermissionsPage(): JSX.Element {
   });
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
+		
     if (!workspaceIam) return;
     setLoading(true);
     try {
-      const response = await workspaceUser.users_create_permission({
-        action: data.permission,
-        description: data.description,
+      const response = await workspaceUser.webhooks_register_webhook({
+        principal:  Principal.fromText(data.webhook),
+        name: data.name,
       });
-
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) alert("User not authenticated");
 
@@ -156,31 +149,31 @@ export default function ManagementPermissionsPage(): JSX.Element {
   return (
     <WorkspaceLayout>
       <div className="flex flex-col w-full">
-        <span className="text-[34px] font-semibold">Permissions</span>
+        <span className="text-[34px] font-semibold">Webhookss</span>
         <span className="text-[12px] font-medium">Create and manage Permissions for your applications.</span>
         <span className="text-[12px] font-medium">Permissions can be assigned to Roles or Users.</span>
-        <span className="text-[16px] font-medium mt-4 mb-2">Add a permission</span>
+        <span className="text-[16px] font-medium mt-4 mb-2">Add a webhooks</span>
         <form onSubmit={handleSubmit(onSubmit)} className="w-full flex flex-col">
           <div className="flex items-center space-x-4">
             <div>
               <input
                 type="text"
-                placeholder="Permission"
-                {...register("permission", { required: "Permission is required" })}
+                placeholder="Webhook"
+                {...register("webhook", { required: "Webhook is required" })}
                 className={`border p-2 rounded ${errors.permission ? "border-red-500" : "border-gray-300"}`}
               />
-              {errors.permission && <p className="text-red-500">{errors.permission.message}</p>}
+              {errors.permission && <p className="text-red-500">{errors.webhook.message}</p>}
             </div>
             <div>
               <input
                 type="text"
-                placeholder="Description"
-                {...register("description", {
-                  required: "Description is required",
+                placeholder="Name"
+                {...register("name", {
+                  required: "Name is required",
                 })}
-                className={`border p-2 rounded ${errors.description ? "border-red-500" : "border-gray-300"}`}
+                className={`border p-2 rounded ${errors.name ? "border-red-500" : "border-gray-300"}`}
               />
-              {errors.description && <p className="text-red-500">{errors.description.message}</p>}
+              {errors.name && <p className="text-red-500">{errors.name.message}</p>}
             </div>
             <button type="submit" className="bg-green-400 text-white px-6 py-2 rounded">
               {loading ? <LoadingSpinner /> : "+ Add"}
@@ -188,23 +181,27 @@ export default function ManagementPermissionsPage(): JSX.Element {
           </div>
         </form>
 
-        <span className="text-[16px] font-medium mb-3 mt-6">List of permission</span>
+        <span className="text-[16px] font-medium mb-3 mt-6">List of webhooks</span>
         <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
-          <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
-            <div>Permission</div>
-            <div>Description</div>
+          <div className="grid grid-cols-5 bg-gray-200 p-4 text-gray-700 font-bold">
+            <div>Webhook</div>
+            <div>Name</div>
+						<div>Created by</div>
+            <div>Created at</div>
             <div>Action</div>
           </div>
           <div className="divide-y divide-gray-200">
-            {permissionsList.map((item, index) => (
-              <div key={index} className="grid grid-cols-3 p-4">
-                <div>{item.action}</div>
-                <div>{item.description}</div>
+            {webhooksList.map((item, index) => (
+              <div key={index} className="grid grid-cols-5 p-4">
+                <div>{item.ref.toString()}</div>
+                <div>{item.name}</div>
+								<div>{item.createdBy.toString()}</div>
+								<div>{new Date(Number(item.createdAt) / 1e6).toLocaleString()}</div>
                 <div>
                   <button
                     className="bg-red-500 text-white py-1 px-3 rounded-lg"
                     onClick={() => {
-                      deleteIdapp(item.action);
+                      deleteIdapp(item.ref);
                     }}
                     disabled={loading}>
                     {loading ? <LoadingSpinner /> : "Delete"}

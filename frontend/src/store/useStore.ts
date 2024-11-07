@@ -5,8 +5,11 @@ import { PersistOptions, persist } from "zustand/middleware";
 interface StoreState {
   userMid: string;
   userIAMid: string;
+	workspaceRefId: string;
+  setWorkspaceRefId: (value: string) => void;
   setUserMid: (value: string) => void;
   setUserIAMid: (value: string) => void;
+	
 }
 
 // Definimos los tipos para persist
@@ -18,14 +21,16 @@ type MyPersist = (
 const useStore = create<StoreState>(
   (persist as MyPersist)(
     (set) => ({
-      userMid: "", // Estado inicial de userMid como string
-      userIAMid: "", // Estado inicial de userIAMid como string
-      setUserMid: (value: string) => set((state: StoreState) => ({ ...state, userMid: value })), // Mantiene el estado existente
-      setUserIAMid: (value: string) => set((state: StoreState) => ({ ...state, userIAMid: value })), // Mantiene el estado existente
+      userMid: "", 
+      userIAMid: "", 
+			workspaceRefId: "", 
+      setWorkspaceRefId: (value: string) => set((state: StoreState) => ({ ...state, workspaceRefId: value })), 
+      setUserMid: (value: string) => set((state: StoreState) => ({ ...state, userMid: value })),
+      setUserIAMid: (value: string) => set((state: StoreState) => ({ ...state, userIAMid: value })),
     }),
     {
-      name: "count-storage", // Nombre en el localStorage
-      getStorage: () => localStorage, // Configuración para obtener localStorage
+      name: "count-storage", 
+      getStorage: () => localStorage, 
     }
   )
 );

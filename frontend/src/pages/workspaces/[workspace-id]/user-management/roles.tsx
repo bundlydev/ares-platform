@@ -28,7 +28,7 @@ type UsernameData = {
 };
 
 export default function ManagementRolesPage(): JSX.Element {
-  const { userIAMid } = useStore();
+  const { userIAMid, workspaceRefId } = useStore();
   const { userMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
@@ -51,13 +51,13 @@ export default function ManagementRolesPage(): JSX.Element {
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: userIAMid,
-  }) as CandidActors["workspaceIam"];
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
-  const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
-    canisterId: userMid,
-  }) as CandidActors["workspaceUser"];
+  const workspaceUser = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
   useEffect(() => {
     getPermissions();
@@ -66,7 +66,7 @@ export default function ManagementRolesPage(): JSX.Element {
   const getPermissions = async () => {
     if (!workspaceUser) return;
 
-    const getRolesResult = await workspaceUser.get_roles();
+    const getRolesResult = await workspaceUser.users_get_roles();
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
         permissions: role.permissions,
@@ -109,7 +109,7 @@ export default function ManagementRolesPage(): JSX.Element {
 
     try {
       const appId = Principal.fromText(idApp);
-      const response = await workspaceIam.delete_access(appId);
+      const response = await workspaceIam.iam_delete_access(appId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");

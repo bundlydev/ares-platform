@@ -57,7 +57,7 @@ interface ModalProps {
 
 const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, dataNameSearch, getData }) => {
   const { currentIdentity } = useAuth();
-  const { userIAMid } = useStore();
+  const { userIAMid, workspaceRefId } = useStore();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
@@ -85,9 +85,9 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
     }
   };
 
-  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: userIAMid,
-  }) as CandidActors["workspaceIam"];
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];;
 
   const filteredDataNameSearch = dataNameSearch.filter(
     (name) => !selectedNames.some((selected) => selected.id === name.id)
@@ -96,7 +96,7 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
   const getRoles = async () => {
     if (!workspaceIam) return;
 
-    const getRolesResult = await workspaceIam.get_roles();
+    const getRolesResult = await workspaceIam.iam_get_roles();
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
         label: role.name,
@@ -128,7 +128,7 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
     setLoading(true);
     try {
       const value = Principal.fromText(data.name);
-      const response = await workspaceIam.create_access({
+      const response = await workspaceIam.iam_create_access({
         identity: value,
         roleId: data.role,
         itype: { app: null },

@@ -47,7 +47,7 @@ const ModalAssignRoleUser: FC<ModalProps> = ({
   assignPrincipal,
   assignRoles,
 }) => {
-  const { userMid } = useStore();
+  const { userMid, workspaceRefId } = useStore();
   const { currentIdentity } = useAuth();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
@@ -72,19 +72,17 @@ const ModalAssignRoleUser: FC<ModalProps> = ({
     resolver: zodResolver(formSchema),
   });
 
-  const workspaceIam = workspaceId
-    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-        canisterId: workspaceId,
-      }) as CandidActors["workspaceIam"])
-    : null;
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
-  const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
-    canisterId: userMid,
-  }) as CandidActors["workspaceUser"];
+  const workspaceUser = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
   const getRoles = async () => {
     if (!workspaceIam) return;
-    const getRolesResult = await workspaceUser.get_roles();
+    const getRolesResult = await workspaceUser.users_get_roles();
 
     if ("ok" in getRolesResult) {
       const filteredRoles = getRolesResult.ok.filter((role) => {
@@ -144,7 +142,7 @@ const ModalAssignRoleUser: FC<ModalProps> = ({
 
     try {
       for (const role of data.roles) {
-        const response = await workspaceUser.add_role_to_access(Principal.fromText(assignPrincipal), role);
+        const response = await workspaceUser.users_add_role_to_access(Principal.fromText(assignPrincipal), role);
         if ("err" in response) {
           if ("userNotAuthenticated" in response.err) alert("User not authenticated");
 

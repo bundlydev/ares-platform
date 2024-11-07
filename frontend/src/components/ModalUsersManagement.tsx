@@ -39,7 +39,7 @@ interface ModalProps {
 }
 
 const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNameSearch }) => {
-  const { userMid } = useStore();
+  const { userMid, workspaceRefId} = useStore();
   const { currentIdentity } = useAuth();
   const [inputValue, setInputValue] = useState<string>("");
   const { workspaceId } = useContext(AuthContext);
@@ -64,19 +64,17 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
     resolver: zodResolver(formSchema),
   });
 
-  const workspaceIam = workspaceId
-    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-        canisterId: workspaceId,
-      }) as CandidActors["workspaceIam"])
-    : null;
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
-  const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
-    canisterId: userMid,
-  }) as CandidActors["workspaceUser"];
+  const workspaceUser = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceRefId,
+  }) as CandidActors["workspace"];
 
   const getPermissions = async () => {
     if (!workspaceIam) return;
-    const getRolesResult = await workspaceUser.get_permissions();
+    const getRolesResult = await workspaceUser.users_get_permissions();
     if ("ok" in getRolesResult) {
       const permissionsOptions = getRolesResult.ok.map((permission) => ({
         label: permission.action,
@@ -91,7 +89,7 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
 
   const getRoles = async () => {
     if (!workspaceIam) return;
-    const getRolesResult = await workspaceUser.get_roles();
+    const getRolesResult = await workspaceUser.users_get_roles();
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
         label: role.name,
@@ -162,7 +160,7 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
     if (!workspaceUser) return;
     setLoading(true);
     try {
-      const response = await workspaceUser.create_access({
+      const response = await workspaceUser.users_create_access({
         permissions: data.permission,
         identity: Principal.fromText(data.identity),
         roles: data.roles,
