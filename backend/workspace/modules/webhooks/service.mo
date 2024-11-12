@@ -23,7 +23,7 @@ module {
 			return webhookArray;
 		};
 
-		public func register(principal : Principal, name : Text, creator : Principal) : () {
+		public func register(principal : Principal, name : Text, creator : Principal) : Models.Webhook {
 			let webhook = {
 				ref = actor (Principal.toText(principal)) : Models.Subscriber;
 				name = name;
@@ -32,6 +32,8 @@ module {
 			};
 
 			ignore Map.put<Principal, Models.Webhook>(_repository, phash, principal, webhook);
+
+			return webhook;
 		};
 
 		public func remove(principal : Principal) : () {
