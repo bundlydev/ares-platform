@@ -2,7 +2,6 @@
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Iter "mo:base/Iter";
-import Debug "mo:base/Debug";
 
 // Mops Modules
 import Map "mo:map/Map";
@@ -43,9 +42,6 @@ module {
 		// public func emit(event : Models.CanisterEvents) : async () {
 		public func emit<T>(event : CoreTypes.Event<T>) : async () {
 			for (webhook in getAll().vals()) {
-				Debug.print("Notifying webhook");
-				Debug.print("Scope" # event.action);
-
 				ignore webhook.ref.callback(event);
 
 				// TODO: Add a function to register failed webhooks
