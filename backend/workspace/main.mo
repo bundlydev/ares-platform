@@ -26,11 +26,13 @@ import IamEvents "./modules/iam/events";
 
 // Users Imports
 import UserPermission "./modules/users/permissions";
+import UsersEvents "./modules/users/events";
 
 // Webhooks Imports
 import WebhooksModels "./modules/webhooks/models";
 import WebhookService "./modules/webhooks/service";
 import WebhookPermissions "./modules/webhooks/permissions";
+import WebhookEvents "./modules/webhooks/events";
 
 // General Imports
 import Types "./types";
@@ -174,6 +176,13 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 		try {
 			let role = await roleService.create(data);
 
+			let event : IamEvents.RoleCreatedEvent = {
+				action = "iam.role.created";
+				payload = role;
+			};
+
+			ignore webhookService.emit(event);
+
 			return #ok(role);
 		} catch (_error) {
 			// TODO: Catch other errors
@@ -194,19 +203,40 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 				ignore accessService.changeRole(access.identity, newRoleId);
 			};
 
+			let event : IamEvents.RoleDeletedEvent = {
+				action = "iam.role.deleted";
+				payload = {
+					rid = roleId;
+				};
+			};
+
+			ignore webhookService.emit(event);
+
 			return #ok();
 		} catch (_error) {
 			return #err(#roleNotFound);
 		};
 	};
 
-	public shared ({ caller }) func iam_add_policy_to_role(roleName : Text, policyId : Text) : async IamResults.AddPermissionToRoleResult {
+	public shared ({ caller }) func iam_add_policy_to_role(roleId : Text, policyId : Text) : async IamResults.AddPermissionToRoleResult {
 		if (not iam_identity_has_access(caller, #permission(IamPermissions.PERMISSION_LIST.ADD_POLICY_TO_ROLE.id))) return #err(#unauthorized);
 
 		try {
 			// TODO: Validate if policy exists
-			ignore roleService.addPolicy(roleName, policyId);
+			ignore roleService.addPolicy(roleId, policyId);
+
+			let event : IamEvents.PolicyAddedToRoleEvent = {
+				action = "iam.role.policy_added";
+				payload = {
+					roleId = roleId;
+					policyId = policyId;
+				};
+			};
+
+			ignore webhookService.emit(event);
+
 			return #ok();
+
 		} catch (_error) {
 			// TODO: Catch other errors
 			return #err(#roleNotFound);
@@ -218,6 +248,17 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		try {
 			ignore roleService.removePolicy(roleName, policyId);
+
+			let event : IamEvents.PolicyRemovedFromRoleEvent = {
+				action = "iam.role.policy_removed";
+				payload = {
+					roleId = roleName;
+					policyId = policyId;
+				};
+			};
+
+			ignore webhookService.emit(event);
+
 			return #ok();
 		} catch (_error) {
 			// TODO: Catch other errors
@@ -252,6 +293,18 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		try {
 			let access = await accessService.create(data);
+
+			let event : IamEvents.AccessCreatedEvent = {
+				action = "iam.access.created";
+				payload = {
+					identity = data.identity;
+					roleId = data.roleId;
+					itype = data.itype;
+				};
+			};
+
+			ignore webhookService.emit(event);
+
 			let orchestrator = actor (Principal.toText(_creator)) : actor {
 				add_workspace_member : shared Principal -> async ();
 			};
@@ -272,6 +325,16 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 		try {
 			let access = await accessService.delete(identity);
 
+			let event : IamEvents.AccessDeletedEvent = {
+				action = "iam.access.deleted";
+				payload = {
+					identity = access.identity;
+					itype = access.itype;
+				};
+			};
+
+			ignore webhookService.emit(event);
+
 			let orchestrator = actor (Principal.toText(_creator)) : actor {
 				remove_workspace_member : shared Principal -> async ();
 			};
@@ -289,6 +352,17 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		try {
 			ignore accessService.changeRole(identity, roleId);
+
+			let event : IamEvents.AccessRoleChangedEvent = {
+				action = "iam.access.role_changed";
+				payload = {
+					identity = identity;
+					roleId = roleId;
+				};
+			};
+
+			ignore webhookService.emit(event);
+
 			return #ok();
 		} catch (_error) {
 			// TODO: Catch other errors
@@ -318,7 +392,12 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		switch (userPermissionsService.create({ permission with createdBy = caller })) {
 			case (#ok(permission)) {
-				// TODO: Emit event
+				let event : UsersEvents.PermissionCreatedEvent = {
+					action = "users.permission.created";
+					payload = permission;
+				};
+
+				ignore webhookService.emit(event);
 
 				#ok(permission);
 			};
@@ -326,26 +405,33 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 		};
 	};
 
-	public shared ({ caller }) func users_delete_permission(permissionId : Text) : async UsersResults.DeletePermissionResult {
+	public shared ({ caller }) func users_delete_permission(action : Text) : async UsersResults.DeletePermissionResult {
 		if (not iam_identity_has_access(caller, #permission(UserPermission.PERMISSION_LIST.DELETE_PERMISSION.id))) return #err(#unauthorized);
 
-		if (not userPermissionsService.exists(permissionId)) return #err(#permissionDoesNotExist);
+		if (not userPermissionsService.exists(action)) return #err(#permissionDoesNotExist);
 
-		switch (userPermissionsService.delete(permissionId)) {
+		switch (userPermissionsService.delete(action)) {
 			case (true) {
 				let roles = userRolesService.getAll();
 
 				for (role in roles.vals()) {
-					ignore userRolesService.removePermission(role.name, permissionId);
+					ignore userRolesService.removePermission(role.name, action);
 				};
 
 				let accesses = accessService.getAll();
 
 				for (access in accesses.vals()) {
-					ignore userAccessService.removePermission(access.identity, permissionId);
+					ignore userAccessService.removePermission(access.identity, action);
 				};
 
-				// TODO: Emit event
+				let event : UsersEvents.PermissionDeletedEvent = {
+					action = "users.permission.deleted";
+					payload = {
+						action = action;
+					};
+				};
+
+				ignore webhookService.emit(event);
 
 				#ok();
 			};
@@ -364,7 +450,12 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		switch (userRolesService.create({ role with createdBy = caller })) {
 			case (#ok(role)) {
-				// TODO: Emit event
+				let event : UsersEvents.RoleCreatedEvent = {
+					action = "users.role.created";
+					payload = role;
+				};
+
+				ignore webhookService.emit(event);
 
 				return #ok(role);
 			};
@@ -383,7 +474,14 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 					ignore userAccessService.removeRole(access.identity, roleId);
 				};
 
-				// TODO: Emit event
+				let event : UsersEvents.RoleDeletedEvent = {
+					action = "users.role.deleted";
+					payload = {
+						roleId = roleId;
+					};
+				};
+
+				ignore webhookService.emit(event);
 
 				return #ok();
 			};
@@ -396,7 +494,15 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		switch (userRolesService.addPermission(roleId, permissionId)) {
 			case (#ok()) {
-				// TODO: Emit event
+				let event : UsersEvents.PermissionAddedToRoleEvent = {
+					action = "users.role.permission_added";
+					payload = {
+						roleId = roleId;
+						permissionId = permissionId;
+					};
+				};
+
+				ignore webhookService.emit(event);
 
 				#ok();
 			};
@@ -409,7 +515,15 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		switch (userRolesService.removePermission(roleId, permissionId)) {
 			case (#ok()) {
-				// TODO: Emit event
+				let event : UsersEvents.PermissionRemovedFromRoleEvent = {
+					action = "users.role.permission_removed";
+					payload = {
+						roleId = roleId;
+						permissionId = permissionId;
+					};
+				};
+
+				ignore webhookService.emit(event);
 
 				#ok();
 			};
@@ -428,6 +542,12 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		switch (userAccessService.create({ data with createdBy = caller })) {
 			case (#ok(access)) {
+				let event : UsersEvents.AccessCreatedEvent = {
+					action = "users.access.created";
+					payload = access;
+				};
+
+				ignore webhookService.emit(event);
 
 				#ok(access);
 			};
@@ -440,7 +560,14 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		switch (userAccessService.delete(accessId)) {
 			case (true) {
-				// TODO: Emit event
+				let event : UsersEvents.AccessDeletedEvent = {
+					action = "users.access.deleted";
+					payload = {
+						accessId = accessId;
+					};
+				};
+
+				ignore webhookService.emit(event);
 
 				#ok();
 			};
@@ -451,6 +578,16 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 	public shared ({ caller }) func users_change_access_status(accessId : Principal, status : Access.AccessStatus) : async UsersResults.GetAccessResult {
 		if (not iam_identity_has_access(caller, #permission(UserPermission.PERMISSION_LIST.CHANGE_ACCESS_STATUS.id))) return #err(#unauthorized);
 
+		let event : UsersEvents.AccessStateChangedEvent = {
+			action = "users.access.status_changed";
+			payload = {
+				accessId = accessId;
+				status = status;
+			};
+		};
+
+		ignore webhookService.emit(event);
+
 		return userAccessService.changeStatus(accessId, status);
 	};
 
@@ -459,7 +596,15 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		switch (userAccessService.addRole(accessId, roleId)) {
 			case (#ok()) {
-				// TODO: Emit event
+				let event : UsersEvents.RoleAddedToAccessEvent = {
+					action = "users.access.role_added_to_access";
+					payload = {
+						accessId = accessId;
+						roleId = roleId;
+					};
+				};
+
+				ignore webhookService.emit(event);
 
 				#ok();
 			};
@@ -472,7 +617,15 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		switch (userAccessService.removeRole(accessId, roleId)) {
 			case (#ok()) {
-				// TODO: Emit event
+				let event : UsersEvents.RoleRemovedFromAccessEvent = {
+					action = "users.access.role_removed_from_access";
+					payload = {
+						accessId = accessId;
+						roleId = roleId;
+					};
+				};
+
+				ignore webhookService.emit(event);
 
 				#ok();
 			};
@@ -485,7 +638,15 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		switch (userAccessService.addPermission(accessId, permissionId)) {
 			case (#ok()) {
-				// TODO: Emit event
+				let event : UsersEvents.PermissionAddedToAccessEvent = {
+					action = "users.access.permission_added_to_access";
+					payload = {
+						accessId = accessId;
+						permissionId = permissionId;
+					};
+				};
+
+				ignore webhookService.emit(event);
 
 				#ok();
 			};
@@ -498,7 +659,15 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 
 		switch (userAccessService.removePermission(accessId, permissionId)) {
 			case (#ok()) {
-				// TODO: Emit event
+				let event : UsersEvents.PermissionRemovedFromAccessEvent = {
+					action = "users.access.permission_removed_from_access";
+					payload = {
+						accessId = accessId;
+						permissionId = permissionId;
+					};
+				};
+
+				ignore webhookService.emit(event);
 
 				#ok();
 			};
@@ -519,7 +688,19 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 	public shared ({ caller }) func webhooks_register_webhook(data : Types.RegisterWebhookData) : async WebhooksResults.RegisterWebhookResult {
 		if (not iam_identity_has_access(caller, #permission(WebhookPermissions.PERMISSION_LIST.REGISTER_WEBHOOK.id))) return #err(#unauthorized);
 
-		webhookService.register(data.principal, data.name, caller);
+		let webhook = webhookService.register(data.principal, data.name, caller);
+
+		let event : WebhookEvents.WebhookRegisteredEvent = {
+			action = "webhooks.webhook.registered";
+			payload = {
+				ref = data.principal;
+				name = data.name;
+				createdAt = webhook.createdAt;
+				createdBy = caller;
+			};
+		};
+
+		ignore webhookService.emit(event);
 
 		return #ok();
 	};
@@ -528,6 +709,15 @@ shared ({ caller = creator }) actor class WorkspaceClass(owner : Principal) {
 		if (not iam_identity_has_access(caller, #permission(WebhookPermissions.PERMISSION_LIST.REMOVE_WEBHOOK.id))) return #err(#unauthorized);
 
 		webhookService.remove(principal);
+
+		let event : WebhookEvents.WebhookRemovedEvent = {
+			action = "webhooks.webhook.removed";
+			payload = {
+				ref = principal;
+			};
+		};
+
+		ignore webhookService.emit(event);
 
 		return #ok();
 	};

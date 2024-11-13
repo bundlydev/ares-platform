@@ -2,7 +2,6 @@
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Iter "mo:base/Iter";
-import Debug "mo:base/Debug";
 
 // Mops Modules
 import Map "mo:map/Map";
@@ -23,7 +22,7 @@ module {
 			return webhookArray;
 		};
 
-		public func register(principal : Principal, name : Text, creator : Principal) : () {
+		public func register(principal : Principal, name : Text, creator : Principal) : Models.Webhook {
 			let webhook = {
 				ref = actor (Principal.toText(principal)) : Models.Subscriber;
 				name = name;
@@ -32,6 +31,8 @@ module {
 			};
 
 			ignore Map.put<Principal, Models.Webhook>(_repository, phash, principal, webhook);
+
+			return webhook;
 		};
 
 		public func remove(principal : Principal) : () {
@@ -41,9 +42,6 @@ module {
 		// public func emit(event : Models.CanisterEvents) : async () {
 		public func emit<T>(event : CoreTypes.Event<T>) : async () {
 			for (webhook in getAll().vals()) {
-				Debug.print("Notifying webhook");
-				Debug.print("Scope" # event.action);
-
 				ignore webhook.ref.callback(event);
 
 				// TODO: Add a function to register failed webhooks
