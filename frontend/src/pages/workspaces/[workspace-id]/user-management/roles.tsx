@@ -60,6 +60,7 @@ export default function ManagementRolesPage(): JSX.Element {
   }) as CandidActors["workspace"];
 
   useEffect(() => {
+		
     getPermissions();
   }, []);
 
@@ -128,6 +129,7 @@ export default function ManagementRolesPage(): JSX.Element {
   };
 
   useEffect(() => {
+		
     const handleClickOutside = (event: MouseEvent) => {
       if (
         menuRef.current &&

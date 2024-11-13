@@ -22,8 +22,8 @@ type Workspace = {
 type WorkspaceData = {
   ref: string;
   name: string;
-	createdBy: string;
-	createdAt: Date;
+  createdBy: string;
+  createdAt: Date;
 };
 type UsernameData = {
   id: string;
@@ -61,23 +61,30 @@ export default function WebhooksPage(): JSX.Element {
     name: z.string().min(1, "Name is required"),
   });
   useEffect(() => {
+    ;
     getWebhooks();
   }, []);
 
   const getWebhooks = async () => {
     if (!workspaceUser) return;
-		
+
     const getWebhooksResult = await workspaceUser.webhooks_get_webhook_list();
     if ("ok" in getWebhooksResult) {
-      
-      setWebhooksList(getWebhooksResult.ok);
-    } 
+      const transformedWebhooks = getWebhooksResult.ok.map((webhook) => ({
+        ref: webhook.ref.toString(),
+        name: webhook.name,
+        createdBy: webhook.createdBy.toString(), 
+        createdAt: new Date(Number(webhook.createdAt) / 1e6),
+      }));
+
+      setWebhooksList(transformedWebhooks);
+    }
   };
 
   const deleteIdapp = async (idApp: string) => {
     setLoading(true);
     try {
-      const response = await workspaceUser.webhooks_remove_webhook(idApp);
+      const response = await workspaceUser.webhooks_remove_webhook(Principal.fromText(idApp));
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
@@ -123,12 +130,11 @@ export default function WebhooksPage(): JSX.Element {
   });
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-		
     if (!workspaceIam) return;
     setLoading(true);
     try {
       const response = await workspaceUser.webhooks_register_webhook({
-        principal:  Principal.fromText(data.webhook),
+        principal: Principal.fromText(data.webhook),
         name: data.name,
       });
       if ("err" in response) {
@@ -145,7 +151,7 @@ export default function WebhooksPage(): JSX.Element {
       setLoading(false);
     }
   };
-
+  console.log(webhooksList, "-----webhooksList");
   return (
     <WorkspaceLayout>
       <div className="flex flex-col w-full">
@@ -160,9 +166,9 @@ export default function WebhooksPage(): JSX.Element {
                 type="text"
                 placeholder="Webhook"
                 {...register("webhook", { required: "Webhook is required" })}
-                className={`border p-2 rounded ${errors.permission ? "border-red-500" : "border-gray-300"}`}
+                className={`border p-2 rounded ${errors.webhook ? "border-red-500" : "border-gray-300"}`}
               />
-              {errors.permission && <p className="text-red-500">{errors.webhook.message}</p>}
+              {errors.webhook && <p className="text-red-500">{errors.webhook.message}</p>}
             </div>
             <div>
               <input
@@ -186,7 +192,7 @@ export default function WebhooksPage(): JSX.Element {
           <div className="grid grid-cols-5 bg-gray-200 p-4 text-gray-700 font-bold">
             <div>Webhook</div>
             <div>Name</div>
-						<div>Created by</div>
+            <div>Created by</div>
             <div>Created at</div>
             <div>Action</div>
           </div>
@@ -195,8 +201,8 @@ export default function WebhooksPage(): JSX.Element {
               <div key={index} className="grid grid-cols-5 p-4">
                 <div>{item.ref.toString()}</div>
                 <div>{item.name}</div>
-								<div>{item.createdBy.toString()}</div>
-								<div>{new Date(Number(item.createdAt) / 1e6).toLocaleString()}</div>
+                <div>{item.createdBy.toString()}</div>
+                <div>{new Date(Number(item.createdAt) / 1e6).toLocaleString()}</div>
                 <div>
                   <button
                     className="bg-red-500 text-white py-1 px-3 rounded-lg"

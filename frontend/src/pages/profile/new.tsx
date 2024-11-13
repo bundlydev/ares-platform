@@ -64,11 +64,6 @@ export default function NewProfilePage(): JSX.Element {
     }
   };
 
-  // useEffect(() => {
-  //   if (submissionSuccess) {
-  //     window.location.reload();
-  //   }
-  // }, [submissionSuccess]);
 
   return (
     <BlankLayout>

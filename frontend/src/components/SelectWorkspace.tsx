@@ -28,6 +28,7 @@ const SelectWorkspace: React.FC = () => {
     }
   };
   useEffect(() => {
+		
     setWorkspaceId(workspaceIdRoute);
   }, []);
   const handleOptionClick = (option: Workspace) => {
@@ -48,6 +49,7 @@ const SelectWorkspace: React.FC = () => {
   };
 
   useEffect(() => {
+		
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -55,6 +57,7 @@ const SelectWorkspace: React.FC = () => {
   }, []);
 
   useEffect(() => {
+		
     if (router.pathname === "/home" && workspaceId) {
       router.push(`/workspaces/${workspaceId}/dashboard`);
     }

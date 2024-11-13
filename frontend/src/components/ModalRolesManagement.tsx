@@ -107,8 +107,9 @@ const ModalRolesManagement: FC<ModalProps> = ({
   };
 
   useEffect(() => {
+		
     getPermissionss();
-  }, [workspaceUser]);
+  }, []);
 
   useEffect(() => {
     if (inputValue === "") {
@@ -141,6 +142,7 @@ const ModalRolesManagement: FC<ModalProps> = ({
   };
 
   useEffect(() => {
+		
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
@@ -170,7 +172,7 @@ const ModalRolesManagement: FC<ModalProps> = ({
     if (!workspaceUser) return;
     setLoading(true);
     try {
-      const response = await workspaceUser.create_role({
+      const response = await workspaceUser.users_create_role({
         name: data.name,
         description: data.description,
         permissions: data.permission,

@@ -33,9 +33,6 @@ export default function WorkspaceSettingsPage(props: WorkspaceSettingsPageProps)
     currentIdentity
   ) as CandidActors["workspaceOrchestrator"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: userIAMid,
-  }) as CandidActors["workspaceIam"];
 
   const findWorkspaceName = () => {
     const workspace = workspaces.find((workspace) => workspace.id === workspaceId);
