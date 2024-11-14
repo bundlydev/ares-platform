@@ -149,23 +149,12 @@ export default function WorkspaceRolesPage(): JSX.Element {
           <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
             <div>Name</div>
             <div>Description</div>
-            <div>Action</div>
           </div>
           <div className="divide-y divide-gray-200">
             {rolesList.map((item, index) => (
               <div key={index} className="grid grid-cols-3 p-4">
                 <div>{item.name}</div>
                 <div>{item.description}</div>
-                <div>
-                  <button
-                    className="bg-red-500 text-white py-1 px-3 rounded-lg"
-                    onClick={() => {
-                      deleteIdapp(item.name);
-                    }}
-                    disabled={loading}>
-                    {loading ? <LoadingSpinner /> : "Delete"}
-                  </button>
-                </div>
               </div>
             ))}
           </div>
