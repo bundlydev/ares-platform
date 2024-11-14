@@ -160,10 +160,11 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
     if (!workspaceUser) return;
     setLoading(true);
     try {
+			
       const response = await workspaceUser.users_create_access({
-        permissions: data.permission,
+        permissions: data.permission || [],
         identity: Principal.fromText(data.identity),
-        roles: data.roles,
+        roles: selectedRoleValues,
       });
 
       if ("err" in response) {

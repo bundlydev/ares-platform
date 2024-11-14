@@ -176,7 +176,7 @@ export default function WorkspaceAppsPage(): JSX.Element {
         </button>
         <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
           <div className="grid grid-cols-2 bg-gray-200 p-4 text-gray-700 font-bold">
-            <div>Name</div>
+            <div>Principal</div>
             <div>Action</div>
           </div>
           <div className="divide-y divide-gray-200">

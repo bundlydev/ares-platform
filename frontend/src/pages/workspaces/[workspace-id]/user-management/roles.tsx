@@ -109,8 +109,7 @@ export default function ManagementRolesPage(): JSX.Element {
     setLoading(true);
 
     try {
-      const appId = Principal.fromText(idApp);
-      const response = await workspaceIam.iam_delete_access(appId);
+      const response = await workspaceIam.iam_delete_role(idApp);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
