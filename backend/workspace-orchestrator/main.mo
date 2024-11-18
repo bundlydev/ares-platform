@@ -84,11 +84,6 @@ actor WorkspaceOrchestrator {
 					name = workspace.name;
 					owner = workspace.owner;
 					members = workspace.members;
-					canisters = {
-						iam = Principal.fromActor(workspace.canisters.iam);
-						users = Principal.fromActor(workspace.canisters.users);
-						webhooks = Principal.fromActor(workspace.canisters.webhooks);
-					};
 				};
 
 				return #ok(result);
@@ -113,11 +108,6 @@ actor WorkspaceOrchestrator {
 			name = workspace.name;
 			owner = workspace.owner;
 			members = workspace.members;
-			canisters = {
-				iam = Principal.fromActor(workspace.canisters.iam);
-				users = Principal.fromActor(workspace.canisters.users);
-				webhooks = Principal.fromActor(workspace.canisters.webhooks);
-			};
 		};
 
 		#ok(result);
@@ -138,7 +128,7 @@ actor WorkspaceOrchestrator {
 	};
 
 	public shared ({ caller }) func add_workspace_member(userId : Principal) : async () {
-		switch (workspaceManagerService.getWorkspaceByChild(caller)) {
+		switch (workspaceManagerService.getById(caller)) {
 			case (?workspace) {
 				await workspaceManagerService.addMember(workspace.wip, userId);
 			};
@@ -148,7 +138,7 @@ actor WorkspaceOrchestrator {
 	};
 
 	public shared ({ caller }) func remove_workspace_member(userId : Principal) : async () {
-		switch (workspaceManagerService.getWorkspaceByChild(caller)) {
+		switch (workspaceManagerService.getById(caller)) {
 			case (?workspace) {
 				await workspaceManagerService.removeMember(workspace.wip, userId);
 			};

@@ -1,4 +1,4 @@
-import IamPermissionModule "../../../workspace-iam/modules/permission";
+import IamPermissionModule "../iam/types";
 
 module PermissiosnModule {
 	private type Permission = IamPermissionModule.Permission;

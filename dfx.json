@@ -26,30 +26,6 @@
         "output": "frontend/src/declarations/workspace"
       }
     },
-    "workspace-iam": {
-      "type": "motoko",
-      "main": "backend/workspace-iam/main.mo",
-      "declarations": {
-        "node_compatibility": true,
-        "output": "frontend/src/declarations/workspace-iam"
-      }
-    },
-    "workspace-users": {
-      "type": "motoko",
-      "main": "backend/workspace-users/main.mo",
-      "declarations": {
-        "node_compatibility": true,
-        "output": "frontend/src/declarations/workspace-users"
-      }
-    },
-    "workspace-webhooks": {
-      "type": "motoko",
-      "main": "backend/workspace-webhooks/main.mo",
-      "declarations": {
-        "node_compatibility": true,
-        "output": "frontend/src/declarations/workspace-webhooks"
-      }
-    },
     "frontend": {
       "type": "assets",
       "dependencies": ["account-manager", "workspace-orchestrator", "internet-identity"],

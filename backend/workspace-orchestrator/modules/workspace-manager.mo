@@ -3,13 +3,9 @@ import Principal "mo:base/Principal";
 import List "mo:base/List";
 import Array "mo:base/Array";
 import Error "mo:base/Error";
-// TODO: Should I remove Result and use throw?
-import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Cycles "mo:base/ExperimentalCycles";
 import Iter "mo:base/Iter";
-import Random "mo:base/Random";
-import Blob "mo:base/Blob";
 
 // Mops Modules
 import Map "mo:map/Map";
@@ -21,9 +17,6 @@ import CyclesLedgerModule "./cycles-ledger";
 
 // Actor Classes
 import WorkspaceActor "../../workspace/main";
-import WorkspaceIam "../../workspace-iam/main";
-import WorkspaceUsers "../../workspace-users/main";
-import WorkspaceWebhooks "../../workspace-webhooks/main";
 
 import Models "../models";
 import Results "../results";
@@ -50,14 +43,6 @@ module WorkspaceManager {
 	) {
 		private let ic = actor ("aaaaa-aa") : IC.Service;
 
-		private func generatePrincipal() : async Principal {
-			var b = await Random.blob();
-			var array = Blob.toArray(b);
-			array := Array.subArray<Nat8>(array, 0, 10);
-			b := Blob.fromArray(array);
-			Principal.fromBlob(b);
-		};
-
 		public func getAll() : [Models.Workspace] {
 			let workspaceIter = Map.vals<Principal, Models.Workspace>(_storage);
 			let workspaceArray = Iter.toArray(workspaceIter);
@@ -82,15 +67,6 @@ module WorkspaceManager {
 			let workspaceArray = List.toArray(workspaceList);
 
 			return workspaceArray;
-		};
-
-		public func getWorkspaceByChild(principal : Principal) : ?Models.Workspace {
-			return Array.find<Models.Workspace>(
-				getAll(),
-				func workspace = Principal.equal(Principal.fromActor(workspace.canisters.iam), principal) or
-				Principal.equal(Principal.fromActor(workspace.canisters.users), principal) or
-				Principal.equal(Principal.fromActor(workspace.canisters.webhooks), principal),
-			);
 		};
 
 		public func addMember(workspaceId : Principal, memberId : Principal) : async () {
@@ -130,66 +106,20 @@ module WorkspaceManager {
 
 		public func create(name : Text, creator : Principal) : async Models.Workspace {
 			let workspaceRef = await createWorkspaceCanister(creator);
-			let iam = await createIamCanister(creator);
-			let users = await createUsersCanister(creator, Principal.fromActor(iam));
-			let webhooks = await createWebhooksCanister(creator, Principal.fromActor(iam));
 
 			await workspaceRef.init();
 
-			let wip = await generatePrincipal();
-
 			let workspace : Models.Workspace = {
-				wip;
+				wip = Principal.fromActor(workspaceRef);
 				ref = workspaceRef;
 				name;
 				owner = creator;
 				members = [];
-				canisters = {
-					iam;
-					users;
-					webhooks;
-				};
 			};
 
 			ignore Map.put<Principal, Models.Workspace>(_storage, phash, workspace.wip, workspace);
 
-			// Init Default IAM Access
-			let adminPolicy = {
-				pid = "AdministratorAccess";
-				ptype = #managed;
-				statements = [{
-					effect = #allow;
-					action = #all;
-				}];
-			};
-
-			ignore await iam.create_policy(adminPolicy);
-
-			let adminRoleData = {
-				name = "Administrator";
-				description = "Grant full access to the workspace";
-				policies = [adminPolicy.pid];
-			};
-
-			let addRoleResult = await iam.create_role(adminRoleData);
-
-			switch (addRoleResult) {
-				case (#ok(role)) {
-					let newAccess = {
-						identity = creator;
-						roleId = role.rid;
-						itype = #user;
-					};
-
-					ignore await iam.create_access(newAccess);
-
-					return workspace;
-				};
-				case (#err(_error)) {
-					// TODO: Handle error correctly
-					throw Error.reject("Error");
-				};
-			};
+			return workspace;
 		};
 
 		private func createWorkspaceCanister(owner : Principal) : async WorkspaceActor.WorkspaceClass {
@@ -201,37 +131,11 @@ module WorkspaceManager {
 			return workpace;
 		};
 
-		private func createIamCanister(owner : Principal) : async WorkspaceIam.IamActorClass {
-			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
-			Cycles.add<system>(113_846_199_230);
-
-			let iam = await WorkspaceIam.IamActorClass(owner);
-
-			return iam;
-		};
-
-		private func createUsersCanister(owner : Principal, iam : Principal) : async WorkspaceUsers.WorkspaceUsersActorClass {
-			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
-			Cycles.add<system>(113_846_199_230);
-
-			let users = await WorkspaceUsers.WorkspaceUsersActorClass(owner, iam);
-
-			return users;
-		};
-
-		private func createWebhooksCanister(owner : Principal, iam : Principal) : async WorkspaceWebhooks.WorkspaceWebhooksActorClass {
-			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
-			Cycles.add<system>(113_846_199_230);
-
-			let webhooks = await WorkspaceWebhooks.WorkspaceWebhooksActorClass(owner, iam);
-
-			return webhooks;
-		};
-
 		public func delete(workspaceId : Principal, requester : Principal) : async ({ refundedCycles : Nat }) {
 			let maybeWorkspace = getById(workspaceId);
 
 			switch (maybeWorkspace) {
+				case null throw Error.reject(WORKSPACE_NOT_FOUND);
 				case (?workspace) {
 					let hasAccess = Principal.equal(workspace.owner, requester);
 
@@ -239,17 +143,16 @@ module WorkspaceManager {
 						throw Error.reject(UNAUTHORIZED);
 					};
 
-					// TODO: Delete Workspace Canister
-					let deleteIamCanisterResult = await deleteCanister(workspace.canisters.iam);
-					let deleteUsersCanisterResult = await deleteCanister(workspace.canisters.users);
-					let deleteWebhooksCanisterResult = await deleteCanister(workspace.canisters.webhooks);
+					let canister = workspace.ref;
 
-					switch (deleteIamCanisterResult, deleteUsersCanisterResult, deleteWebhooksCanisterResult) {
-						case (#ok(iamResult), #ok(usersResult), #ok(webhooksResult)) {
-							ignore Map.remove<Principal, Models.Workspace>(_storage, phash, workspaceId);
+					let deleteResult = await deleteCanister(canister);
 
-							let refundedCycles = iamResult.refundedCycles + usersResult.refundedCycles + webhooksResult.refundedCycles;
-
+					switch (deleteResult) {
+						case (#err(_error)) {
+							throw Error.reject("Error on delete canister");
+						};
+						case (#ok(result)) {
+							let refundedCycles = result.refundedCycles;
 							let newCyclesEntry : CyclesLedgerModule.CycleTransaction = {
 								amount = refundedCycles;
 								recipient = workspace.owner;
@@ -261,13 +164,8 @@ module WorkspaceManager {
 
 							return { refundedCycles };
 						};
-						case (_) {
-							// TODO: Handle error correctly
-							throw Error.reject("Error");
-						};
 					};
 				};
-				case null throw Error.reject(WORKSPACE_NOT_FOUND);
 			};
 		};
 

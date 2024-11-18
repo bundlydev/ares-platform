@@ -22,11 +22,6 @@ module WorkspaceOrchestratorTypes {
 		name : Text;
 		owner : Principal;
 		members : [Principal];
-		canisters : {
-			iam : Principal;
-			users : Principal;
-			webhooks : Principal;
-		};
 	};
 
 	public type GetWorkspaceInfoResultErr = {
@@ -46,11 +41,6 @@ module WorkspaceOrchestratorTypes {
 		name : Text;
 		owner : Principal;
 		members : [Principal];
-		canisters : {
-			iam : Principal;
-			users : Principal;
-			webhooks : Principal;
-		};
 	};
 
 	public type CreateWorkspaceResultErr = {
