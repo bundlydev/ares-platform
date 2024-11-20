@@ -13,10 +13,10 @@ import { useAuthGuard } from "@app/hooks/useGuard";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
 import useStore from "@app/store/useStore";
 
-type Workspace = {
-  id: string;
-  name: string;
-};
+// type Workspace = {
+//   id: string;
+//   name: string;
+// };
 
 type WorkspaceData = {
   identity: string;
@@ -32,36 +32,35 @@ type UsernameData = {
 };
 
 export default function ManagementUsersPage(): JSX.Element {
-  const { userIAMid, workspaceRefId } = useStore();
-  const { userMid } = useStore();
+  // const { userIAMid, workspaceRefId } = useStore();
+  // const { userMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalRole, setShowModalRole] = useState<boolean>(false);
   const [showModalPermission, setShowModalPermission] = useState<boolean>(false);
+  // TODO: setDataNameSearch is unused
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
+  // TODO: loading is unused
   const [loading, setLoading] = useState<boolean>(false);
   const [rolesList, setRolesList] = useState<WorkspaceData[]>([]);
-  const { userManagementId } = useContext(AuthContext);
+  // const { userManagementId } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [assignPrincipal, setAssignPrincipal] = useState<string>("");
   const [rolesAssing, setRolesAssign] = useState<string[]>([]);
   const [permissionAssing, setPermissionAssign] = useState<string[]>([]);
+
   let workspaceId = router.query["workspace-id"] as string;
 
-  const accountManager = useCandidActor<CandidActors>(
-    "accountManager",
-    currentIdentity
-  ) as CandidActors["accountManager"];
+  // const accountManager = useCandidActor<CandidActors>(
+  //   "accountManager",
+  //   currentIdentity
+  // ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
-  }) as CandidActors["workspace"];
-
-  const workspaceUser = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
   }) as CandidActors["workspace"];
 
   useEffect(() => {
@@ -76,9 +75,9 @@ export default function ManagementUsersPage(): JSX.Element {
   }
 
   const getPermissions = async () => {
-    if (!workspaceUser) return;
+    if (!workspace) return;
 
-    const getRolesResult = await workspaceUser.users_get_access_list();
+    const getRolesResult = await workspace.users_get_access_list();
 
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
@@ -97,9 +96,9 @@ export default function ManagementUsersPage(): JSX.Element {
   };
 
   const inactiveStatus = async (id: string) => {
-    if (!workspaceUser) return;
+    if (!workspace) return;
 
-    const getChangeResult = await workspaceUser.users_change_access_status(Principal.fromText(id), {
+    const getChangeResult = await workspace.users_change_access_status(Principal.fromText(id), {
       inactive: null,
     });
     if ("ok" in getChangeResult) {
@@ -110,9 +109,9 @@ export default function ManagementUsersPage(): JSX.Element {
     }
   };
   const activeStatus = async (id: string) => {
-    if (!workspaceUser) return;
+    if (!workspace) return;
 
-    const getChangeResult = await workspaceUser.users_change_access_status(Principal.fromText(id), {
+    const getChangeResult = await workspace.users_change_access_status(Principal.fromText(id), {
       active: null,
     });
     if ("ok" in getChangeResult) {
@@ -151,13 +150,13 @@ export default function ManagementUsersPage(): JSX.Element {
   };
 
   const deleteIdUser = async (idUser: string) => {
-    if (!workspaceUser) return;
+    if (!workspace) return;
 
     setLoading(true);
 
     try {
       const userId = Principal.fromText(idUser);
-      const response = await workspaceUser.users_delete_access(userId);
+      const response = await workspace.users_delete_access(userId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");

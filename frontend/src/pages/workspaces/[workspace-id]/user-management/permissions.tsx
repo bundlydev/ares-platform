@@ -1,6 +1,7 @@
-import { Principal } from "@dfinity/principal";
+// import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
+// TODO: useContext is not used, so it should be removed
 import { useContext, useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -9,24 +10,24 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters";
 import LoadingSpinner from "@app/components/LoadingSpinner";
-import { AuthContext } from "@app/context/auth-context";
+// import { AuthContext } from "@app/context/auth-context";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
 
-import useStore from "../../../../store/useStore";
+// import useStore from "../../../../store/useStore";
 
-type Workspace = {
-  id: string;
-  name: string;
-};
+// type Workspace = {
+//   id: string;
+//   name: string;
+// };
 type WorkspaceData = {
   action: string;
   description: string;
 };
-type UsernameData = {
-  id: string;
-  username: string;
-};
+// type UsernameData = {
+//   id: string;
+//   username: string;
+// };
 type FormValues = {
   permission: string;
   description: string;
@@ -34,26 +35,25 @@ type FormValues = {
 export default function ManagementPermissionsPage(): JSX.Element {
   const router = useRouter();
   const { currentIdentity } = useAuth();
-  const { userIAMid, workspaceRefId } = useStore();
-  const { userMid } = useStore();
+  // const { userIAMid, workspaceRefId } = useStore();
+  // const { userMid } = useStore();
   useAuthGuard({ isPrivate: true });
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
+  // const [showModal, setShowModal] = useState<boolean>(false);
+  // const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  // TODO: workspaceIsOpen is unused
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
   const [permissionsList, setPermissionsList] = useState<WorkspaceData[]>([]);
-  const { userManagementId } = useContext(AuthContext);
+  // const { userManagementId } = useContext(AuthContext);
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   let workspaceId = router.query["workspace-id"] as string;
 
-  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
   }) as CandidActors["workspace"];
-  const workspaceUser = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
-  }) as CandidActors["workspace"];
+
   const formSchema = z.object({
     permission: z.string().min(1, "Permission is required"),
     description: z.string().min(1, "Description is required"),
@@ -63,9 +63,9 @@ export default function ManagementPermissionsPage(): JSX.Element {
   }, []);
 
   const getPermissions = async () => {
-    if (!workspaceUser) return;
+    if (!workspace) return;
 
-    const getPermissionsResult = await workspaceUser.users_get_permissions();
+    const getPermissionsResult = await workspace.users_get_permissions();
     if ("ok" in getPermissionsResult) {
       const rolesOptions = getPermissionsResult.ok.map((permission: { action: any; description: any }) => ({
         action: permission.action,
@@ -79,12 +79,12 @@ export default function ManagementPermissionsPage(): JSX.Element {
   };
 
   const deleteIdapp = async (idApp: string) => {
-    if (!workspaceUser) return;
+    if (!workspace) return;
 
     setLoading(true);
 
     try {
-      const response = await workspaceUser.users_delete_permission(idApp);
+      const response = await workspace.users_delete_permission(idApp);
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
         else console.log("Error fetching profile");
@@ -130,10 +130,10 @@ export default function ManagementPermissionsPage(): JSX.Element {
   });
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
     setLoading(true);
     try {
-      const response = await workspaceUser.users_create_permission({
+      const response = await workspace.users_create_permission({
         action: data.permission,
         description: data.description,
       });

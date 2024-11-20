@@ -8,13 +8,14 @@ import { CandidActors } from "@app/canisters";
 import LoadingSpinner from "@app/components/LoadingSpinner";
 import ModalApps from "@app/components/ModalApps";
 import { useAuthGuard } from "@app/hooks/useGuard";
-import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
-import useStore from "@app/store/useStore";
 
-type Workspace = {
-  id: string;
-  name: string;
-};
+// import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
+// import useStore from "@app/store/useStore";
+
+// type Workspace = {
+//   id: string;
+//   name: string;
+// };
 type WorkspaceData = {
   id: string;
   name: string;
@@ -25,7 +26,6 @@ type UsernameData = {
 };
 
 export default function WorkspaceAppsPage(): JSX.Element {
-  const { workspaceRefId } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
@@ -33,6 +33,7 @@ export default function WorkspaceAppsPage(): JSX.Element {
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  // TODO: workspaceIsOpen is unused
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
 
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceData[]>([]);
@@ -47,8 +48,8 @@ export default function WorkspaceAppsPage(): JSX.Element {
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
   }) as CandidActors["workspace"];
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function WorkspaceAppsPage(): JSX.Element {
   }, []);
 
   const getApps = async () => {
-    const getMembersResult = await workspaceIam.iam_get_access_list({ filters: { itype: { app: null } } });
+    const getMembersResult = await workspace.iam_get_access_list({ filters: { itype: { app: null } } });
     if ("ok" in getMembersResult) {
       const NameList = getMembersResult.ok.map((item) => ({
         id: item.identity.toString(),
@@ -92,13 +93,13 @@ export default function WorkspaceAppsPage(): JSX.Element {
   };
 
   const deleteIdapp = async (idApp: string) => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
     setLoading(true);
 
     try {
       const appId = Principal.fromText(idApp);
-      const response = await workspaceIam.iam_delete_access(appId);
+      const response = await workspace.iam_delete_access(appId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -116,12 +117,12 @@ export default function WorkspaceAppsPage(): JSX.Element {
   };
 
   const addMemberWorkspace = async (userId: string) => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
     setLoading(true);
     try {
       const memberId = Principal.fromText(userId);
-      const response = await workspaceIam.iam_create_access({
+      const response = await workspace.iam_create_access({
         identity: memberId,
         itype: { user: null },
         roleId: "Administrator",

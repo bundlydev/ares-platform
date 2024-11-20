@@ -5,16 +5,17 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters";
-import LoadingSpinner from "@app/components/LoadingSpinner";
+// import LoadingSpinner from "@app/components/LoadingSpinner";
 import ModalRoles from "@app/components/ModalRoles";
 import { useAuthGuard } from "@app/hooks/useGuard";
-import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
-import useStore from "@app/store/useStore";
 
-type Workspace = {
-  id: string;
-  name: string;
-};
+// import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
+// import useStore from "@app/store/useStore";
+
+// type Workspace = {
+//   id: string;
+//   name: string;
+// };
 type WorkspaceData = {
   name: string;
   description: string;
@@ -26,14 +27,16 @@ type UsernameData = {
 };
 
 export default function WorkspaceRolesPage(): JSX.Element {
-  const { userIAMid, workspaceRefId } = useStore();
+  // const { userIAMid, workspaceRefId } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
+  // TODO: loading is unused
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  // TODO: workspaceIsOpen is unused
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
   const [rolesList, setRolesList] = useState<WorkspaceData[]>([]);
 
@@ -48,7 +51,7 @@ export default function WorkspaceRolesPage(): JSX.Element {
   ) as CandidActors["accountManager"];
 
   const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
+    canisterId: workspaceId,
   }) as CandidActors["workspace"];
 
   useEffect(() => {

@@ -1,5 +1,6 @@
-import { Principal } from "@dfinity/principal";
+// import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/router";
 import React, { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -7,8 +8,8 @@ import { z } from "zod";
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
-import useStore from "@app/store/useStore";
 
+// import useStore from "@app/store/useStore";
 import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
 
@@ -47,10 +48,10 @@ const ModalRolesManagement: FC<ModalProps> = ({
   getListFindName,
   dataNameSearch,
 }) => {
-  const { userMid, workspaceRefId } = useStore();
   const { currentIdentity } = useAuth();
+  const router = useRouter();
   const [inputValue, setInputValue] = useState<string>("");
-  const { workspaceId } = useContext(AuthContext);
+  // const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
   const [selectedPolicies, setSelectedPolicies] = useState<PoliciesData[]>([]);
@@ -58,6 +59,8 @@ const ModalRolesManagement: FC<ModalProps> = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { userManagementId } = useContext(AuthContext);
+
+  let workspaceId = router.query["workspace-id"] as string;
 
   const {
     register,
@@ -79,21 +82,15 @@ const ModalRolesManagement: FC<ModalProps> = ({
     }
   };
 
-  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
-  }) as CandidActors["workspace"];
-
-  const workspaceUser = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
   }) as CandidActors["workspace"];
   const filteredDataNameSearch = dataNameSearch.filter(
     (name) => !selectedNames.some((selected) => selected.id === name.id)
   );
 
   const getPermissionss = async () => {
-    if (!workspaceIam) return;
-
-    const getRolesResult = await workspaceUser.users_get_permissions();
+    const getRolesResult = await workspace.users_get_permissions();
     if ("ok" in getRolesResult) {
       const permissionsOptions = getRolesResult.ok.map((permission) => ({
         label: permission.action,
@@ -107,7 +104,6 @@ const ModalRolesManagement: FC<ModalProps> = ({
   };
 
   useEffect(() => {
-		
     getPermissionss();
   }, []);
 
@@ -142,7 +138,6 @@ const ModalRolesManagement: FC<ModalProps> = ({
   };
 
   useEffect(() => {
-		
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
@@ -169,10 +164,10 @@ const ModalRolesManagement: FC<ModalProps> = ({
   }
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    if (!workspaceUser) return;
+    if (!workspace) return;
     setLoading(true);
     try {
-      const response = await workspaceUser.users_create_role({
+      const response = await workspace.users_create_role({
         name: data.name,
         description: data.description,
         permissions: data.permission,

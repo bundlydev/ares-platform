@@ -35,15 +35,16 @@ export default function WorkspaceUsersPage() {
   const router = useRouter();
   const { ownerId } = useContext(AuthContext);
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
-  const [deleteItem, setDeleteItem] = useState<string>("");
+  // const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
+  // const [deleteItem, setDeleteItem] = useState<string>("");
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const workspaces = useWorkspaces();
-  const profiles = useProfile();
+  // const workspaces = useWorkspaces();
+  // const profiles = useProfile();
+  // TODO: workspaceIsOpen is unused
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const identity = useIdentities();
+  // const identity = useIdentities();
   const loadingAuth = useAuthGuard({ isPrivate: true });
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceData[]>([]);
 
@@ -55,8 +56,8 @@ export default function WorkspaceUsersPage() {
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
   }) as CandidActors["workspace"];
 
   useEffect(() => {
@@ -64,13 +65,13 @@ export default function WorkspaceUsersPage() {
   }, [workspaceId]);
 
   const getWorkspaceMembers = async () => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
-    let getMembersResult = await workspaceIam.iam_get_access_list({ filters: { itype: { user: null } } });
+    let getMembersResult = await workspace.iam_get_access_list({ filters: { itype: { user: null } } });
 
     if ("ok" in getMembersResult) {
       let members = getMembersResult.ok;
-      let getRolesResult = await workspaceIam.iam_get_roles();
+      let getRolesResult = await workspace.iam_get_roles();
       let roles = "ok" in getRolesResult ? getRolesResult.ok : [];
 
       let results = [];
@@ -122,13 +123,13 @@ export default function WorkspaceUsersPage() {
   };
 
   const deleteIdmember = async (idMember: string) => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
     setLoading(true);
 
     try {
       const memberId = Principal.fromText(idMember);
-      const response = await workspaceIam.iam_delete_access(memberId);
+      const response = await workspace.iam_delete_access(memberId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -146,12 +147,12 @@ export default function WorkspaceUsersPage() {
   };
 
   const addMemberWorkspace = async (userId: string) => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
     setLoading(true);
     try {
       const memberId = Principal.fromText(userId);
-      const response = await workspaceIam.iam_create_access({
+      const response = await workspace.iam_create_access({
         identity: memberId,
         roleId: "Administrator",
         itype: { user: null },

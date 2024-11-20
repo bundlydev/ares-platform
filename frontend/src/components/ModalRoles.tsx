@@ -1,5 +1,7 @@
-import { Principal } from "@dfinity/principal";
+// import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/router";
+// TODO: useContext is not used, so it should be removed
 import React, { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -9,7 +11,7 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 import { CandidActors } from "@app/canisters/index";
 import useStore from "@app/store/useStore";
 
-import { AuthContext } from "../context/auth-context";
+// import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
 
 interface NameData {
@@ -50,15 +52,18 @@ const ModalRoles: FC<ModalProps> = ({
   getData,
 }) => {
   const { currentIdentity } = useAuth();
+  const router = useRouter();
   const { userIAMid, workspaceRefId } = useStore();
   const [inputValue, setInputValue] = useState<string>("");
-  const { workspaceId } = useContext(AuthContext);
+  // const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
   const [selectedPolicies, setSelectedPolicies] = useState<PoliciesData[]>([]);
   const [selectedPolicyValues, setSelectedPolicyValues] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  let workspaceId = router.query["workspace-id"] as string;
 
   const {
     register,
@@ -81,7 +86,7 @@ const ModalRoles: FC<ModalProps> = ({
   };
 
   const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
+    canisterId: workspaceId,
   }) as CandidActors["workspace"];
 
   const filteredDataNameSearch = dataNameSearch.filter(

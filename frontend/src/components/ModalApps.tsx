@@ -1,5 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/router";
+// TODO: useContext is not used, so it should be removed
 import React, { ChangeEvent, FC, useContext, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -57,13 +59,16 @@ interface ModalProps {
 
 const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, dataNameSearch, getData }) => {
   const { currentIdentity } = useAuth();
+  const router = useRouter();
   const { userIAMid, workspaceRefId } = useStore();
   const [inputValue, setInputValue] = useState<string>("");
-  const { workspaceId } = useContext(AuthContext);
+  // const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [inputValueId, setInputValueId] = useState<string>("");
   const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<RoleData[]>([]);
+
+  let workspaceId = router.query["workspace-id"] as string;
 
   const {
     register,
@@ -85,18 +90,18 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
     }
   };
 
-  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
-  }) as CandidActors["workspace"];;
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
+  }) as CandidActors["workspace"];
 
   const filteredDataNameSearch = dataNameSearch.filter(
     (name) => !selectedNames.some((selected) => selected.id === name.id)
   );
 
   const getRoles = async () => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
-    const getRolesResult = await workspaceIam.iam_get_roles();
+    const getRolesResult = await workspace.iam_get_roles();
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
         label: role.name,
@@ -124,11 +129,11 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
   }
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
     setLoading(true);
     try {
       const value = Principal.fromText(data.name);
-      const response = await workspaceIam.iam_create_access({
+      const response = await workspace.iam_create_access({
         identity: value,
         roleId: data.role,
         itype: { app: null },

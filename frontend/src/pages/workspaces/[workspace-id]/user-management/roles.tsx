@@ -1,4 +1,4 @@
-import { Principal } from "@dfinity/principal";
+// import { Principal } from "@dfinity/principal";
 import { useRouter } from "next/router";
 import { useContext, useEffect, useRef, useState } from "react";
 
@@ -6,17 +6,17 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters";
 import LoadingSpinner from "@app/components/LoadingSpinner";
-import ModalRoles from "@app/components/ModalRoles";
+// import ModalRoles from "@app/components/ModalRoles";
 import ModalRolesManagement from "@app/components/ModalRolesManagement";
 import { AuthContext } from "@app/context/auth-context";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
 import useStore from "@app/store/useStore";
 
-type Workspace = {
-  id: string;
-  name: string;
-};
+// type Workspace = {
+//   id: string;
+//   name: string;
+// };
 type WorkspaceData = {
   name: string;
   description: string;
@@ -28,8 +28,8 @@ type UsernameData = {
 };
 
 export default function ManagementRolesPage(): JSX.Element {
-  const { userIAMid, workspaceRefId } = useStore();
-  const { userMid } = useStore();
+  // const { userIAMid, workspaceRefId } = useStore();
+  // const { userMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
@@ -37,9 +37,10 @@ export default function ManagementRolesPage(): JSX.Element {
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
+  // TODO: workspaceIsOpen is unused
   const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
   const [rolesList, setRolesList] = useState<WorkspaceData[]>([]);
-  const { userManagementId } = useContext(AuthContext);
+  // const { userManagementId } = useContext(AuthContext);
 
   const workspaceRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -51,23 +52,18 @@ export default function ManagementRolesPage(): JSX.Element {
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
-  }) as CandidActors["workspace"];
-
-  const workspaceUser = useCandidActor<CandidActors>("workspace", currentIdentity, {
-    canisterId: workspaceRefId,
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
   }) as CandidActors["workspace"];
 
   useEffect(() => {
-		
     getPermissions();
   }, []);
 
   const getPermissions = async () => {
-    if (!workspaceUser) return;
+    if (!workspace) return;
 
-    const getRolesResult = await workspaceUser.users_get_roles();
+    const getRolesResult = await workspace.users_get_roles();
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
         permissions: role.permissions,
@@ -104,12 +100,12 @@ export default function ManagementRolesPage(): JSX.Element {
   };
 
   const deleteIdapp = async (idApp: string) => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
     setLoading(true);
 
     try {
-      const response = await workspaceIam.users_delete_role(idApp);
+      const response = await workspace.users_delete_role(idApp);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -128,7 +124,6 @@ export default function ManagementRolesPage(): JSX.Element {
   };
 
   useEffect(() => {
-		
     const handleClickOutside = (event: MouseEvent) => {
       if (
         menuRef.current &&
