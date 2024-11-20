@@ -114,7 +114,7 @@ module WorkspaceManager {
 				ref = workspaceRef;
 				name;
 				owner = creator;
-				members = [];
+				members = [creator];
 			};
 
 			ignore Map.put<Principal, Models.Workspace>(_storage, phash, workspace.wip, workspace);
