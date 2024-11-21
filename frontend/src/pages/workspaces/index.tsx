@@ -1,10 +1,8 @@
-import { Principal } from "@dfinity/principal";
 import { useRouter } from "next/router";
 import { FC, useContext, useEffect, useRef, useState } from "react";
 
 import { LogoutButton, useIdentities } from "@bundly/ares-react";
 
-import SelectWorkspace from "@app/components/SelectWorkspace";
 import { AuthContext } from "@app/context/auth-context";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import { useProfile } from "@app/hooks/useProfile";

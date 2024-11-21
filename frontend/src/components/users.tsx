@@ -2,19 +2,13 @@ import { Principal } from "@dfinity/principal";
 import { useRouter } from "next/router";
 import React, { useContext, useEffect, useRef, useState } from "react";
 
-import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
+import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
 import LoadingSpinner from "@app/components/LoadingSpinner";
-import Menu from "@app/components/Menu";
 import Modal from "@app/components/Modal";
-import SelectWorkspace from "@app/components/SelectWorkspace";
 import { AuthContext } from "@app/context/auth-context";
 import { useAuthGuard } from "@app/hooks/useGuard";
-import { useProfile } from "@app/hooks/useProfile";
-import { useWorkspaces } from "@app/hooks/useWorkspaces";
-import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
-import useStore from "@app/store/useStore";
 
 export default function WorkspaceUsersPage() {
   type Workspace = {
@@ -30,21 +24,13 @@ export default function WorkspaceUsersPage() {
     id: string;
     username: string;
   };
-  const { userIAMid, workspaceRefId } = useStore();
   const { currentIdentity } = useAuth();
   const router = useRouter();
   const { ownerId } = useContext(AuthContext);
   const [showModal, setShowModal] = useState<boolean>(false);
-  // const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
-  // const [deleteItem, setDeleteItem] = useState<string>("");
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  // const workspaces = useWorkspaces();
-  // const profiles = useProfile();
-  // TODO: workspaceIsOpen is unused
-  const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  // const identity = useIdentities();
   const loadingAuth = useAuthGuard({ isPrivate: true });
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceData[]>([]);
 
@@ -94,10 +80,6 @@ export default function WorkspaceUsersPage() {
       let error = getMembersResult.err;
       console.error(error);
     }
-  };
-
-  const getFirstLetter = (text: string): string => {
-    return text.charAt(0).toUpperCase();
   };
 
   const getListFindName = async (nameText: string) => {
@@ -174,10 +156,6 @@ export default function WorkspaceUsersPage() {
     }
   };
 
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
-  };
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -187,7 +165,6 @@ export default function WorkspaceUsersPage() {
         !workspaceRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
-        setWorkspaceIsOpen(false);
       }
     };
 

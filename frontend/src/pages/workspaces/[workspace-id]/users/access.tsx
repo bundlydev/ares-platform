@@ -32,20 +32,15 @@ type UsernameData = {
 };
 
 export default function ManagementUsersPage(): JSX.Element {
-  // const { userIAMid, workspaceRefId } = useStore();
-  // const { userMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [showModalRole, setShowModalRole] = useState<boolean>(false);
   const [showModalPermission, setShowModalPermission] = useState<boolean>(false);
-  // TODO: setDataNameSearch is unused
+ 
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
-  // TODO: loading is unused
-  const [loading, setLoading] = useState<boolean>(false);
   const [rolesList, setRolesList] = useState<WorkspaceData[]>([]);
-  // const { userManagementId } = useContext(AuthContext);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [assignPrincipal, setAssignPrincipal] = useState<string>("");
@@ -54,11 +49,6 @@ export default function ManagementUsersPage(): JSX.Element {
 
   let workspaceId = router.query["workspace-id"] as string;
 
-  // const accountManager = useCandidActor<CandidActors>(
-  //   "accountManager",
-  //   currentIdentity
-  // ) as CandidActors["accountManager"];
-
   const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
     canisterId: workspaceId,
   }) as CandidActors["workspace"];
@@ -66,13 +56,6 @@ export default function ManagementUsersPage(): JSX.Element {
   useEffect(() => {
     getPermissions();
   }, []);
-
-  function formatDateFromNanoseconds(nanoseconds: bigint) {
-    const milliseconds = Number(BigInt(nanoseconds) / BigInt(1000000));
-    const date = new Date(milliseconds);
-    const options = { year: "numeric" as const, month: "long" as const, day: "numeric" as const };
-    return date.toLocaleDateString("en-US", options);
-  }
 
   const getPermissions = async () => {
     if (!workspace) return;
@@ -152,7 +135,6 @@ export default function ManagementUsersPage(): JSX.Element {
   const deleteIdUser = async (idUser: string) => {
     if (!workspace) return;
 
-    setLoading(true);
 
     try {
       const userId = Principal.fromText(idUser);
@@ -166,7 +148,6 @@ export default function ManagementUsersPage(): JSX.Element {
     } catch (error) {
       console.error("error response", { error });
     } finally {
-      setLoading(false);
       window.location.reload();
     }
   };
@@ -175,7 +156,7 @@ export default function ManagementUsersPage(): JSX.Element {
       <div className="flex flex-col w-full">
         <div className="container w-full flex flex-col justify-start items-end bg-slate-100 h-full p-6 rounded-lg">
           <div className="flex justify-between w-full">
-            <span className="text-[34px] font-semibold">Users</span>
+            <span className="text-[34px] font-semibold">Access</span>
             <button
               className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
               onClick={() => setShowModal(true)}>

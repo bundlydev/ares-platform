@@ -136,7 +136,7 @@ const MainMenu = () => {
         <div
           onClick={toggleIamMenu}
           className="cursor-pointer w-full h-12 flex justify-between items-center text-lg font-semibold relative px-2 text-white">
-          <span>User management</span>
+          <span>Users</span>
           <svg
             className={`transition-transform transform ${isIamMenuOpen ? "rotate-135" : "rotate-45"} w-5 h-5`}
             xmlns="http://www.w3.org/2000/svg"
@@ -149,24 +149,18 @@ const MainMenu = () => {
         {isIamMenuOpen && (
           <div className="flex flex-col w-full">
             <div
-              onClick={() =>
-                handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/users`)
-              }
+              onClick={() => handleSubmenuNavigationManage(`/workspaces/${workspaceId}/users/access`)}
               className="cursor-pointer w-full h-12 px-4 flex justify-start items-center text-sm font-semibold text-white"
               style={{
-                borderLeft: router.pathname.includes("/user-management/users")
+                borderLeft: router.pathname.includes("/users/access")
                   ? "4px solid #06b6d4"
                   : "4px solid #083344",
-                background: router.pathname.includes("/user-management/users")
-                  ? "rgba(15, 75, 100, 0.7)"
-                  : "#083344",
+                background: router.pathname.includes("/users/access") ? "rgba(15, 75, 100, 0.7)" : "#083344",
               }}>
-              Users
+              Access
             </div>
             <div
-              onClick={() =>
-                handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/roles`)
-              }
+              onClick={() => handleSubmenuNavigationManage(`/workspaces/${workspaceId}/users/roles`)}
               className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
               style={{
                 borderLeft: router.pathname.includes("/user-management/roles")
@@ -179,9 +173,7 @@ const MainMenu = () => {
               Roles
             </div>
             <div
-              onClick={() =>
-                handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/permissions`)
-              }
+              onClick={() => handleSubmenuNavigationManage(`/workspaces/${workspaceId}/users/permissions`)}
               className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
               style={{
                 borderLeft: router.pathname.includes("permissions")
@@ -191,21 +183,20 @@ const MainMenu = () => {
               }}>
               Permissions
             </div>
-						<div
-              onClick={() =>
-                handleSubmenuNavigationManage(`/workspaces/${workspaceId}/user-management/webhooks`)
-              }
-              className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
-              style={{
-                borderLeft: router.pathname.includes("webhooks")
-                  ? "4px solid #06b6d4"
-                  : "4px solid #083344",
-                background: router.pathname.includes("webhooks") ? "rgba(15, 75, 100, 0.7)" : "#083344",
-              }}>
-              Webhooks
-            </div>
           </div>
         )}
+        <div
+          onClick={() => {
+            handleSubmenuNavigationManage(`/workspaces/${workspaceId}/webhooks`);
+            setIsIamMenuOpen(false);
+          }}
+          className="cursor-pointer w-full px-2 h-12 flex justify-start items-center text-sm font-semibold text-white"
+          style={{
+            borderLeft: router.pathname.includes("webhooks") ? "4px solid #06b6d4" : "4px solid #083344",
+            background: router.pathname.includes("webhooks") ? "rgba(15, 75, 100, 0.7)" : "#083344",
+          }}>
+          Webhooks
+        </div>
         <div className="flex-grow"></div>
       </div>
       <div

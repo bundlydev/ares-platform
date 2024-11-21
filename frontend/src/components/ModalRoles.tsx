@@ -1,17 +1,13 @@
-// import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
-// TODO: useContext is not used, so it should be removed
-import React, { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
+import React, { FC, useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
-import useStore from "@app/store/useStore";
 
-// import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
 
 interface NameData {
@@ -53,11 +49,7 @@ const ModalRoles: FC<ModalProps> = ({
 }) => {
   const { currentIdentity } = useAuth();
   const router = useRouter();
-  const { userIAMid, workspaceRefId } = useStore();
-  const [inputValue, setInputValue] = useState<string>("");
-  // const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
-  const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
   const [selectedPolicies, setSelectedPolicies] = useState<PoliciesData[]>([]);
   const [selectedPolicyValues, setSelectedPolicyValues] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
@@ -74,24 +66,9 @@ const ModalRoles: FC<ModalProps> = ({
     resolver: zodResolver(formSchema),
   });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-
-    if (value.length >= 3) {
-      getListFindName(value);
-    } else {
-      setSelectedNames([]);
-    }
-  };
-
   const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
     canisterId: workspaceId,
   }) as CandidActors["workspace"];
-
-  const filteredDataNameSearch = dataNameSearch.filter(
-    (name) => !selectedNames.some((selected) => selected.id === name.id)
-  );
 
   const getPolicies = async () => {
     if (!workspaceIam) return;
@@ -112,12 +89,6 @@ const ModalRoles: FC<ModalProps> = ({
   useEffect(() => {
     getPolicies();
   }, [workspaceIam]);
-
-  useEffect(() => {
-    if (inputValue === "") {
-      setSelectedNames([]);
-    }
-  }, [inputValue]);
 
   useEffect(() => {
     setValue("policie", selectedPolicyValues);

@@ -1,17 +1,14 @@
 import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
-// TODO: useContext is not used, so it should be removed
-import React, { ChangeEvent, FC, useContext, useEffect, useState } from "react";
+import React, { ChangeEvent, FC, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
-import useStore from "@app/store/useStore";
 
-import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
 
 interface NameData {
@@ -52,20 +49,13 @@ const formSchema = z.object({
 interface ModalProps {
   showModal: boolean;
   setShowModal: (show: boolean) => void;
-  getListFindName: (nameText: string) => void;
-  dataNameSearch: NameData[];
   getData: any;
 }
 
-const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, dataNameSearch, getData }) => {
+const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getData }) => {
   const { currentIdentity } = useAuth();
   const router = useRouter();
-  const { userIAMid, workspaceRefId } = useStore();
-  const [inputValue, setInputValue] = useState<string>("");
-  // const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
-  const [inputValueId, setInputValueId] = useState<string>("");
-  const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<RoleData[]>([]);
 
   let workspaceId = router.query["workspace-id"] as string;
@@ -73,30 +63,14 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
   const {
     register,
     handleSubmit,
-    setError,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
   });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-
-    if (value.length >= 3) {
-      getListFindName(value);
-    } else {
-      setSelectedNames([]);
-    }
-  };
-
   const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
     canisterId: workspaceId,
   }) as CandidActors["workspace"];
-
-  const filteredDataNameSearch = dataNameSearch.filter(
-    (name) => !selectedNames.some((selected) => selected.id === name.id)
-  );
 
   const getRoles = async () => {
     if (!workspace) return;
@@ -117,12 +91,6 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
   useEffect(() => {
     getRoles();
   }, []);
-
-  useEffect(() => {
-    if (inputValue === "") {
-      setSelectedNames([]);
-    }
-  }, [inputValue]);
 
   if (!showModal) {
     return null;

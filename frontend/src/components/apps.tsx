@@ -9,13 +9,6 @@ import LoadingSpinner from "@app/components/LoadingSpinner";
 import ModalApps from "@app/components/ModalApps";
 import { useAuthGuard } from "@app/hooks/useGuard";
 
-// import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
-// import useStore from "@app/store/useStore";
-
-// type Workspace = {
-//   id: string;
-//   name: string;
-// };
 type WorkspaceData = {
   id: string;
   name: string;
@@ -33,8 +26,6 @@ export default function WorkspaceAppsPage(): JSX.Element {
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  // TODO: workspaceIsOpen is unused
-  const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
 
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceData[]>([]);
 
@@ -70,28 +61,6 @@ export default function WorkspaceAppsPage(): JSX.Element {
     }
   };
 
-  const getListFindName = async (nameText: string) => {
-    try {
-      const response = await accountManager.find_account_by_username_chunk(nameText);
-      if ("err" in response) {
-        if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
-        else console.log("Error fetching profile");
-        return;
-      }
-      const listName = "ok" in response ? response.ok : undefined;
-      if (listName) {
-        const searchNameList = listName.map((member) => ({
-          id: member.id.toString(),
-          username: member.username,
-        }));
-
-        setDataNameSearch(searchNameList);
-      }
-    } catch (error) {
-      console.error("error response", { error });
-    }
-  };
-
   const deleteIdapp = async (idApp: string) => {
     if (!workspace) return;
 
@@ -116,38 +85,6 @@ export default function WorkspaceAppsPage(): JSX.Element {
     }
   };
 
-  const addMemberWorkspace = async (userId: string) => {
-    if (!workspace) return;
-
-    setLoading(true);
-    try {
-      const memberId = Principal.fromText(userId);
-      const response = await workspace.iam_create_access({
-        identity: memberId,
-        itype: { user: null },
-        roleId: "Administrator",
-      });
-
-      if ("err" in response) {
-        if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
-        else console.log("Error fetching profile");
-        return;
-      }
-
-      getApps();
-    } catch (error) {
-      console.error("error response", { error });
-    } finally {
-      setLoading(false);
-      setShowModal(false);
-      window.location.reload();
-    }
-  };
-
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
-  };
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -157,7 +94,6 @@ export default function WorkspaceAppsPage(): JSX.Element {
         !workspaceRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
-        setWorkspaceIsOpen(false);
       }
     };
 
@@ -203,8 +139,6 @@ export default function WorkspaceAppsPage(): JSX.Element {
         getData={getApps}
         showModal={showModal}
         setShowModal={setShowModal}
-        getListFindName={getListFindName}
-        dataNameSearch={dataNameSearch}
       />
     </div>
   );

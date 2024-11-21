@@ -13,13 +13,11 @@ import WorkspaceUsersPage from "@app/components/users";
 import { useAuthGuard } from "@app/hooks/useGuard";
 import { useWorkspaces } from "@app/hooks/useWorkspaces";
 import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
-import useStore from "@app/store/useStore";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@app/ui/components/tabs";
 
 type WorkspaceSettingsPageProps = {};
 
 export default function WorkspaceSettingsPage(props: WorkspaceSettingsPageProps): JSX.Element {
-  const { userIAMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   const workspaces = useWorkspaces();

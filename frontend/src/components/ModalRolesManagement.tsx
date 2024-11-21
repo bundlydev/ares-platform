@@ -1,4 +1,3 @@
-// import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
 import React, { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
@@ -9,8 +8,6 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
 
-// import useStore from "@app/store/useStore";
-import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
 
 interface NameData {
@@ -51,14 +48,12 @@ const ModalRolesManagement: FC<ModalProps> = ({
   const { currentIdentity } = useAuth();
   const router = useRouter();
   const [inputValue, setInputValue] = useState<string>("");
-  // const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
   const [selectedPolicies, setSelectedPolicies] = useState<PoliciesData[]>([]);
   const [selectedPolicyValues, setSelectedPolicyValues] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const { userManagementId } = useContext(AuthContext);
 
   let workspaceId = router.query["workspace-id"] as string;
 

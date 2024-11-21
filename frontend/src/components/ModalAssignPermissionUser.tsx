@@ -1,6 +1,6 @@
 import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
+import React, { FC, useContext, useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -47,21 +47,14 @@ const ModalAssignRoleUser: FC<ModalProps> = ({
   assignPrincipal,
   assignRoles,
 }) => {
-  const { userMid, workspaceRefId } = useStore();
+  const { workspaceRefId } = useStore();
   const { currentIdentity } = useAuth();
-  const [inputValue, setInputValue] = useState<string>("");
-  const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
-  const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
-  const [selectedPolicies, setSelectedPolicies] = useState<PoliciesData[]>([]);
-  const [selectedPolicyValues, setSelectedPolicyValues] = useState<string[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<PoliciesData[]>([]);
   const [selectedRoleValues, setSelectedRoleValues] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [isRolesDropdownOpen, setIsRolesDropdownOpen] = useState<boolean>(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const rolesDropdownRef = useRef<HTMLDivElement>(null);
-  const { userManagementId } = useContext(AuthContext);
 
   const {
     register,
