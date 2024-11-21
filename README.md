@@ -1,6 +1,6 @@
-# Fullstack dApp (Motoko + NextJS + Internet Identity)
+# Ares Platform
 
-This template is designed to easily build applications deployed on ICP using Motoko + Next.js + Internet Identity
+Ares Platform is a suite of services that provides pre-built tools for common use cases, making it easier for developers to implement essential features needed to build platforms.
 
 ## Table of Contents
 
