@@ -163,10 +163,10 @@ const MainMenu = () => {
               onClick={() => handleSubmenuNavigationManage(`/workspaces/${workspaceId}/users/roles`)}
               className="cursor-pointer w-full px-4 h-12 flex justify-start items-center text-sm font-semibold text-white"
               style={{
-                borderLeft: router.pathname.includes("/user-management/roles")
+                borderLeft: router.pathname.includes("/users/roles")
                   ? "4px solid #06b6d4"
                   : "4px solid #083344",
-                background: router.pathname.includes("/user-management/roles")
+                background: router.pathname.includes("/users/roles")
                   ? "rgba(15, 75, 100, 0.7)"
                   : "#083344",
               }}>
