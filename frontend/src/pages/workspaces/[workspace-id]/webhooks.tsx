@@ -41,7 +41,7 @@ export default function WebhooksPage(): JSX.Element {
     canisterId: workspaceId,
   }) as CandidActors["workspace"];
   const formSchema = z.object({
-    webhook: z.string().min(1, "Webhook is required"),
+    webhook: z.string().min(1, "Principal is required"),
     name: z.string().min(1, "Name is required"),
   });
   useEffect(() => {
@@ -142,15 +142,6 @@ export default function WebhooksPage(): JSX.Element {
             <div>
               <input
                 type="text"
-                placeholder="Webhook"
-                {...register("webhook", { required: "Webhook is required" })}
-                className={`border p-2 rounded ${errors.webhook ? "border-red-500" : "border-gray-300"}`}
-              />
-              {errors.webhook && <p className="text-red-500">{errors.webhook.message}</p>}
-            </div>
-            <div>
-              <input
-                type="text"
                 placeholder="Name"
                 {...register("name", {
                   required: "Name is required",
@@ -159,6 +150,16 @@ export default function WebhooksPage(): JSX.Element {
               />
               {errors.name && <p className="text-red-500">{errors.name.message}</p>}
             </div>
+            <div>
+              <input
+                type="text"
+                placeholder="Principal"
+                {...register("webhook", { required: "Principal is required" })}
+                className={`border p-2 rounded ${errors.webhook ? "border-red-500" : "border-gray-300"}`}
+              />
+              {errors.webhook && <p className="text-red-500">{errors.webhook.message}</p>}
+            </div>
+
             <button type="submit" className="bg-green-400 text-white px-6 py-2 rounded">
               {loading ? <LoadingSpinner /> : "+ Add"}
             </button>
