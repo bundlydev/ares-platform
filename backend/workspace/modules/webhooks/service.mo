@@ -8,13 +8,10 @@ import Map "mo:map/Map";
 import { phash } "mo:map/Map";
 
 import Models "./models";
-
-import CoreTypes "../core/types";
+import Types "./types";
 
 module {
 	public class WebhookService(_repository : Models.WebhookRepository) {
-		type Event<T> = CoreTypes.Event<T>;
-
 		public func getAll() : [Models.Webhook] {
 			let webhookIter = Map.vals<Principal, Models.Webhook>(_repository);
 			let webhookArray = Iter.toArray(webhookIter);
@@ -24,7 +21,7 @@ module {
 
 		public func register(principal : Principal, name : Text, creator : Principal) : Models.Webhook {
 			let webhook = {
-				ref = actor (Principal.toText(principal)) : Models.Subscriber;
+				ref = actor (Principal.toText(principal)) : Types.Subscriber;
 				name = name;
 				createdAt = Time.now();
 				createdBy = creator;
@@ -39,8 +36,7 @@ module {
 			ignore Map.remove<Principal, Models.Webhook>(_repository, phash, principal);
 		};
 
-		// public func emit(event : Models.CanisterEvents) : async () {
-		public func emit<T>(event : CoreTypes.Event<T>) : async () {
+		public func emit<T>(event : Types.Event) : async () {
 			for (webhook in getAll().vals()) {
 				ignore webhook.ref.callback(event);
 
