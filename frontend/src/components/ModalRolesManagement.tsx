@@ -1,5 +1,5 @@
-import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/router";
 import React, { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -8,9 +8,7 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
 
-import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
-import useStore from "@app/store/useStore";
 
 interface NameData {
   id: string;
@@ -25,13 +23,13 @@ interface PoliciesData {
 type FormValues = {
   name: string;
   description: string;
-  permission: string[]; 
+  permission: string[];
 };
 
 const formSchema = z.object({
-  name: z.string().min(1, "Name is required"), 
+  name: z.string().min(1, "Name is required"),
   description: z.string().min(1, "Description is required"),
-  permission: z.array(z.string()).min(1, "At least one permission is required"), 
+  permission: z.array(z.string()).min(1, "At least one permission is required"),
 });
 
 interface ModalProps {
@@ -41,18 +39,23 @@ interface ModalProps {
   dataNameSearch: NameData[];
 }
 
-const ModalRolesManagement: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, dataNameSearch }) => {
-  const {userMid} = useStore();
-	const { currentIdentity } = useAuth();
+const ModalRolesManagement: FC<ModalProps> = ({
+  showModal,
+  setShowModal,
+  getListFindName,
+  dataNameSearch,
+}) => {
+  const { currentIdentity } = useAuth();
+  const router = useRouter();
   const [inputValue, setInputValue] = useState<string>("");
-  const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
   const [selectedPolicies, setSelectedPolicies] = useState<PoliciesData[]>([]);
   const [selectedPolicyValues, setSelectedPolicyValues] = useState<string[]>([]);
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
-  const dropdownRef = useRef<HTMLDivElement>(null); 
-	const { userManagementId } = useContext(AuthContext);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  let workspaceId = router.query["workspace-id"] as string;
 
   const {
     register,
@@ -60,7 +63,7 @@ const ModalRolesManagement: FC<ModalProps> = ({ showModal, setShowModal, getList
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema), 
+    resolver: zodResolver(formSchema),
   });
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -74,26 +77,15 @@ const ModalRolesManagement: FC<ModalProps> = ({ showModal, setShowModal, getList
     }
   };
 
-  const workspaceIam = workspaceId
-    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-        canisterId: workspaceId,
-      }) as CandidActors["workspaceIam"])
-    : null;
-		const workspaceUser = useCandidActor<CandidActors>(
-			"workspaceUser",
-			currentIdentity,
-			{
-				canisterId: userMid,
-			}
-		) as CandidActors["workspaceUser"];
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
+  }) as CandidActors["workspace"];
   const filteredDataNameSearch = dataNameSearch.filter(
     (name) => !selectedNames.some((selected) => selected.id === name.id)
   );
 
   const getPermissionss = async () => {
-    if (!workspaceIam) return;
-
-    const getRolesResult = await workspaceUser.get_permissions();
+    const getRolesResult = await workspace.users_get_permissions();
     if ("ok" in getRolesResult) {
       const permissionsOptions = getRolesResult.ok.map((permission) => ({
         label: permission.action,
@@ -108,7 +100,7 @@ const ModalRolesManagement: FC<ModalProps> = ({ showModal, setShowModal, getList
 
   useEffect(() => {
     getPermissionss();
-  }, [workspaceUser]);
+  }, []);
 
   useEffect(() => {
     if (inputValue === "") {
@@ -117,7 +109,7 @@ const ModalRolesManagement: FC<ModalProps> = ({ showModal, setShowModal, getList
   }, [inputValue]);
 
   useEffect(() => {
-    setValue("permission", selectedPolicyValues); 
+    setValue("permission", selectedPolicyValues);
   }, [selectedPolicyValues, setValue]);
 
   const togglePolicySelection = (policyValue: string) => {
@@ -130,14 +122,14 @@ const ModalRolesManagement: FC<ModalProps> = ({ showModal, setShowModal, getList
 
   const toggleSelectAllPolicies = () => {
     if (selectedPolicyValues.length === selectedPolicies.length) {
-      setSelectedPolicyValues([]); 
+      setSelectedPolicyValues([]);
     } else {
-      setSelectedPolicyValues(selectedPolicies.map((policy) => policy.value)); 
+      setSelectedPolicyValues(selectedPolicies.map((policy) => policy.value));
     }
   };
 
   const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen); 
+    setIsDropdownOpen(!isDropdownOpen);
   };
 
   useEffect(() => {
@@ -167,10 +159,10 @@ const ModalRolesManagement: FC<ModalProps> = ({ showModal, setShowModal, getList
   }
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    if (!workspaceUser) return;
+    if (!workspace) return;
     setLoading(true);
     try {
-      const response = await workspaceUser.create_role({
+      const response = await workspace.users_create_role({
         name: data.name,
         description: data.description,
         permissions: data.permission,
@@ -187,7 +179,7 @@ const ModalRolesManagement: FC<ModalProps> = ({ showModal, setShowModal, getList
     } catch (error) {
       console.error({ error });
     } finally {
-			window.location.reload();
+      window.location.reload();
       setLoading(false);
     }
   };

@@ -2,19 +2,13 @@ import { Principal } from "@dfinity/principal";
 import { useRouter } from "next/router";
 import React, { useContext, useEffect, useRef, useState } from "react";
 
-import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
+import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
 import LoadingSpinner from "@app/components/LoadingSpinner";
-import Menu from "@app/components/Menu";
 import Modal from "@app/components/Modal";
-import SelectWorkspace from "@app/components/SelectWorkspace";
 import { AuthContext } from "@app/context/auth-context";
 import { useAuthGuard } from "@app/hooks/useGuard";
-import { useProfile } from "@app/hooks/useProfile";
-import { useWorkspaces } from "@app/hooks/useWorkspaces";
-import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
-import useStore from "@app/store/useStore";
 
 export default function WorkspaceUsersPage() {
   type Workspace = {
@@ -30,20 +24,13 @@ export default function WorkspaceUsersPage() {
     id: string;
     username: string;
   };
-	const { userIAMid } = useStore();
   const { currentIdentity } = useAuth();
   const router = useRouter();
   const { ownerId } = useContext(AuthContext);
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [showModalDelete, setShowModalDelete] = useState<boolean>(false);
-  const [deleteItem, setDeleteItem] = useState<string>("");
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const workspaces = useWorkspaces();
-  const profiles = useProfile();
-  const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const identity = useIdentities();
   const loadingAuth = useAuthGuard({ isPrivate: true });
   const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceData[]>([]);
 
@@ -55,22 +42,22 @@ export default function WorkspaceUsersPage() {
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: userIAMid,
-  }) as CandidActors["workspaceIam"];
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
+  }) as CandidActors["workspace"];
 
   useEffect(() => {
     getWorkspaceMembers();
   }, [workspaceId]);
 
   const getWorkspaceMembers = async () => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
-    let getMembersResult = await workspaceIam.get_access_list({ filters: { itype: { user: null } } });
+    let getMembersResult = await workspace.iam_get_access_list({ filters: { itype: { user: null } } });
 
     if ("ok" in getMembersResult) {
       let members = getMembersResult.ok;
-      let getRolesResult = await workspaceIam.get_roles();
+      let getRolesResult = await workspace.iam_get_roles();
       let roles = "ok" in getRolesResult ? getRolesResult.ok : [];
 
       let results = [];
@@ -93,10 +80,6 @@ export default function WorkspaceUsersPage() {
       let error = getMembersResult.err;
       console.error(error);
     }
-  };
-
-  const getFirstLetter = (text: string): string => {
-    return text.charAt(0).toUpperCase();
   };
 
   const getListFindName = async (nameText: string) => {
@@ -122,13 +105,13 @@ export default function WorkspaceUsersPage() {
   };
 
   const deleteIdmember = async (idMember: string) => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
     setLoading(true);
 
     try {
       const memberId = Principal.fromText(idMember);
-      const response = await workspaceIam.delete_access(memberId);
+      const response = await workspace.iam_delete_access(memberId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -146,12 +129,12 @@ export default function WorkspaceUsersPage() {
   };
 
   const addMemberWorkspace = async (userId: string) => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
     setLoading(true);
     try {
       const memberId = Principal.fromText(userId);
-      const response = await workspaceIam.create_access({
+      const response = await workspace.iam_create_access({
         identity: memberId,
         roleId: "Administrator",
         itype: { user: null },
@@ -173,10 +156,6 @@ export default function WorkspaceUsersPage() {
     }
   };
 
-  const handleToggle = () => {
-    setIsOpen(!isOpen);
-  };
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -186,7 +165,6 @@ export default function WorkspaceUsersPage() {
         !workspaceRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
-        setWorkspaceIsOpen(false);
       }
     };
 
@@ -224,9 +202,11 @@ export default function WorkspaceUsersPage() {
               <div key={index} className="grid grid-cols-3 p-4">
                 <div>
                   {item.name}
-                  <span className="text-cyan-800 bg-gray-200 rounded-[5px] text-sm font-bold px-[5px] ml-[8px]">
-                    OWNER
-                  </span>
+                  {item.id === ownerId && (
+                    <span className="text-cyan-800 bg-gray-200 rounded-[5px] text-sm font-bold px-[5px] ml-[8px]">
+                      OWNER
+                    </span>
+                  )}
                 </div>
                 <div>{item.role}</div>
                 <div>

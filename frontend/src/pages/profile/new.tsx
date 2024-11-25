@@ -24,7 +24,6 @@ export default function NewProfilePage(): JSX.Element {
   const { setProfile } = useContext(AuthContext);
   const { currentIdentity } = useAuth();
 
-  const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const accountManager = useCandidActor<CandidActors>(
@@ -64,11 +63,6 @@ export default function NewProfilePage(): JSX.Element {
     }
   };
 
-  // useEffect(() => {
-  //   if (submissionSuccess) {
-  //     window.location.reload();
-  //   }
-  // }, [submissionSuccess]);
 
   return (
     <BlankLayout>

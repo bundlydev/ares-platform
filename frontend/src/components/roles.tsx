@@ -5,16 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters";
-import LoadingSpinner from "@app/components/LoadingSpinner";
 import ModalRoles from "@app/components/ModalRoles";
 import { useAuthGuard } from "@app/hooks/useGuard";
-import WorkspaceLayout from "@app/layouts/WorkspaceLayout";
-import useStore from "@app/store/useStore";
 
-type Workspace = {
-  id: string;
-  name: string;
-};
 type WorkspaceData = {
   name: string;
   description: string;
@@ -26,15 +19,13 @@ type UsernameData = {
 };
 
 export default function WorkspaceRolesPage(): JSX.Element {
-	const { userIAMid } = useStore();
   const router = useRouter();
   const { currentIdentity } = useAuth();
   useAuthGuard({ isPrivate: true });
   const [showModal, setShowModal] = useState<boolean>(false);
   const [dataNameSearch, setDataNameSearch] = useState<UsernameData[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  // TODO: loading is unused
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [workspaceIsOpen, setWorkspaceIsOpen] = useState<boolean>(false);
   const [rolesList, setRolesList] = useState<WorkspaceData[]>([]);
 
   const workspaceRef = useRef<HTMLDivElement>(null);
@@ -47,9 +38,9 @@ export default function WorkspaceRolesPage(): JSX.Element {
     currentIdentity
   ) as CandidActors["accountManager"];
 
-  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: userIAMid,
-  }) as CandidActors["workspaceIam"];
+  const workspaceIam = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
+  }) as CandidActors["workspace"];
 
   useEffect(() => {
     getRoles();
@@ -58,7 +49,7 @@ export default function WorkspaceRolesPage(): JSX.Element {
   const getRoles = async () => {
     if (!workspaceIam) return;
 
-    const getRolesResult = await workspaceIam.get_roles();
+    const getRolesResult = await workspaceIam.iam_get_roles();
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
         name: role.name,
@@ -97,11 +88,9 @@ export default function WorkspaceRolesPage(): JSX.Element {
   const deleteIdapp = async (idApp: string) => {
     if (!workspaceIam) return;
 
-    setLoading(true);
-
     try {
       const appId = Principal.fromText(idApp);
-      const response = await workspaceIam.delete_access(appId);
+      const response = await workspaceIam.iam_delete_access(appId);
 
       if ("err" in response) {
         if ("userNotAuthenticated" in response.err) console.log("User not authenticated");
@@ -111,7 +100,6 @@ export default function WorkspaceRolesPage(): JSX.Element {
     } catch (error) {
       console.error("error response", { error });
     } finally {
-      setLoading(false);
       window.location.reload();
     }
   };
@@ -128,7 +116,6 @@ export default function WorkspaceRolesPage(): JSX.Element {
         !workspaceRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
-        setWorkspaceIsOpen(false);
       }
     };
 
@@ -137,12 +124,9 @@ export default function WorkspaceRolesPage(): JSX.Element {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [menuRef, workspaceRef]);
-  console.log(rolesList, "rolesList");
   return (
     <div className="flex flex-col w-full mt-4">
-      <div
-        style={{ height: "calc(100vh - 64px)" }}
-        className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
+      <div className="container w-full flex flex-col justify-start items-end  bg-slate-100 h-full p-6 rounded-lg">
         <button
           className="bg-green-400 text-white px-8 py-2 rounded-lg mb-4 w-36"
           onClick={() => setShowModal(true)}>
@@ -152,23 +136,12 @@ export default function WorkspaceRolesPage(): JSX.Element {
           <div className="grid grid-cols-3 bg-gray-200 p-4 text-gray-700 font-bold">
             <div>Name</div>
             <div>Description</div>
-            <div>Action</div>
           </div>
           <div className="divide-y divide-gray-200">
             {rolesList.map((item, index) => (
               <div key={index} className="grid grid-cols-3 p-4">
                 <div>{item.name}</div>
                 <div>{item.description}</div>
-                <div>
-                  <button
-                    className="bg-red-500 text-white py-1 px-3 rounded-lg"
-                    onClick={() => {
-                      deleteIdapp(item.name);
-                    }}
-                    disabled={loading}>
-                    {loading ? <LoadingSpinner /> : "Delete"}
-                  </button>
-                </div>
               </div>
             ))}
           </div>
