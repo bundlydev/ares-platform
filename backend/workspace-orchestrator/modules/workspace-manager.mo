@@ -3,12 +3,9 @@ import Principal "mo:base/Principal";
 import List "mo:base/List";
 import Array "mo:base/Array";
 import Error "mo:base/Error";
-import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Cycles "mo:base/ExperimentalCycles";
 import Iter "mo:base/Iter";
-import Random "mo:base/Random";
-import Blob "mo:base/Blob";
 
 // Mops Modules
 import Map "mo:map/Map";
@@ -19,10 +16,10 @@ import IC "mo:ic";
 import CyclesLedgerModule "./cycles-ledger";
 
 // Actor Classes
-import WorkspaceIam "../../workspace-iam/main";
-import WorkspaceUserManagement "../../workspace-user-management/main";
+import WorkspaceActor "../../workspace/main";
 
-import WorkspaceOrchestratorModels "../models";
+import Models "../models";
+import Results "../results";
 
 module WorkspaceManager {
 	// Errors
@@ -36,37 +33,30 @@ module WorkspaceManager {
 		canisters : {
 			main : Principal;
 			iam : Principal;
+			webhooks : Principal;
 		};
 	};
 
 	public class WorkspaceManagerService(
-		_storage : WorkspaceOrchestratorModels.WorkspaceCollection,
+		_storage : Models.WorkspaceCollection,
 		cyclesLedgerService : CyclesLedgerModule.CyclesLedgerService,
 	) {
 		private let ic = actor ("aaaaa-aa") : IC.Service;
 
-		private func generatePrincipal() : async Principal {
-			var b = await Random.blob();
-			var array = Blob.toArray(b);
-			array := Array.subArray<Nat8>(array, 0, 28);
-			b := Blob.fromArray(array);
-			Principal.fromBlob(b);
-		};
-
-		public func getAll() : [WorkspaceOrchestratorModels.Workspace] {
-			let workspaceIter = Map.vals<Principal, WorkspaceOrchestratorModels.Workspace>(_storage);
+		public func getAll() : [Models.Workspace] {
+			let workspaceIter = Map.vals<Principal, Models.Workspace>(_storage);
 			let workspaceArray = Iter.toArray(workspaceIter);
 			return workspaceArray;
 		};
 
-		public func getById(workspaceId : Principal) : ?WorkspaceOrchestratorModels.Workspace {
-			return Map.get<Principal, WorkspaceOrchestratorModels.Workspace>(_storage, phash, workspaceId);
+		public func getById(workspaceId : Principal) : ?Models.Workspace {
+			return Map.get<Principal, Models.Workspace>(_storage, phash, workspaceId);
 		};
 
-		public func getAllByMemberId(memberId : Principal) : [WorkspaceOrchestratorModels.Workspace] {
-			var workspaceList : List.List<WorkspaceOrchestratorModels.Workspace> = List.nil();
+		public func getAllByMemberId(memberId : Principal) : [Models.Workspace] {
+			var workspaceList : List.List<Models.Workspace> = List.nil();
 
-			for (workspace in Map.vals<Principal, WorkspaceOrchestratorModels.Workspace>(_storage)) {
+			for (workspace in Map.vals<Principal, Models.Workspace>(_storage)) {
 				for (member in workspace.members.vals()) {
 					if (Principal.equal(member, memberId)) {
 						workspaceList := List.push(workspace, workspaceList);
@@ -75,9 +65,6 @@ module WorkspaceManager {
 			};
 
 			let workspaceArray = List.toArray(workspaceList);
-
-			// let workspaceIter = Map.vals<Principal, WorkspaceOrchestratorModels.Workspace>(_storage);
-			// let workspaceArray = Iter.toArray(workspaceIter);
 
 			return workspaceArray;
 		};
@@ -91,7 +78,7 @@ module WorkspaceManager {
 
 					let workspaceUpdated = { workspace with members = members };
 
-					ignore Map.put<Principal, WorkspaceOrchestratorModels.Workspace>(_storage, phash, workspaceUpdated.wip, workspaceUpdated);
+					ignore Map.put<Principal, Models.Workspace>(_storage, phash, workspaceUpdated.wip, workspaceUpdated);
 				};
 				case null throw Error.reject(WORKSPACE_NOT_FOUND);
 			};
@@ -111,92 +98,44 @@ module WorkspaceManager {
 
 					let workspaceUpdated = { workspace with members = members };
 
-					ignore Map.put<Principal, WorkspaceOrchestratorModels.Workspace>(_storage, phash, workspaceUpdated.wip, workspaceUpdated);
+					ignore Map.put<Principal, Models.Workspace>(_storage, phash, workspaceUpdated.wip, workspaceUpdated);
 				};
 				case null throw Error.reject(WORKSPACE_NOT_FOUND);
 			};
 		};
 
-		public func create(name : Text, creator : Principal) : async WorkspaceOrchestratorModels.Workspace {
-			let iam = await createIamCanister(creator);
-			let user_management = await createUserManagementCanister(creator, Principal.fromActor(iam));
+		public func create(name : Text, creator : Principal) : async Models.Workspace {
+			let workspaceRef = await createWorkspaceCanister(creator);
 
-			let wip = await generatePrincipal();
+			await workspaceRef.init();
 
-			let workspace : WorkspaceOrchestratorModels.Workspace = {
-				wip;
+			let workspace : Models.Workspace = {
+				wip = Principal.fromActor(workspaceRef);
+				ref = workspaceRef;
 				name;
 				owner = creator;
-				members = [];
-				canisters = {
-					iam = iam;
-					user_management = user_management;
-				};
+				members = [creator];
 			};
 
-			ignore Map.put<Principal, WorkspaceOrchestratorModels.Workspace>(_storage, phash, workspace.wip, workspace);
+			ignore Map.put<Principal, Models.Workspace>(_storage, phash, workspace.wip, workspace);
 
-			// Init Default IAM Access
-			let adminPolicy = {
-				pid = "AdministratorAccess";
-				ptype = #managed;
-				statements = [{
-					effect = #allow;
-					action = #all;
-				}];
-			};
-
-			ignore await iam.create_policy(adminPolicy);
-
-			let adminRoleData = {
-				name = "Administrator";
-				description = "Grant full access to the workspace";
-				policies = [adminPolicy.pid];
-			};
-
-			let addRoleResult = await iam.create_role(adminRoleData);
-
-			switch (addRoleResult) {
-				case (#ok(role)) {
-					let newAccess = {
-						identity = creator;
-						roleId = role.rid;
-						itype = #user;
-					};
-
-					ignore await iam.create_access(newAccess);
-
-					return workspace;
-				};
-				case (#err(_error)) {
-					// TODO: Handle error correctly
-					throw Error.reject("Error");
-				};
-			};
+			return workspace;
 		};
 
-		public func createIamCanister(owner : Principal) : async WorkspaceIam.IamActorClass {
+		private func createWorkspaceCanister(owner : Principal) : async WorkspaceActor.WorkspaceClass {
 			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
 			Cycles.add<system>(113_846_199_230);
 
-			let iam = await WorkspaceIam.IamActorClass(owner);
+			let workpace = await WorkspaceActor.WorkspaceClass(owner);
 
-			return iam;
-		};
-
-		public func createUserManagementCanister(owner : Principal, iam : Principal) : async WorkspaceUserManagement.WorkspaceUserManagementActorClass {
-			// TODO: Validate if 113_846_199_230 is the correct amount and if it should be a constant
-			Cycles.add<system>(113_846_199_230);
-
-			let userManagement = await WorkspaceUserManagement.WorkspaceUserManagementActorClass(owner, iam);
-
-			return userManagement;
+			return workpace;
 		};
 
 		public func delete(workspaceId : Principal, requester : Principal) : async ({ refundedCycles : Nat }) {
 			let maybeWorkspace = getById(workspaceId);
 
 			switch (maybeWorkspace) {
+				case null throw Error.reject(WORKSPACE_NOT_FOUND);
 				case (?workspace) {
 					let hasAccess = Principal.equal(workspace.owner, requester);
 
@@ -204,15 +143,16 @@ module WorkspaceManager {
 						throw Error.reject(UNAUTHORIZED);
 					};
 
-					let deleteIamCanisterResult = await deleteIamCanister(workspace.canisters.iam);
-					let deleteUserManagementCanisterResult = await deleteUserManagementCanister(workspace.canisters.user_management);
+					let canister = workspace.ref;
 
-					switch (deleteIamCanisterResult, deleteUserManagementCanisterResult) {
-						case (#ok(iamResult), #ok(userManagementResult)) {
-							ignore Map.remove<Principal, WorkspaceOrchestratorModels.Workspace>(_storage, phash, workspaceId);
+					let deleteResult = await deleteCanister(canister);
 
-							let refundedCycles = iamResult.refundedCycles + userManagementResult.refundedCycles;
-
+					switch (deleteResult) {
+						case (#err(_error)) {
+							throw Error.reject("Error on delete canister");
+						};
+						case (#ok(result)) {
+							let refundedCycles = result.refundedCycles;
 							let newCyclesEntry : CyclesLedgerModule.CycleTransaction = {
 								amount = refundedCycles;
 								recipient = workspace.owner;
@@ -224,50 +164,20 @@ module WorkspaceManager {
 
 							return { refundedCycles };
 						};
-						case (_) {
-							// TODO: Handle error correctly
-							throw Error.reject("Error");
-						};
 					};
 				};
-				case null throw Error.reject(WORKSPACE_NOT_FOUND);
 			};
 		};
 
-		type DeleteIamCanisterResultOk = {
-			refundedCycles : Nat;
+		type DeleteCanisterRef = actor {
+			prepare_deletion : shared () -> async Results.DeleteCanisterResult;
 		};
 
-		type DeleteIamCanisterResultErr = {
-			#unauthorized;
-		};
+		private func deleteCanister(canister : DeleteCanisterRef) : async Results.DeleteCanisterResult {
+			let deletionResult = await canister.prepare_deletion();
 
-		type DeleteIamCanisterResult = Result.Result<DeleteIamCanisterResultOk, DeleteIamCanisterResultErr>;
-
-		public func deleteIamCanister(iam : WorkspaceIam.IamActorClass) : async DeleteIamCanisterResult {
-			let deletionResult = await iam.prepare_deletion();
-
-			await ic.stop_canister({ canister_id = Principal.fromActor(iam) });
-			await ic.delete_canister({ canister_id = Principal.fromActor(iam) });
-
-			return deletionResult;
-		};
-
-		type DeleteUserManagementCanisterResultOk = {
-			refundedCycles : Nat;
-		};
-
-		type DeleteUserManagementCanisterResultErr = {
-			#unauthorized;
-		};
-
-		type DeleteUserManagementCanisterResult = Result.Result<DeleteUserManagementCanisterResultOk, DeleteUserManagementCanisterResultErr>;
-
-		public func deleteUserManagementCanister(userManagement : WorkspaceUserManagement.WorkspaceUserManagementActorClass) : async DeleteUserManagementCanisterResult {
-			let deletionResult = await userManagement.prepare_deletion();
-
-			await ic.stop_canister({ canister_id = Principal.fromActor(userManagement) });
-			await ic.delete_canister({ canister_id = Principal.fromActor(userManagement) });
+			await ic.stop_canister({ canister_id = Principal.fromActor(canister) });
+			await ic.delete_canister({ canister_id = Principal.fromActor(canister) });
 
 			return deletionResult;
 		};

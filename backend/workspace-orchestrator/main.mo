@@ -14,13 +14,13 @@ import TextValidator "mo:validators/Text";
 import CyclesLedgerModule "./modules/cycles-ledger";
 import WorkspaceManager "./modules/workspace-manager";
 
-import WorkspaceOrchestratorEvents "./events";
-import WorkspaceOrchestratorModels "./models";
-import WorkspaceOrchestratorTypes "./types";
+// import Events "./events";
+import Models "./models";
+import Results "./results";
 
 actor WorkspaceOrchestrator {
 	// Database
-	stable let _workspaces : WorkspaceOrchestratorModels.WorkspaceCollection = Map.new<Principal, WorkspaceOrchestratorModels.Workspace>();
+	stable let _workspaces : Models.WorkspaceCollection = Map.new<Principal, Models.Workspace>();
 	stable var _cyclesLedger : CyclesLedgerModule.CyclesLedgerStorage = Map.new<Nat, CyclesLedgerModule.CycleTransaction>();
 
 	// Services
@@ -40,7 +40,7 @@ actor WorkspaceOrchestrator {
 		return availableBalance;
 	};
 
-	public shared composite query ({ caller }) func get_my_balance() : async WorkspaceOrchestratorTypes.GetMyBalanceResponse {
+	public shared composite query ({ caller }) func get_my_balance() : async Results.GetMyBalanceResult {
 		if (Principal.isAnonymous(caller)) return #err(#unauthorized);
 
 		let balance = cyclesLedgerService.getUserBalance(caller);
@@ -48,12 +48,12 @@ actor WorkspaceOrchestrator {
 		#ok({ balance });
 	};
 
-	public shared composite query ({ caller }) func get_my_workspaces() : async WorkspaceOrchestratorTypes.GetMyWorkspacesResponse {
+	public shared composite query ({ caller }) func get_my_workspaces() : async Results.GetMyWorkspacesResult {
 		if (Principal.isAnonymous(caller)) return #err(#unauthorized);
 
 		let workspaces = workspaceManagerService.getAllByMemberId(caller);
 
-		let result = Array.map<WorkspaceOrchestratorModels.Workspace, WorkspaceOrchestratorTypes.GetMyWorkspacesResponseOkItem>(
+		let result = Array.map<Models.Workspace, Results.GetMyWorkspacesResultOkItem>(
 			workspaces,
 			func(workspace) {
 				return {
@@ -66,7 +66,7 @@ actor WorkspaceOrchestrator {
 		return #ok(result);
 	};
 
-	public shared query ({ caller }) func get_workspace_info(wip : Principal) : async WorkspaceOrchestratorTypes.GetWorkspaceInfoResult {
+	public shared query ({ caller }) func get_workspace_info(wip : Principal) : async Results.GetWorkspaceInfoResult {
 		if (Principal.isAnonymous(caller)) return #err(#unauthorized);
 
 		switch (workspaceManagerService.getById(wip)) {
@@ -80,13 +80,10 @@ actor WorkspaceOrchestrator {
 
 				let result = {
 					wip = workspace.wip;
+					ref = Principal.fromActor(workspace.ref);
 					name = workspace.name;
 					owner = workspace.owner;
 					members = workspace.members;
-					canisters = {
-						iam = Principal.fromActor(workspace.canisters.iam);
-						user_management = Principal.fromActor(workspace.canisters.user_management);
-					};
 				};
 
 				return #ok(result);
@@ -95,9 +92,9 @@ actor WorkspaceOrchestrator {
 		};
 	};
 
-	public shared ({ caller }) func create_workspace(data : WorkspaceOrchestratorTypes.CreateWorkspaceData) : async WorkspaceOrchestratorTypes.CreateWorkspaceResponse {
+	public shared ({ caller }) func create_workspace(data : Results.CreateWorkspaceData) : async Results.CreateWorkspaceResult {
 		if (Principal.isAnonymous(caller)) return #err(#unauthorized);
-		// TODO: Validate if the account exists
+		// TODO: Only users with account and cycles should be able to create a workspace
 
 		if (TextValidator.isEmpty(data.name)) {
 			return #err(#requiredField("name"));
@@ -106,22 +103,17 @@ actor WorkspaceOrchestrator {
 		let workspace = await workspaceManagerService.create(data.name, caller);
 
 		let result = {
-			// TODO: Change how the workspace id is generated
-			// TODO: Add created_at field
 			wip = workspace.wip;
+			ref = Principal.fromActor(workspace.ref);
 			name = workspace.name;
 			owner = workspace.owner;
 			members = workspace.members;
-			canisters = {
-				iam = Principal.fromActor(workspace.canisters.iam);
-				user_management = Principal.fromActor(workspace.canisters.user_management);
-			};
 		};
 
 		#ok(result);
 	};
 
-	public shared ({ caller }) func delete_workspace(wip : Principal) : async WorkspaceOrchestratorTypes.DeleteWorkspaceResponse {
+	public shared ({ caller }) func delete_workspace(wip : Principal) : async Results.DeleteWorkspaceResult {
 		if (Principal.isAnonymous(caller)) return #err(#unauthorized);
 		// TODO: Validate if the account exists
 
@@ -135,33 +127,22 @@ actor WorkspaceOrchestrator {
 		};
 	};
 
-	public shared ({ caller }) func webhook_receiver(event : WorkspaceOrchestratorEvents.EventVariants) {
-		if (Principal.isAnonymous(caller)) return;
-
-		let maybeWorkspace = Array.find<WorkspaceOrchestratorModels.Workspace>(
-			workspaceManagerService.getAll(),
-			func workspace = Principal.equal(Principal.fromActor(workspace.canisters.iam), caller) or Principal.equal(Principal.fromActor(workspace.canisters.user_management), caller),
-		);
-
-		switch (maybeWorkspace) {
+	public shared ({ caller }) func add_workspace_member(userId : Principal) : async () {
+		switch (workspaceManagerService.getById(caller)) {
 			case (?workspace) {
-				switch (event) {
-					case (#WorkspaceIam(event)) {
-						switch (event) {
-							case (#AccessCreated(data)) {
-								if (data.itype == #user) {
-									await workspaceManagerService.addMember(workspace.wip, data.identity);
-								};
-							};
-							case (#AccessRemoved(data)) {
-								if (data.itype == #user) {
-									await workspaceManagerService.removeMember(workspace.wip, data.identity);
-								};
-							};
-						};
-					};
-				};
+				await workspaceManagerService.addMember(workspace.wip, userId);
 			};
+			// TODO: Return unauthorized error
+			case (null) return;
+		};
+	};
+
+	public shared ({ caller }) func remove_workspace_member(userId : Principal) : async () {
+		switch (workspaceManagerService.getById(caller)) {
+			case (?workspace) {
+				await workspaceManagerService.removeMember(workspace.wip, userId);
+			};
+			// TODO: Return unauthorized error
 			case (null) return;
 		};
 	};

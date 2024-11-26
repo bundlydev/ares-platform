@@ -14,7 +14,7 @@ type FormValues = {
 export default function CreateWorkspacePage(): JSX.Element {
   useAuthGuard({ isPrivate: true });
   const [loading, setLoading] = useState(false);
-  const { isAuthenticated, currentIdentity, changeCurrentIdentity } = useAuth();
+  const { currentIdentity } = useAuth();
   const {
     register,
     handleSubmit,

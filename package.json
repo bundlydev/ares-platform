@@ -28,5 +28,8 @@
     "@trivago/prettier-plugin-sort-imports": "4.3.0",
     "prettier": "^3.3.2",
     "turbo": "^1.13.4"
+  },
+  "dependencies": {
+    "eslint-config-next": "^14.2.15"
   }
 }

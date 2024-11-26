@@ -5,7 +5,8 @@ import z from "zod";
 import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
-import useStore from '../store/useStore';
+
+import useStore from "../store/useStore";
 
 export type AuthUserProfile = {
   username: string;
@@ -46,11 +47,10 @@ export type AuthContextType = {
   workspaces: AuthUserWorkspace[];
   workspaceId?: string;
   ownerId?: string;
-  iamId?: string;
-  userManagementId?: string;
   setProfile: (profile: AuthUserProfile) => void;
   setWorkspaceId: (id: string) => void;
   setOwnerId: (id: string) => void;
+	
 };
 
 export const AuthContext = createContext<AuthContextType>({
@@ -61,12 +61,10 @@ export const AuthContext = createContext<AuthContextType>({
   setProfile: () => {},
   setWorkspaceId: () => {},
   setOwnerId: () => {},
-  iamId: undefined,
-  userManagementId: undefined,
 });
 
 export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
-	const { setUserMid, setUserIAMid } = useStore();
+  const {  setWorkspaceRefId } = useStore();
   const { isAuthenticated, currentIdentity } = useAuth();
   const accountManager = useCandidActor<CandidActors>(
     "accountManager",
@@ -81,8 +79,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<AuthUserProfile | undefined>();
   const [workspaces, setWorkspaces] = useState<AuthUserWorkspace[]>([]);
   const [workspaceId, setWorkspaceId] = useState<string | undefined>();
-  const [iamId, setIamId] = useState<string | undefined>();
-  const [userManagementId, setUserManagementId] = useState<string | undefined>();
   const [ownerId, setOwnerId] = useState<string | undefined>();
 
   useEffect(() => {
@@ -93,7 +89,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
             accountManager.get_my_info(),
             workspaceOrchestrator.get_my_workspaces(),
           ]);
-
           if ("err" in profileResponse) {
             throw new Error("Invalid profile response");
           }
@@ -129,16 +124,13 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
 
           setProfile(profileParse.data.ok);
           setWorkspaces(retrievedWorkspaces);
-          if (workspaceId ) {
+          if (workspaceId) {
             const responseOwner = await workspaceOrchestrator.get_workspace_info(
-              Principal.fromText(workspaceId )
+              Principal.fromText(workspaceId)
             );
             if (responseOwner && "ok" in responseOwner) {
               setOwnerId(responseOwner.ok.owner.toString());
-              setIamId(responseOwner.ok.canisters.iam.toString());
-              setUserManagementId(responseOwner.ok.canisters.user_management.toString());
-							setUserMid(responseOwner.ok.canisters.user_management.toString())
-							setUserIAMid(responseOwner.ok.canisters.iam.toString())
+							setWorkspaceRefId(responseOwner.ok.ref.toString())
             }
           }
         } catch (error) {
@@ -153,7 +145,7 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
     }
 
     loadProfileAndWorkspaces();
-  }, [isAuthenticated, currentIdentity,workspaceId]);
+  }, [isAuthenticated, currentIdentity, workspaceId]);
 
   const updateProfile = (newProfile: AuthUserProfile) => {
     setProfile(newProfile);
@@ -170,8 +162,6 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
           setWorkspaceId,
           setOwnerId,
           ownerId,
-          iamId,
-          userManagementId,
         }}>
         {children}
       </AuthContext.Provider>

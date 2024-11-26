@@ -1,14 +1,16 @@
 import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { ChangeEvent, FC, useContext, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/router";
+import React, {  FC, useEffect, useRef, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useAuth, useCandidActor } from "@bundly/ares-react";
+
 import { CandidActors } from "@app/canisters/index";
-import { AuthContext } from "../context/auth-context";
-import LoadingSpinner from "./LoadingSpinner";
 import useStore from "@app/store/useStore";
+
+import LoadingSpinner from "./LoadingSpinner";
 
 interface NameData {
   id: string;
@@ -27,9 +29,7 @@ type FormValues = {
 };
 
 const formSchema = z.object({
-  identity: z.string().min(1, "Description is required"),
-  permission: z.array(z.string()).min(1, "At least one permission is required"),
-  roles: z.array(z.string()).min(1, "At least one role is required"),
+  identity: z.string().min(1, "Identity is required"),
 });
 
 interface ModalProps {
@@ -39,12 +39,10 @@ interface ModalProps {
 }
 
 const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNameSearch }) => {
-  const {userMid} = useStore();
-	const { currentIdentity } = useAuth();
+  const router = useRouter();
+  const { currentIdentity } = useAuth();
   const [inputValue, setInputValue] = useState<string>("");
-  const { workspaceId } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
-  const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
   const [selectedPolicies, setSelectedPolicies] = useState<PoliciesData[]>([]);
   const [selectedPolicyValues, setSelectedPolicyValues] = useState<string[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<PoliciesData[]>([]);
@@ -53,7 +51,8 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
   const [isRolesDropdownOpen, setIsRolesDropdownOpen] = useState<boolean>(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const rolesDropdownRef = useRef<HTMLDivElement>(null);
-  const { userManagementId } = useContext(AuthContext);
+
+  let workspaceId = router.query["workspace-id"] as string;
 
   const {
     register,
@@ -64,19 +63,13 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
     resolver: zodResolver(formSchema),
   });
 
-  const workspaceIam = workspaceId
-    ? (useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-        canisterId: workspaceId,
-      }) as CandidActors["workspaceIam"])
-    : null;
-
-  const workspaceUser = useCandidActor<CandidActors>("workspaceUser", currentIdentity, {
-    canisterId: userMid,
-  }) as CandidActors["workspaceUser"];
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
+  }) as CandidActors["workspace"];
 
   const getPermissions = async () => {
-    if (!workspaceIam) return;
-    const getRolesResult = await workspaceUser.get_permissions();
+    if (!workspace) return;
+    const getRolesResult = await workspace.users_get_permissions();
     if ("ok" in getRolesResult) {
       const permissionsOptions = getRolesResult.ok.map((permission) => ({
         label: permission.action,
@@ -90,9 +83,9 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
   };
 
   const getRoles = async () => {
-    if (!workspaceIam) return;
-    const getRolesResult = await workspaceUser.get_roles(); 
-		if ("ok" in getRolesResult) {
+    if (!workspace) return;
+    const getRolesResult = await workspace.users_get_roles();
+    if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
         label: role.name,
         value: role.name,
@@ -159,13 +152,13 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
   }
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    if (!workspaceUser) return;
+    if (!workspace) return;
     setLoading(true);
     try {
-      const response = await workspaceUser.create_access({
-        permissions: data.permission,
+      const response = await workspace.users_create_access({
+        permissions: data.permission || [],
         identity: Principal.fromText(data.identity),
-        roles: data.roles,
+        roles: selectedRoleValues,
       });
 
       if ("err" in response) {
@@ -200,45 +193,6 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
               className="h-10 w-full rounded-lg border border-gray-300 px-2"
             />
             <span className="text-red-500 h-2">{errors.identity?.message}</span>
-          </div>
-          <div className="flex flex-col" ref={dropdownRef}>
-            <label htmlFor="permission" className="text-gray-700 font-semibold">
-              Permissions
-            </label>
-            <div
-              className="relative bg-white border w-full border-gray-300 mt-2 p-2 rounded-md"
-              onClick={toggleDropdown}
-              style={{ cursor: "pointer" }}>
-              <div className="flex justify-between items-center">
-                <span>{getSelectedPoliciesText()}</span>
-                <svg
-                  className={`transition-transform transform ${isDropdownOpen ? "rotate-180" : "rotate-0"} w-5 h-5`}
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
-              {isDropdownOpen && (
-                <div className="absolute z-10 left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto">
-                  <div className="p-2">
-                    {selectedPolicies.map((permission) => (
-                      <div key={permission.value} className="flex items-center mt-2">
-                        <input
-                          type="checkbox"
-                          checked={selectedPolicyValues.includes(permission.value)}
-                          onChange={() => togglePolicySelection(permission.value)}
-                          className="accent-cyan-950 mr-2"
-                        />
-                        <span>{permission.label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            <span className="text-red-500 h-2">{errors.permission?.message}</span>
           </div>
 
           {/* Multiselect for Roles */}
@@ -279,7 +233,44 @@ const ModalUsersManagement: FC<ModalProps> = ({ showModal, setShowModal, dataNam
                 </div>
               )}
             </div>
-            <span className="text-red-500 h-2">{errors.roles?.message}</span>
+          </div>
+          <div className="flex flex-col" ref={dropdownRef}>
+            <label htmlFor="permission" className="text-gray-700 font-semibold">
+              Permissions
+            </label>
+            <div
+              className="relative bg-white border w-full border-gray-300 mt-2 p-2 rounded-md"
+              onClick={toggleDropdown}
+              style={{ cursor: "pointer" }}>
+              <div className="flex justify-between items-center">
+                <span>{getSelectedPoliciesText()}</span>
+                <svg
+                  className={`transition-transform transform ${isDropdownOpen ? "rotate-180" : "rotate-0"} w-5 h-5`}
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+              {isDropdownOpen && (
+                <div className="absolute z-10 left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto">
+                  <div className="p-2">
+                    {selectedPolicies.map((permission) => (
+                      <div key={permission.value} className="flex items-center mt-2">
+                        <input
+                          type="checkbox"
+                          checked={selectedPolicyValues.includes(permission.value)}
+                          onChange={() => togglePolicySelection(permission.value)}
+                          className="accent-cyan-950 mr-2"
+                        />
+                        <span>{permission.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end">

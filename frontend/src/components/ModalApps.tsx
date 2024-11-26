@@ -1,6 +1,7 @@
 import { Principal } from "@dfinity/principal";
 import { zodResolver } from "@hookform/resolvers/zod";
-import React, { ChangeEvent, FC, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import React, { ChangeEvent, FC, useEffect, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -8,9 +9,7 @@ import { useAuth, useCandidActor } from "@bundly/ares-react";
 
 import { CandidActors } from "@app/canisters/index";
 
-import { AuthContext } from "../context/auth-context";
 import LoadingSpinner from "./LoadingSpinner";
-import useStore from "@app/store/useStore";
 
 interface NameData {
   id: string;
@@ -50,53 +49,33 @@ const formSchema = z.object({
 interface ModalProps {
   showModal: boolean;
   setShowModal: (show: boolean) => void;
-  getListFindName: (nameText: string) => void;
-  dataNameSearch: NameData[];
-	getData: any
+  getData: any;
 }
 
-const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, dataNameSearch, getData }) => {
+const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getData }) => {
   const { currentIdentity } = useAuth();
-	const { userIAMid } = useStore();
-  const [inputValue, setInputValue] = useState<string>("");
-  const { workspaceId } = useContext(AuthContext);
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [inputValueId, setInputValueId] = useState<string>("");
-  const [selectedNames, setSelectedNames] = useState<NameData[]>([]);
   const [selectedRoles, setSelectedRoles] = useState<RoleData[]>([]);
+
+  let workspaceId = router.query["workspace-id"] as string;
 
   const {
     register,
     handleSubmit,
-    setError,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(formSchema), 
+    resolver: zodResolver(formSchema),
   });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-
-    if (value.length >= 3) {
-      getListFindName(value);
-    } else {
-      setSelectedNames([]);
-    }
-  };
-
-  const workspaceIam = useCandidActor<CandidActors>("workspaceIam", currentIdentity, {
-    canisterId: userIAMid,
-  }) as CandidActors["workspaceIam"];
-
-  const filteredDataNameSearch = dataNameSearch.filter(
-    (name) => !selectedNames.some((selected) => selected.id === name.id)
-  );
+  const workspace = useCandidActor<CandidActors>("workspace", currentIdentity, {
+    canisterId: workspaceId,
+  }) as CandidActors["workspace"];
 
   const getRoles = async () => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
 
-    const getRolesResult = await workspaceIam.get_roles();
+    const getRolesResult = await workspace.iam_get_roles();
     if ("ok" in getRolesResult) {
       const rolesOptions = getRolesResult.ok.map((role) => ({
         label: role.name,
@@ -113,22 +92,16 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
     getRoles();
   }, []);
 
-  useEffect(() => {
-    if (inputValue === "") {
-      setSelectedNames([]);
-    }
-  }, [inputValue]);
-
   if (!showModal) {
     return null;
   }
 
   const onSubmit: SubmitHandler<FormValues> = async (data) => {
-    if (!workspaceIam) return;
+    if (!workspace) return;
     setLoading(true);
     try {
-      const value = Principal.fromText(data.name); 
-      const response = await workspaceIam.create_access({
+      const value = Principal.fromText(data.name);
+      const response = await workspace.iam_create_access({
         identity: value,
         roleId: data.role,
         itype: { app: null },
@@ -140,8 +113,8 @@ const ModalApps: FC<ModalProps> = ({ showModal, setShowModal, getListFindName, d
         throw new Error("Error creating profile");
       }
       if ("ok" in response) {
-				setShowModal(false);
-				getData();
+        setShowModal(false);
+        getData();
       }
     } catch (error) {
       console.error({ error });

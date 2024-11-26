@@ -1,15 +1,10 @@
 import React, { FC, ReactNode, useRef, useState } from "react";
 
-import { LogoutButton, useAuth, useCandidActor, useIdentities } from "@bundly/ares-react";
-
-import { CandidActors } from "@app/canisters/index";
-import { useAuthGuard } from "@app/hooks/useGuard";
+import { LogoutButton, useAuth, useIdentities } from "@bundly/ares-react";
 
 import LoadingSpinner from "../components/LoadingSpinner";
 import Menu from "../components/Menu";
-import Modal from "../components/Modal";
 import SelectWorkspace from "../components/SelectWorkspace";
-import { AuthContext } from "../context/auth-context";
 import { useProfile } from "../hooks/useProfile";
 import { useWorkspaces } from "../hooks/useWorkspaces";
 
@@ -23,7 +18,6 @@ const Layout: FC<LayoutProps> = ({ children }) => {
   const workspaces = useWorkspaces();
   const identity = useIdentities();
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const { currentIdentity } = useAuth();
   const profiles = useProfile();
   const getFirstLetter = (text: string): string => {
     return text.charAt(0).toUpperCase();

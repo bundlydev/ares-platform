@@ -52,8 +52,7 @@ echo "Generating declaration files..."
 
 dfx generate account-manager
 dfx generate workspace-orchestrator
-dfx generate workspace-iam
-dfx generate workspace-user-management
+dfx generate workspace
 
 # Add specific code for each mode here
 if [ "$mode" = "dev" ]; then
