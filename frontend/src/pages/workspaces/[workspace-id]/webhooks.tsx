@@ -169,9 +169,8 @@ export default function WebhooksPage(): JSX.Element {
         <span className="text-[16px] font-medium mb-3 mt-6">List of webhooks</span>
         <div className="bg-white w-full shadow-md rounded-lg overflow-hidden ">
           <div className="grid grid-cols-4 bg-gray-200 p-4 text-gray-700 font-bold">
-            <div>Webhook</div>
+            <div>Principal</div>
             <div>Name</div>
-            <div>Created at</div>
             <div>Action</div>
           </div>
           <div className="divide-y divide-gray-200">
@@ -179,7 +178,6 @@ export default function WebhooksPage(): JSX.Element {
               <div key={index} className="grid grid-cols-4 p-4">
                 <div>{item.ref.toString()}</div>
                 <div>{item.name}</div>
-                <div>{new Date(Number(item.createdAt) / 1e6).toLocaleString()}</div>
                 <div>
                   <button
                     className="bg-red-500 text-white py-1 px-3 rounded-lg"
