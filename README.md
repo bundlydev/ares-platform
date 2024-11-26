@@ -164,41 +164,40 @@ NEXT_PUBLIC_WORKSPACE_ORCHESTRATOR_CANISTER_ID=YOUR_WORKSPACE_ORCHESTRATOR_CANIS
 NEXT_PUBLIC_INTERNET_IDENTITY_URL=http://YOUR_INTERNET_IDENTITY_CANISTER_ID.localhost:4943
 ```
 
-Generate did files:
+Deploy your canisters and generate did files:
 
 ```bash
-dfx generate account-manager
-dfx generate workspace-orchestrator
-dfx generate workspace-iam
-dfx generate workspace-user-management
-```
-
-Deploy your canisters:
-
-```bash
-sh scripts/deploy.sh --mode=dev
+sh scripts/deploy.sh --mode=dev --force-frontend
 ```
 
 You will receive a result similar to the following (ids could be different four you):
 
 ```bash
+Deployed canisters.
 URLs:
   Frontend canister via browser
     frontend:
-      - http://127.0.0.1:4943/?canisterId=br5f7-7uaaa-aaaaa-qaaca-cai
-      - http://br5f7-7uaaa-aaaaa-qaaca-cai.localhost:4943/
+      - http://127.0.0.1:4943/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai
+      - http://bd3sg-teaaa-aaaaa-qaaba-cai.localhost:4943/
     internet-identity:
-      - http://127.0.0.1:4943/?canisterId=bkyz2-fmaaa-aaaaa-qaaaq-cai
-      - http://bkyz2-fmaaa-aaaaa-qaaaq-cai.localhost:4943/
+      - http://127.0.0.1:4943/?canisterId=be2us-64aaa-aaaaa-qaabq-cai
+      - http://be2us-64aaa-aaaaa-qaabq-cai.localhost:4943/
   Backend canister via Candid interface:
-    account-manager: http://127.0.0.1:4943/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai&id=be2us-64aaa-aaaaa-qaabq-cai
-    internet-identity: http://127.0.0.1:4943/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai&id=bkyz2-fmaaa-aaaaa-qaaaq-cai
-		workspace-orchestrator: http://127.0.0.1:4943/?canisterId=bd3sg-teaaa-aaaaa-qaaba-cai&id=br5f7-7uaaa-aaaaa-qaaca-cai
+    account-manager: http://127.0.0.1:4943/?canisterId=b77ix-eeaaa-aaaaa-qaada-cai&id=bkyz2-fmaaa-aaaaa-qaaaq-cai
+    internet-identity: http://127.0.0.1:4943/?canisterId=b77ix-eeaaa-aaaaa-qaada-cai&id=be2us-64aaa-aaaaa-qaabq-cai
+    workspace: http://127.0.0.1:4943/?canisterId=b77ix-eeaaa-aaaaa-qaada-cai&id=br5f7-7uaaa-aaaaa-qaaca-cai
+    workspace-orchestrator: http://127.0.0.1:4943/?canisterId=b77ix-eeaaa-aaaaa-qaada-cai&id=bw4dl-smaaa-aaaaa-qaacq-cai
 ```
 
 Open your web browser and enter the Frontend URL to view the web application in action.
 
 ## Test frontend without deploy to ICP Replica
+
+Deploy your canisters and generate did files:
+
+```bash
+sh scripts/deploy.sh --mode=dev --no-frontend
+```
 
 Comment the next line into `frontend/next.config.mjs` file:
 
